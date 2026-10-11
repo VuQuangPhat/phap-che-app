@@ -206,7 +206,14 @@ body.pd .act{cursor:default}
   </div>
   <div id="rbody"></div>
   <p class="hint">Số việc tồn và quá hạn tính tại ngày cuối kỳ. Trạng thái chi tiết (Chờ phản hồi, Tạm dừng) lấy theo hiện tại. Xuất Excel tạo file mở được bằng Excel, có thể có cảnh báo định dạng khi mở.</p>
-  <div class="foot"><button id="rxls">Xuất Excel</button><button id="rprint">In / PDF</button><button class="primary" id="rclose">Đóng</button></div>
+  <div class="foot"><button id="pedit" style="margin-right:auto">Chỉnh kế hoạch công việc</button><button id="rxls">Xuất Excel</button><button id="rprint">In / PDF</button><button class="primary" id="rclose">Đóng</button></div>
+</dialog>
+
+<dialog id="pdlg" style="width:min(760px,95vw)">
+  <h2>Chỉnh kế hoạch công việc</h2>
+  <p class="hint" id="pinfo"></p>
+  <div id="pbody" style="max-height:62vh;overflow:auto;padding-right:4px"></div>
+  <div class="foot"><button id="pcancel">Đóng</button><button class="primary" id="psave">Lưu</button></div>
 </dialog>
 
 <script>
@@ -398,7 +405,7 @@ $("cfg").onclick=()=>{
 $("ccancel").onclick=()=>$("cdlg").close();
 $("csave").onclick=()=>{
   const ls=k=>[...new Set($("c_"+k).value.split("\n").map(s=>s.trim()).filter(Boolean))];
-  CFG={org:$("c_org").value.trim()||DEF.org,unit:$("c_unit").value.trim()||DEF.unit,g1:ls("g1"),g2:ls("g2"),g3:ls("g3"),proj:ls("proj")};
+  CFG={org:$("c_org").value.trim()||DEF.org,unit:$("c_unit").value.trim()||DEF.unit,g1:ls("g1"),g2:ls("g2"),g3:ls("g3"),proj:ls("proj"),plans:CFG.plans||{}};
   saveC();initSel();$("cdlg").close();render();
 };
 
@@ -445,6 +452,40 @@ function range(p,off){
 const plab=(p,a,b,up)=>{const m=a.slice(5,7),y=a.slice(0,4);const s=p==="custom"?`từ ${fmt(a)} đến ${fmt(b)}`:p==="month"?`tháng ${m}/${y}`:p==="quarter"?`quý ${Math.floor((+m-1)/3)+1}/${y}`:p==="year"?`năm ${y}`:`tuần ${fmt(a)} - ${fmt(b)}`;return up?s.toUpperCase():s};
 const td=(c,o={})=>`<td${o.rs>1?` rowspan="${o.rs}"`:""}${o.cs>1?` colspan="${o.cs}"`:""}${o.cls?` class="${o.cls}"`:""}>${br(c)}</td>`;
 
+/* ---------- Kế hoạch công việc: tùy chỉnh ---------- */
+const planKey=(p,off,cs)=>p+"|"+range(p,off-1)[0]+"|"+cs.join(",");
+const planOv=(p,off,e)=>(CFG.plans||{})[planKey(p,off,e.cs)]||null;
+function planGoal(p,off,cs,pre){
+  const [a,b]=range(p,off),[na,nb]=range(p,off-1);
+  const notDone=t=>!(t.st==="Hoàn thành"&&t.done&&t.done<=b);
+  const l=tasks.filter(t=>cs.includes(t.co)&&notDone(t)).sort((x,y)=>(+x.pri-+y.pri)||((x.due||"9")<(y.due||"9")?-1:1)).map(t=>(pre?t.co+": ":"")+t.title+(t.due?` (hạn ${fmt(t.due)})`:"")+(t.pri==="1"?" - ưu tiên 1":"")+(t.st==="Tạm dừng"?" [tạm dừng]":""));
+  l.push(`Thực hiện các công việc khác theo chỉ đạo của Lãnh đạo và công việc theo mục tiêu năm ${na.slice(0,4)} của Phòng`);
+  return `Mục tiêu kế hoạch ${plab(p,na,nb)}:\n`+l.map((x,i)=>`${i+1}/ ${x}`).join("\n");
+}
+function planEnts(co){
+  const {g1,g2,g3}=CFG,g3sel=co&&g3.includes(co)?[co]:g3,o=[];
+  if(g1.length&&(!co||g1.includes(co)))o.push({label:g1.join(", "),cs:g1});
+  g2.filter(c=>!co||c===co).forEach(c=>o.push({label:c,cs:[c]}));
+  if(g3.length&&(!co||g3.includes(co)))o.push({label:"Các công ty khác",cs:g3sel,pre:true});
+  return o;
+}
+let pEnts=[];
+$("pedit").onclick=()=>{
+  const p=$("rper").value,off=p==="custom"?0:+$("rkp").value,co=$("rco").value,[na,nb]=range(p,off-1);
+  pEnts=planEnts(co).map(e=>({...e,auto:planGoal(p,off,e.cs,e.pre),key:planKey(p,off,e.cs)}));
+  $("pinfo").textContent="Kế hoạch "+plab(p,na,nb)+". Sửa tự do nội dung từng đơn vị (thêm, bớt, đổi thứ tự dòng). Bản đã sửa được giữ nguyên, không tự cập nhật theo danh sách việc nữa. Bấm Đặt lại tự động để lấy lại nội dung theo danh sách việc.";
+  $("pbody").innerHTML=pEnts.length?pEnts.map((e,i)=>`<div style="margin:0 0 14px"><b>${esc(e.label)}</b><textarea data-t="${i}" rows="8" style="width:100%;margin-top:4px"></textarea><div class="bar" style="margin-top:4px"><input data-r="${i}" placeholder="Kết quả mục tiêu (để trống nếu không cần)" style="flex:1;min-width:200px"><button data-x="${i}">Đặt lại tự động</button></div></div>`).join(""):'<div class="empty">Không có đơn vị nào trong phạm vi đã chọn.</div>';
+  pEnts.forEach((e,i)=>{const ov=(CFG.plans||{})[e.key];$("pbody").querySelector(`[data-t="${i}"]`).value=ov&&ov.t!=null?ov.t:e.auto;$("pbody").querySelector(`[data-r="${i}"]`).value=ov?ov.r||"":""});
+  $("pdlg").showModal();
+};
+$("pbody").onclick=e=>{const b=e.target.closest("[data-x]");if(!b)return;const i=+b.dataset.x;$("pbody").querySelector(`[data-t="${i}"]`).value=pEnts[i].auto;$("pbody").querySelector(`[data-r="${i}"]`).value=""};
+$("psave").onclick=()=>{
+  CFG.plans=CFG.plans||{};
+  pEnts.forEach((e,i)=>{const t=$("pbody").querySelector(`[data-t="${i}"]`).value.replace(/\s+$/,""),r=$("pbody").querySelector(`[data-r="${i}"]`).value.trim();
+    if(t===e.auto&&!r)delete CFG.plans[e.key];else CFG.plans[e.key]={t,r}});
+  saveC();$("pdlg").close();genReport();
+};
+$("pcancel").onclick=()=>$("pdlg").close();
 function bm02(p,off,co){
   const [a,b]=range(p,off),[na,nb]=range(p,off-1);
   const inR=s=>s&&s>=a&&s<=b;
@@ -472,12 +513,8 @@ function bm02(p,off,co){
   if(g3.length&&(!co||g3.includes(co)))ents.push({label:"Các công ty khác bao gồm: "+g3sel.join(", "),rows:block(g3sel,true)});
   if(ents.length){s+=sec("XỬ LÝ HỒ SƠ THEO HỢP ĐỒNG DỊCH VỤ VỚI CÁC CÔNG TY THÀNH VIÊN");s+=emit("Đối với Công ty thành viên",ents)}
   /* Kế hoạch kỳ tới */
-  const goal=(cs,pre)=>{
-    const l=tasks.filter(t=>cs.includes(t.co)&&notDone(t)).sort((x,y)=>(+x.pri-+y.pri)||((x.due||"9")<(y.due||"9")?-1:1)).map(t=>(pre?t.co+": ":"")+t.title+(t.due?` (hạn ${fmt(t.due)})`:"")+(t.pri==="1"?" - ưu tiên 1":"")+(t.st==="Tạm dừng"?" [tạm dừng]":""));
-    l.push(`Thực hiện các công việc khác theo chỉ đạo của Lãnh đạo và công việc theo mục tiêu năm ${na.slice(0,4)} của Phòng`);
-    return `Mục tiêu kế hoạch ${plab(p,na,nb)}:\n`+l.map((x,i)=>`${i+1}/ ${x}`).join("\n");
-  };
-  const plan=(hm,list)=>{let first=true,o="";list.forEach(e=>{o+=`<tr>${td(++n)}${first?td(hm,{rs:list.length}):""}${td(e.label)}${td(goal(e.cs,e.pre),{cs:2,cls:"l"})}${td("")}${td(fmt(na))}${td(fmt(nb))}</tr>`;first=false});return o};
+  const goal=(cs,pre)=>planGoal(p,off,cs,pre);
+  const plan=(hm,list)=>{let first=true,o="";list.forEach(e=>{const ov=planOv(p,off,e);o+=`<tr>${td(++n)}${first?td(hm,{rs:list.length}):""}${td(e.label)}${td(ov&&ov.t!=null?ov.t:goal(e.cs,e.pre),{cs:2,cls:"l"})}${td(ov?ov.r||"":"")}${td(fmt(na))}${td(fmt(nb))}</tr>`;first=false});return o};
   let ps="";
   if(g1.length&&(!co||g1.includes(co)))ps+=plan("Đối với "+g1.join(", "),[{label:g1.join(", "),cs:g1}]);
   const pl=g2.filter(c=>!co||c===co).map(c=>({label:c,cs:[c]}));
@@ -521,7 +558,7 @@ function bm01(p,off,co){
   return `<div class="rh"><b>BẢNG THEO DÕI TẠM ỨNG VÀ CHI TIÊU ${lab}</b><br>Đơn vị: PHÒNG ${esc(CFG.unit.toUpperCase())}${co?" - "+esc(co):""}<br>Đvt: đồng</div><table class="rt"><thead><tr><th>STT</th><th>Công ty</th><th>Nội dung</th><th>Số tiền</th><th>Ngày</th><th>Đối tác</th><th>Dự án</th><th>Chứng từ</th><th>Ghi chú</th></tr></thead><tbody>${grp("I","TẠM ỨNG NHẬN TRONG KỲ",it.filter(x=>x.kind==="Tạm ứng"))}${grp("II","CHI CÓ CHỨNG TỪ",v("Có chứng từ"))}${grp("III","CHI KHÔNG CÓ CHỨNG TỪ",v("Không có chứng từ"))}${grp("IV","CHI CHỜ BỔ SUNG CHỨNG TỪ",v("Chờ bổ sung chứng từ"))}${grp("V","HOÀN ỨNG CHO CÔNG TY",it.filter(x=>x.kind==="Hoàn ứng"))}</tbody></table>${sm}`;
 }
 const togCus=()=>{const c=$("rper").value==="custom";$("rcus").hidden=!c;$("rkp").hidden=c};
-function genReport(){const p=$("rper").value,off=p==="custom"?0:+$("rkp").value,co=$("rco").value;$("rbody").innerHTML=$("rtpl").value==="bm01"?bm01(p,off,co):bm02(p,off,co)}
+function genReport(){$("pedit").hidden=$("rtpl").value!=="bm02";const p=$("rper").value,off=p==="custom"?0:+$("rkp").value,co=$("rco").value;$("rbody").innerHTML=$("rtpl").value==="bm01"?bm01(p,off,co):bm02(p,off,co)}
 $("rep").onclick=()=>{togCus();genReport();$("rdlg").showModal()};
 ["rtpl","rper","rkp","rco","rfrom","rto"].forEach(i=>$(i).onchange=()=>{togCus();genReport()});
 $("rclose").onclick=()=>$("rdlg").close();
