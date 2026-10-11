@@ -81,6 +81,20 @@ table.rt tr.sec td{background:#f1f1ec;font-weight:700;text-align:left}
 .act:last-child{border:0}.act .d{min-width:92px;font-size:12px}.act small{color:var(--mute)}
 @media(max-width:560px){.grid{grid-template-columns:1fr}header,.stats,.filters,.wrap,.tabs,.dash{padding-left:12px;padding-right:12px}}
 @media print{header,.tabs,#vlist,#vbud,#vdash{display:none!important}dialog:not([open]){display:none}#rdlg{position:static;width:100%;max-height:none;border:0;padding:0}#rdlg h2,#rdlg .bar,#rdlg .foot,#rdlg .hint{display:none}#rbody{max-height:none;border:0;overflow:visible;padding:0}}
+.bhint{margin:0;padding:6px 24px 0;color:var(--mute);font-size:12px}
+.stat.ok b{color:var(--ok)}
+#dprint{display:none}
+@media print{
+body.pd{--bg:#fff;--card:#fff;--ink:#1c2333;--mute:#667085;--line:#dcd9d2;--brand:#23395b;--seal:#a4262c;--ok:#2e6b4f;--warn:#b7791f;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body.pd #vdash{display:block!important}
+body.pd #vdash .filters{display:none}
+body.pd #dprint{display:block;margin:0 0 10px;padding:0 0 8px;border-bottom:2px solid var(--brand)}
+body.pd #dprint h2{margin:0 0 2px;font-size:18px;color:var(--brand)}
+body.pd #dprint small{color:var(--mute);font-size:12px}
+body.pd .dash{padding:0}
+body.pd .panel{break-inside:avoid}
+body.pd .act{cursor:default}
+}
 </style>
 </head>
 <body>
@@ -97,7 +111,7 @@ table.rt tr.sec td{background:#f1f1ec;font-weight:700;text-align:left}
     <input type="file" id="file" accept=".json" hidden>
   </div>
 </header>
-<nav class="tabs"><button id="tl" class="on">Công việc</button><button id="tb">Ngân sách</button><button id="td">Dashboard</button></nav>
+<nav class="tabs"><button id="tl" class="on">Công việc</button><button id="tb">Kinh phí</button><button id="td">Dashboard</button></nav>
 
 <div id="vlist">
   <section class="stats" id="stats"></section>
@@ -110,17 +124,21 @@ table.rt tr.sec td{background:#f1f1ec;font-weight:700;text-align:left}
 
 <div id="vbud" hidden>
   <section class="stats" id="bstats"></section>
+  <p class="bhint">Cơ chế: công ty tạm ứng tiền cho các khoản chi trong tháng (có hoặc không có chứng từ). Cuối tháng, phần dư được hoàn ứng lại cho công ty.</p>
   <section class="filters">
     <label>Kỳ <input type="month" id="bm"></label>
-    <select id="bk"><option value="">Thu và chi</option><option>Thu</option><option>Chi</option></select>
+    <select id="bk"><option value="">Mọi loại</option><option>Tạm ứng</option><option>Chi</option><option>Hoàn ứng</option></select>
+    <select id="bv"></select>
     <select id="bco"></select>
-    <button class="primary" id="badd">Thêm khoản thu/chi</button>
+    <button class="primary" id="badd">Thêm khoản</button>
+    <button id="bsettle">Hoàn ứng phần dư</button>
   </section>
   <div class="wrap"><div id="blist"></div></div>
 </div>
 
 <div id="vdash" hidden>
-  <div class="filters"><select id="dco"></select></div>
+  <div class="filters"><select id="dco"></select><button class="primary" id="dpdf">Xuất PDF</button></div>
+  <div id="dprint"></div>
   <div class="dash" id="dash"></div>
 </div>
 
@@ -147,18 +165,17 @@ table.rt tr.sec td{background:#f1f1ec;font-weight:700;text-align:left}
 </dialog>
 
 <dialog id="bdlg">
-  <h2 id="bdt">Khoản thu/chi</h2>
+  <h2 id="bdt">Khoản kinh phí</h2>
   <div class="grid">
-    <label>Loại<select id="b_kind"><option>Chi</option><option>Thu</option></select></label>
-    <label>Kỳ (tháng kế hoạch)<input type="month" id="b_period"></label>
+    <label>Loại<select id="b_kind"><option>Tạm ứng</option><option>Chi</option><option>Hoàn ứng</option></select></label>
+    <label>Kỳ (tháng)<input type="month" id="b_period"></label>
     <label class="full">Nội dung<input id="b_title"></label>
     <label>Công ty<select id="b_co"></select></label>
     <label>Số tiền (đồng)<input type="number" id="b_amount" min="0"></label>
-    <label>Ngày thu/chi dự kiến<input id="b_date" placeholder="VD: 15/02/2026 hoặc Chi khi phát sinh"></label>
-    <label>Đối tác<input id="b_party"></label>
+    <label>Ngày nhận/chi<input id="b_date" placeholder="VD: 15/10/2026"></label>
+    <label id="b_vlab">Chứng từ<select id="b_voucher"></select></label>
+    <label>Đối tác / người nhận<input id="b_party"></label>
     <label>Dự án<input id="b_proj" list="projs"></label>
-    <label>Tình trạng hồ sơ<select id="b_doc"></select></label>
-    <label>Mức độ ưu tiên<select id="b_pri"><option>1</option><option>2</option><option>3</option></select></label>
     <label class="full">Ghi chú<textarea id="b_note" rows="2"></textarea></label>
   </div>
   <div class="foot"><button id="bdel" style="margin-right:auto;color:var(--seal)">Xóa</button><button id="bcancel">Đóng</button><button class="primary" id="bsave">Lưu</button></div>
@@ -181,7 +198,7 @@ table.rt tr.sec td{background:#f1f1ec;font-weight:700;text-align:left}
 <dialog id="rdlg">
   <h2>Báo cáo</h2>
   <div class="bar" style="margin-bottom:10px">
-    <select id="rtpl"><option value="bm02">BM 02 - Báo cáo công việc</option><option value="bm01">BM 01 - Kế hoạch ngân sách</option></select>
+    <select id="rtpl"><option value="bm02">BM 02 - Báo cáo công việc</option><option value="bm01">BM 01 - Tạm ứng và chi tiêu kinh phí</option></select>
     <select id="rper"><option value="month">Tháng</option><option value="week">Tuần</option><option value="quarter">Quý</option><option value="year">Năm</option><option value="custom">Khoảng ngày tùy chọn (VD: thử việc)</option></select>
     <span class="bar" id="rcus" hidden><input type="date" id="rfrom" value="2026-09-01"><input type="date" id="rto" value="2026-10-31"></span>
     <select id="rkp"><option value="0">Kỳ hiện tại</option><option value="1">Kỳ trước</option></select>
@@ -196,7 +213,7 @@ table.rt tr.sec td{background:#f1f1ec;font-weight:700;text-align:left}
 const DEF={org:"CÔNG TY CỔ PHẦN ĐẦU TƯ FGROUP",unit:"Pháp chế",g1:["FGC"],g2:["HLI","HLM","Bảo An"],g3:["FGI","Tiến Phương","Kim Long","Hướng Việt","Chấn Hưng"],proj:["Nam Hà 2","Tân Đô","Hải Sơn"]};
 const TYPES=["Pháp lý doanh nghiệp","Pháp lý đầu tư","Pháp lý thương mại","Pháp lý lao động","Khác"],BASE=TYPES.slice(0,4);
 const TMAP={"Review hợp đồng":"Pháp lý thương mại","Rà soát pháp lý":"Pháp lý doanh nghiệp","Thủ tục hành chính":"Pháp lý doanh nghiệp"};
-const ST=["Mới","Đang xử lý","Chờ phản hồi","Tạm dừng","Hoàn thành"],DOC=["Chưa lập hồ sơ","Đang trình duyệt","Đã duyệt","Đã thu/chi xong"];
+const ST=["Mới","Đang xử lý","Chờ phản hồi","Tạm dừng","Hoàn thành"],DOC=["Chưa lập hồ sơ","Đang trình duyệt","Đã duyệt","Đã thu/chi xong"],VOU=["Có chứng từ","Không có chứng từ","Chờ bổ sung chứng từ"];
 const KEY="phapche_tasks_v1",KB="phapche_budget_v1",KC="phapche_cfg_v1";
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -208,7 +225,7 @@ const money=n=>Number(n||0).toLocaleString("vi-VN");
 const load=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}};
 let tasks=load(KEY,[]),budget=load(KB,[]),CFG=Object.assign({},DEF,load(KC,{}));
 const COS=()=>[...CFG.g1,...CFG.g2,...CFG.g3];
-function migrate(){tasks.forEach(t=>{if(t.co==="FG")t.co="FGC";if(!TYPES.includes(t.type))t.type=TMAP[t.type]||"Khác"})}
+function migrate(){tasks.forEach(t=>{if(t.co==="FG")t.co="FGC";if(!TYPES.includes(t.type))t.type=TMAP[t.type]||"Khác"});budget.forEach(x=>{if(x.kind==="Thu")x.kind="Tạm ứng";if(x.kind==="Chi"&&!VOU.includes(x.voucher))x.voucher="Có chứng từ"})}
 migrate();
 const store=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){alert("Không lưu được vào trình duyệt. Hãy dùng Sao lưu JSON.")}if(k===KEY||k===KB||k===KC)ghSchedule()};
 const save=()=>store(KEY,tasks),saveB=()=>store(KB,budget),saveC=()=>store(KC,CFG);
@@ -217,7 +234,7 @@ const opts=(el,arr,all)=>{const v=el.value;el.innerHTML=(all?`<option value="">$
 function initSel(){
   const c=COS();
   opts($("fc"),c,"Mọi pháp nhân");opts($("f_co"),c);opts($("rco"),c,"Toàn chuỗi");opts($("dco"),c,"Toàn chuỗi");opts($("b_co"),c);opts($("bco"),c,"Mọi pháp nhân");
-  opts($("ft"),TYPES,"Mọi lĩnh vực");opts($("fs"),ST,"Mọi trạng thái");opts($("f_type"),TYPES);opts($("f_st"),ST);opts($("b_doc"),DOC);
+  opts($("ft"),TYPES,"Mọi lĩnh vực");opts($("fs"),ST,"Mọi trạng thái");opts($("f_type"),TYPES);opts($("f_st"),ST);opts($("b_voucher"),VOU);opts($("bv"),VOU,"Mọi chứng từ");
   $("fp").innerHTML='<option value="">Mọi mức ưu tiên</option><option value="1">Ưu tiên 1</option><option value="2">Ưu tiên 2</option><option value="3">Ưu tiên 3</option>';
   $("projs").innerHTML=CFG.proj.map(p=>`<option value="${esc(p)}">`).join("");
 }
@@ -267,36 +284,59 @@ $("list").onclick=e=>{const th=e.target.closest("th[data-k]");if(th){const k=th.
 $("stats").onclick=e=>{const b=e.target.closest("[data-q]");if(b){quick=quick===b.dataset.q?"":b.dataset.q;render()}};
 ["q","fc","ft","fs","fp"].forEach(i=>$(i).addEventListener("input",render));
 
-/* ---------- Ngân sách ---------- */
+/* ---------- Kinh phí (tạm ứng - chi - hoàn ứng) ---------- */
 let editB=null;
-function renderBud(){
-  const m=$("bm").value,k=$("bk").value,c=$("bco").value;
-  const r=budget.filter(x=>(!m||x.period===m)&&(!k||x.kind===k)&&(!c||x.co===c)).sort((a,b)=>(a.period<b.period?-1:a.period>b.period?1:0)||(a.kind<b.kind?-1:1));
-  const sum=kk=>r.filter(x=>x.kind===kk).reduce((s,x)=>s+(+x.amount||0),0);
-  const pend=r.filter(x=>x.doc!=="Đã thu/chi xong").length;
-  $("bstats").innerHTML=`<div class="stat"><b>${money(sum("Thu"))}</b><span>Tổng thu trong kỳ (đồng)</span></div><div class="stat"><b>${money(sum("Chi"))}</b><span>Tổng chi trong kỳ (đồng)</span></div><div class="stat ${pend?"late":""}"><b>${pend}</b><span>Khoản chưa hoàn tất hồ sơ</span></div>`;
-  if(!r.length){$("blist").innerHTML=`<div class="empty">${budget.length?"Không có khoản nào khớp bộ lọc.":"Chưa có khoản thu/chi nào."}</div>`;return}
-  $("blist").innerHTML=`<table class="m"><thead><tr><th>Kỳ</th><th>Loại</th><th>Công ty</th><th>Nội dung</th><th>Số tiền</th><th>Ngày dự kiến</th><th>Đối tác</th><th>Dự án</th><th>Hồ sơ</th><th>ƯT</th></tr></thead><tbody>`+
-  r.map(x=>`<tr data-id="${x.id}"><td>${x.period.slice(5)}/${x.period.slice(0,4)}</td><td>${x.kind}</td><td>${esc(x.co)}</td><td class="t">${esc(x.title)}<small>${esc(x.note)}</small></td><td class="num">${money(x.amount)}</td><td>${esc(x.date)}</td><td>${esc(x.party)}</td><td>${esc(x.proj)}</td><td>${esc(x.doc)}</td><td>${esc(x.pri)}</td></tr>`).join("")+"</tbody></table>";
+const KORD={"Tạm ứng":0,"Chi":1,"Hoàn ứng":2};
+const sumK=(a,k)=>a.filter(x=>x.kind===k).reduce((s,x)=>s+(+x.amount||0),0);
+const balOf=a=>sumK(a,"Tạm ứng")-sumK(a,"Chi")-sumK(a,"Hoàn ứng");
+function budCalc(){
+  const m=$("bm").value,c=$("bco").value,base=budget.filter(x=>!c||x.co===c),per=base.filter(x=>!m||x.period===m);
+  const open0=m?balOf(base.filter(x=>x.period<m)):0,adv=sumK(per,"Tạm ứng"),ret=sumK(per,"Hoàn ứng"),chi=sumK(per,"Chi");
+  const chiC=sumK(per.filter(x=>x.voucher==="Có chứng từ"),"Chi"),chiN=sumK(per.filter(x=>x.voucher==="Không có chứng từ"),"Chi");
+  return{m,per,open0,adv,ret,chi,chiC,chiN,chiW:chi-chiC-chiN,bal:open0+adv-chi-ret};
 }
-function openB(id){
-  editB=id;const x=budget.find(v=>v.id===id)||{kind:"Chi",period:$("bm").value||today().slice(0,7),co:CFG.g1[0]||COS()[0],doc:DOC[0],pri:"2"};
-  $("bdt").textContent=id?"Sửa khoản thu/chi":"Thêm khoản thu/chi";$("bdel").style.display=id?"":"none";
-  ["kind","period","title","co","amount","date","party","proj","doc","pri","note"].forEach(k=>$("b_"+k).value=x[k]==null?"":x[k]);
-  $("bdlg").showModal();
+function renderBud(){
+  const q=budCalc(),k=$("bk").value,v=$("bv").value;
+  const st=(n,l,cls="")=>`<div class="stat ${cls}"><b>${money(n)}</b><span>${l}</span></div>`;
+  const overdue=q.bal>0&&q.m&&q.m<today().slice(0,7);
+  let h="";
+  if(q.open0)h+=st(q.open0,q.open0>0?"Dư các kỳ trước chưa hoàn ứng (đồng)":"Chi vượt các kỳ trước, công ty chưa bù (đồng)",q.open0>0?"late":"");
+  h+=st(q.adv,"Tạm ứng nhận trong kỳ (đồng)")+st(q.chiC,"Chi có chứng từ (đồng)")+st(q.chiN,"Chi không chứng từ (đồng)");
+  if(q.chiW)h+=st(q.chiW,"Chi chờ bổ sung chứng từ (đồng)","late");
+  if(q.ret)h+=st(q.ret,"Đã hoàn ứng cho công ty (đồng)");
+  h+=st(Math.abs(q.bal),q.bal>0?"Còn dư, cần hoàn ứng cho công ty (đồng)":q.bal<0?"Chi vượt tạm ứng, công ty cần bù (đồng)":"Đã cân đối, không còn dư (đồng)",overdue?"late":q.bal===0&&q.per.length?"ok":"");
+  $("bstats").innerHTML=h;
+  const r=q.per.filter(x=>(!k||x.kind===k)&&(!v||x.voucher===v)).sort((a,b)=>(a.period<b.period?-1:a.period>b.period?1:0)||((KORD[a.kind]||0)-(KORD[b.kind]||0))||String(a.date||"").localeCompare(String(b.date||"")));
+  if(!r.length){$("blist").innerHTML=`<div class="empty">${budget.length?"Không có khoản nào khớp bộ lọc.":"Chưa có khoản tạm ứng/chi nào."}</div>`;return}
+  $("blist").innerHTML=`<table class="m"><thead><tr><th>Kỳ</th><th>Loại</th><th>Công ty</th><th>Nội dung</th><th>Số tiền</th><th>Ngày</th><th>Đối tác</th><th>Dự án</th><th>Chứng từ</th></tr></thead><tbody>`+
+  r.map(x=>`<tr data-id="${x.id}"><td>${x.period.slice(5)}/${x.period.slice(0,4)}</td><td>${esc(x.kind)}</td><td>${esc(x.co)}</td><td class="t">${esc(x.title)}<small>${esc(x.note)}</small></td><td class="num">${money(x.amount)}</td><td>${esc(x.date)}</td><td>${esc(x.party)}</td><td>${esc(x.proj)}</td><td${x.voucher==="Chờ bổ sung chứng từ"?' style="color:var(--seal)"':""}>${x.kind==="Chi"?esc(x.voucher):""}</td></tr>`).join("")+"</tbody></table>";
+}
+const togV=()=>{$("b_vlab").style.display=$("b_kind").value==="Chi"?"":"none"};
+$("b_kind").onchange=togV;
+function openB(id,preset){
+  editB=id;const x=budget.find(v=>v.id===id)||Object.assign({kind:"Chi",period:$("bm").value||today().slice(0,7),co:$("bco").value||CFG.g1[0]||COS()[0],voucher:VOU[0]},preset||{});
+  $("bdt").textContent=id?"Sửa khoản kinh phí":"Thêm khoản kinh phí";$("bdel").style.display=id?"":"none";
+  ["kind","period","title","co","amount","date","voucher","party","proj","note"].forEach(k=>$("b_"+k).value=x[k]==null?"":x[k]);
+  togV();$("bdlg").showModal();
 }
 $("badd").onclick=()=>openB(null);$("bcancel").onclick=()=>$("bdlg").close();
+$("bsettle").onclick=()=>{
+  const q=budCalc();
+  if(!q.m){alert("Hãy chọn kỳ (tháng) cần hoàn ứng.");return}
+  if(q.bal<=0){alert(q.bal<0?"Kỳ này chi vượt tạm ứng, không có phần dư để hoàn.":"Kỳ này đã cân đối, không còn phần dư.");return}
+  openB(null,{kind:"Hoàn ứng",title:"Hoàn trả phần tạm ứng dư tháng "+q.m.slice(5)+"/"+q.m.slice(0,4),amount:q.bal,date:fmt(today())});
+};
 $("bsave").onclick=()=>{
   const g=k=>$("b_"+k).value.trim();
   if(!g("title")){$("b_title").focus();return}
   if(!g("period")){$("b_period").focus();return}
-  const o={kind:g("kind"),period:g("period"),title:g("title"),co:g("co"),amount:+g("amount")||0,date:g("date"),party:g("party"),proj:g("proj"),doc:g("doc"),pri:g("pri"),note:g("note")};
+  const o={kind:g("kind"),period:g("period"),title:g("title"),co:g("co"),amount:+g("amount")||0,date:g("date"),voucher:g("kind")==="Chi"?g("voucher"):"",party:g("party"),proj:g("proj"),note:g("note")};
   if(editB)Object.assign(budget.find(v=>v.id===editB),o);else budget.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),...o});
   saveB();$("bdlg").close();render();
 };
 $("bdel").onclick=()=>{if(confirm("Xóa khoản này?")){budget=budget.filter(v=>v.id!==editB);saveB();$("bdlg").close();render()}};
 $("blist").onclick=e=>{const tr=e.target.closest("tr[data-id]");if(tr)openB(tr.dataset.id)};
-["bm","bk","bco"].forEach(i=>$(i).addEventListener("input",render));
+["bm","bk","bv","bco"].forEach(i=>$(i).addEventListener("input",render));
 
 /* ---------- Dashboard ---------- */
 const SC={"Mới":"#7c93b8","Đang xử lý":"var(--brand)","Chờ phản hồi":"var(--warn)","Tạm dừng":"var(--mute)","Hoàn thành":"var(--ok)"};
@@ -306,6 +346,10 @@ function renderDash(){
   const doneM=T.filter(t=>t.st==="Hoàn thành"&&(t.done||"").slice(0,7)===mo);
   const dn=T.filter(t=>t.st==="Hoàn thành"&&t.due&&t.done),ot=dn.length?Math.round(dn.filter(t=>t.done<=t.due).length*100/dn.length)+"%":"-";
   const hdM=T.filter(t=>((t.done||t.recv)||"").slice(0,7)===mo).reduce((s,t)=>s+(+t.hd||0),0);
+  const B=budget.filter(x=>!co||x.co===co),Bm=B.filter(x=>x.period===mo),o0=balOf(B.filter(x=>x.period<mo)),bAdv=sumK(Bm,"Tạm ứng"),bChi=sumK(Bm,"Chi"),bRet=sumK(Bm,"Hoàn ứng"),bBal=o0+bAdv-bChi-bRet;
+  const bC=sumK(Bm.filter(x=>x.voucher==="Có chứng từ"),"Chi"),bN=sumK(Bm.filter(x=>x.voucher==="Không có chứng từ"),"Chi"),bW=bChi-bC-bN;
+  const kl=(l,n,c="")=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--line)"><span>${l}</span><b${c?` style="color:${c}"`:""}>${money(n)}</b></div>`;
+  const pKp=`<div class="panel"><h3>Kinh phí tháng ${mo.slice(5)}/${mo.slice(0,4)} (đồng)</h3>${o0?kl(o0>0?"Dư kỳ trước chưa hoàn ứng":"Chi vượt kỳ trước",Math.abs(o0),o0>0?"var(--seal)":""):""}${kl("Tạm ứng nhận trong tháng",bAdv)}${kl("Chi có chứng từ",bC)}${kl("Chi không chứng từ",bN)}${bW?kl("Chi chờ bổ sung chứng từ",bW,"var(--seal)"):""}${bRet?kl("Đã hoàn ứng",bRet):""}${kl(bBal>0?"Còn dư cần hoàn ứng":bBal<0?"Chi vượt tạm ứng":"Đã cân đối",Math.abs(bBal),bBal>0?"var(--warn)":"")}</div>`;
   const kpi=(n,l,c="")=>`<div class="kpi ${c}"><b>${n}</b><span>${l}</span></div>`;
   const row=(l,segs,max)=>`<div class="row"><span>${esc(l)}</span><div class="track">${segs.map(g=>g.n?`<i style="width:${g.n/max*100}%;background:${g.c}" title="${g.t||""}: ${g.n}"></i>`:"").join("")}</div><span class="n">${segs.reduce((a,g)=>a+g.n,0)}</span></div>`;
   const cos=COS().filter(c=>!co||c===co),mx1=Math.max(1,...cos.map(c=>T.filter(t=>t.co===c).length));
@@ -325,10 +369,18 @@ function renderDash(){
   <div class="panel"><h3>Việc đang xử lý theo mức ưu tiên</h3>${pPr}</div>
   <div class="panel"><h3>Tiếp nhận / hoàn thành 6 tháng gần nhất</h3>${trend}</div>
   <div class="panel"><h3>Quá hạn (${lateL.length})</h3>${lateL.length?lateL.slice(0,8).map(t=>act(t,1)).join(""):'<small style="color:var(--mute)">Không có việc quá hạn.</small>'}</div>
-  <div class="panel"><h3>Đến hạn trong 7 ngày (${soon.length})</h3>${soon.length?soon.slice(0,8).map(t=>act(t)).join(""):'<small style="color:var(--mute)">Không có việc sắp đến hạn.</small>'}</div>`;
+  <div class="panel"><h3>Đến hạn trong 7 ngày (${soon.length})</h3>${soon.length?soon.slice(0,8).map(t=>act(t)).join(""):'<small style="color:var(--mute)">Không có việc sắp đến hạn.</small>'}</div>
+  ${pKp}`;
 }
 $("dash").onclick=e=>{const a=e.target.closest(".act");if(a)open_(a.dataset.id)};
 $("dco").onchange=renderDash;
+$("dpdf").onclick=()=>{
+  renderDash();const co=$("dco").value;
+  $("dprint").innerHTML=`<h2>DASHBOARD CÔNG VIỆC PHÁP CHẾ</h2><small>${esc(CFG.org)} | ${esc(CFG.unit)} | Phạm vi: ${esc(co||"Toàn chuỗi")} | Ngày xuất: ${fmt(today())}</small>`;
+  const t0=document.title;document.title="Dashboard_phap_che_"+today();document.body.classList.add("pd");
+  const done=()=>{document.body.classList.remove("pd");document.title=t0;window.removeEventListener("afterprint",done)};
+  window.addEventListener("afterprint",done);setTimeout(()=>window.print(),60);
+};
 
 /* ---------- Điều hướng ---------- */
 function render(){
@@ -355,7 +407,7 @@ function dl(name,mime,text){const a=document.createElement("a");a.href=URL.creat
 const csvc=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"';
 $("csv").onclick=()=>{
   let h,rows,nm;
-  if(view==="bud"){h=["Kỳ","Loại","Công ty","Nội dung","Số tiền","Ngày thu/chi dự kiến","Đối tác","Dự án","Tình trạng hồ sơ","Mức độ ưu tiên","Ghi chú"];rows=budget.map(x=>[x.period,x.kind,x.co,x.title,x.amount,x.date,x.party,x.proj,x.doc,x.pri,x.note]);nm="ngan_sach"}
+  if(view==="bud"){h=["Kỳ","Loại","Công ty","Nội dung","Số tiền","Ngày","Đối tác","Dự án","Chứng từ","Ghi chú"];rows=budget.map(x=>[x.period,x.kind,x.co,x.title,x.amount,x.date,x.party,x.proj,x.voucher||"",x.note]);nm="kinh_phi"}
   else{h=["Ưu tiên","Công việc","Pháp nhân","Lĩnh vực","Số HĐ kiểm tra","Dự án","Đối tác","Bắt đầu","Hạn","Kết thúc","Trạng thái","Người giao/Phối hợp","Ghi chú"];rows=tasks.map(t=>[t.pri,t.title,t.co,t.type,t.hd,t.proj,t.party,fmt(t.recv),fmt(t.due),fmt(t.done),t.st,t.who,t.note]);nm="cong_viec"}
   dl(nm+"_phap_che_"+today()+".csv","text/csv","\ufeff"+[h.map(csvc).join(","),...rows.map(r=>r.map(csvc).join(","))].join("\r\n"));
 };
@@ -433,11 +485,16 @@ function bm02(p,off,co){
   if(pl.length)ps+=plan("Đối với Công ty thành viên",pl);
   s+=sec("KẾ HOẠCH CÔNG VIỆC "+plab(p,na,nb,1))+ps;
   /* Kế hoạch kinh phí */
-  const bs=budget.filter(x=>!co||x.co===co);
-  const ton=bs.filter(x=>x.period<=b.slice(0,7)&&x.doc!=="Đã thu/chi xong"),ph=bs.filter(x=>x.period>=na.slice(0,7)&&x.period<=nb.slice(0,7));
-  const bl=l=>l.length?l.map((x,i)=>`${l.length>1?(i+1)+"/ ":""}${x.kind}${x.co?" "+x.co:""}: ${x.title}: ${money(x.amount)} đồng`).join("\n"):"Không có";
+  const bs=budget.filter(x=>!co||x.co===co),pe=b.slice(0,7);
+  const ton=bs.filter(x=>x.period<=pe&&x.kind==="Chi"&&x.voucher==="Chờ bổ sung chứng từ"),ph=bs.filter(x=>x.period>=na.slice(0,7)&&x.period<=nb.slice(0,7));
+  const balE=balOf(bs.filter(x=>x.period<=pe));
+  const bl0=l=>l.map((x,i)=>`${l.length>1?(i+1)+"/ ":""}${x.kind}${x.co?" "+x.co:""}: ${x.title}: ${money(x.amount)} đồng`);
+  const bl=l=>l.length?bl0(l).join("\n"):"Không có";
+  const tonA=bl0(ton).map(t=>t+" (chờ bổ sung chứng từ)");
+  if(balE>0)tonA.push("Số dư tạm ứng chưa hoàn ứng đến hết kỳ: "+money(balE)+" đồng");else if(balE<0)tonA.push("Chi vượt tạm ứng đến hết kỳ: "+money(-balE)+" đồng (công ty cần bù)");
+  const tonT=tonA.length?tonA.join("\n"):"Không có";
   s+=sec("KẾ HOẠCH KINH PHÍ "+plab(p,na,nb,1));
-  s+=`<tr>${td(++n)}${td("Kế hoạch kinh phí",{rs:2})}${td("Tồn đọng")}${td(bl(ton),{cs:2,cls:"l"})}${td("")}${td("")}${td(fmt(nb))}</tr>`;
+  s+=`<tr>${td(++n)}${td("Kế hoạch kinh phí",{rs:2})}${td("Tồn đọng")}${td(tonT,{cs:2,cls:"l"})}${td("")}${td("")}${td(fmt(nb))}</tr>`;
   s+=`<tr>${td(++n)}${td("Phát sinh")}${td(bl(ph),{cs:2,cls:"l"})}${td("")}${td("")}${td(fmt(nb))}</tr>`;
   let sm="";
   if(p==="custom"){
@@ -452,12 +509,16 @@ function bm02(p,off,co){
 }
 function bm01(p,off,co){
   const [a,b]=range(p,off),m1=a.slice(0,7),m2=b.slice(0,7);
-  const it=budget.filter(x=>x.period>=m1&&x.period<=m2&&(!co||x.co===co));
+  const all=budget.filter(x=>!co||x.co===co),it=all.filter(x=>x.period>=m1&&x.period<=m2),o0=balOf(all.filter(x=>x.period<m1));
   const lab=m1===m2?`THÁNG ${m1.slice(5)}/${m1.slice(0,4)}`:plab(p,a,b,1);
-  const grp=(no,name,k)=>{const l=it.filter(x=>x.kind===k),tot=l.reduce((s,x)=>s+(+x.amount||0),0);
-    return `<tr class="sec">${td(no)}${td(name,{cs:2})}${td(money(tot))}<td colspan="6"></td></tr>`+l.map((x,i)=>`<tr>${td(i+1)}${td(x.co)}${td(x.title,{cls:"l"})}${td(money(x.amount))}${td(x.date)}${td(x.party)}${td(x.proj)}${td(x.doc)}${td(x.pri)}${td(x.note,{cls:"l"})}</tr>`).join("")};
-  $("rbody").dataset.name="BM01_Ke_hoach_ngan_sach_"+m1;
-  return `<div class="rh"><b>KẾ HOẠCH NGÂN SÁCH ${lab}</b><br>Đơn vị: PHÒNG ${esc(CFG.unit.toUpperCase())}${co?" - "+esc(co):""}<br>Đvt: đồng</div><table class="rt"><thead><tr><th>STT</th><th>Công ty</th><th>Nội dung</th><th>Số tiền</th><th>Ngày thu/chi dự kiến</th><th>Đối tác</th><th>Dự án</th><th>Tình trạng hồ sơ</th><th>Mức độ ưu tiên</th><th>Ghi chú</th></tr></thead><tbody>${grp("I","TỔNG THU TRONG KỲ","Thu")}${grp("II","TỔNG CHI TRONG KỲ","Chi")}</tbody></table>`;
+  const rowx=(x,i)=>`<tr>${td(i+1)}${td(x.co)}${td(x.title,{cls:"l"})}${td(money(x.amount))}${td(x.date)}${td(x.party)}${td(x.proj)}${td(x.kind==="Chi"?x.voucher:"")}${td(x.note,{cls:"l"})}</tr>`;
+  const grp=(no,name,l)=>`<tr class="sec">${td(no)}${td(name,{cs:2})}${td(money(l.reduce((s,x)=>s+(+x.amount||0),0)))}<td colspan="5"></td></tr>`+l.map(rowx).join("");
+  const chi=it.filter(x=>x.kind==="Chi"),v=t=>chi.filter(x=>x.voucher===t);
+  const adv=sumK(it,"Tạm ứng"),tc=sumK(it,"Chi"),ret=sumK(it,"Hoàn ứng"),bal=o0+adv-tc-ret,cC=sumK(v("Có chứng từ"),"Chi"),cN=sumK(v("Không có chứng từ"),"Chi");
+  const sr=(l,n,bd)=>`<tr${bd?' class="sec"':""}>${td(l,{cls:"l"})}${td(money(n))}</tr>`;
+  const sm=`<table class="rt" style="min-width:0;max-width:440px;margin-top:14px"><thead><tr><th colspan="2" style="text-align:left">TỔNG HỢP TẠM ỨNG VÀ HOÀN ỨNG</th></tr></thead><tbody>${sr("Số dư đầu kỳ chuyển sang",o0)}${sr("(+) Tạm ứng nhận trong kỳ",adv)}${sr("(-) Chi có chứng từ",cC)}${sr("(-) Chi không có chứng từ",cN)}${sr("(-) Chi chờ bổ sung chứng từ",tc-cC-cN)}${sr("(-) Đã hoàn ứng cho công ty",ret)}${sr(bal>0?"CÒN DƯ CẦN HOÀN ỨNG":bal<0?"CHI VƯỢT TẠM ỨNG (CÔNG TY BÙ)":"ĐÃ CÂN ĐỐI",Math.abs(bal),1)}</tbody></table>`;
+  $("rbody").dataset.name="BM01_Tam_ung_chi_tieu_"+m1;
+  return `<div class="rh"><b>BẢNG THEO DÕI TẠM ỨNG VÀ CHI TIÊU ${lab}</b><br>Đơn vị: PHÒNG ${esc(CFG.unit.toUpperCase())}${co?" - "+esc(co):""}<br>Đvt: đồng</div><table class="rt"><thead><tr><th>STT</th><th>Công ty</th><th>Nội dung</th><th>Số tiền</th><th>Ngày</th><th>Đối tác</th><th>Dự án</th><th>Chứng từ</th><th>Ghi chú</th></tr></thead><tbody>${grp("I","TẠM ỨNG NHẬN TRONG KỲ",it.filter(x=>x.kind==="Tạm ứng"))}${grp("II","CHI CÓ CHỨNG TỪ",v("Có chứng từ"))}${grp("III","CHI KHÔNG CÓ CHỨNG TỪ",v("Không có chứng từ"))}${grp("IV","CHI CHỜ BỔ SUNG CHỨNG TỪ",v("Chờ bổ sung chứng từ"))}${grp("V","HOÀN ỨNG CHO CÔNG TY",it.filter(x=>x.kind==="Hoàn ứng"))}</tbody></table>${sm}`;
 }
 const togCus=()=>{const c=$("rper").value==="custom";$("rcus").hidden=!c;$("rkp").hidden=c};
 function genReport(){const p=$("rper").value,off=p==="custom"?0:+$("rkp").value,co=$("rco").value;$("rbody").innerHTML=$("rtpl").value==="bm01"?bm01(p,off,co):bm02(p,off,co)}
