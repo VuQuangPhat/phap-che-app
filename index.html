@@ -149,6 +149,17 @@ table.slx.tt tr:last-child td{font-weight:700}
 .hprio{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:16px}
 .hp{border:1px solid #d5e3dc;border-radius:10px;padding:16px 20px;position:relative;background:#fff}.hp b{font-size:34px;color:#017e44;display:block}.hp h4{margin:2px 0 6px;font-size:22px;color:#134e5e}.hp p{margin:0;font-size:17px;line-height:1.4;color:#213a44}
 .hmsg{margin:150px 40px 0;border-left:6px solid #017e44;background:#f2f7f5;padding:30px 40px;border-radius:8px}.hmsg small{font-size:15px;letter-spacing:1px;color:#017e44;font-weight:700}.hmsg p{font-size:28px;line-height:1.5;margin:14px 0 0;font-weight:600}
+.dgrid{display:grid;grid-template-columns:1.15fr 1fr 1.1fr;gap:16px;margin-top:4px}
+.dp{border:1px solid #d5e3dc;border-radius:10px;padding:14px 16px;background:#fff}.dp{min-height:400px}.dp h4{margin:0 0 14px;font-size:18px;color:#134e5e}
+.db{display:flex;align-items:center;margin:12px 0}.db .n{width:96px;font-size:15px;font-weight:600;color:#213a44}
+.db .bt{flex:1;display:flex;height:30px;background:#f2f7f5;border-radius:4px;overflow:hidden}.bt i,.dc i{font-style:normal}.bt i{color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.cd{background:#017e44}.co{background:#134e5e}.cr{background:#b3261e}
+.dl{margin-top:12px;font-size:14px;color:#5b7a86}.dl i{display:inline-block;width:12px;height:12px;border-radius:3px;margin:0 4px 0 10px;vertical-align:middle}.dl i:first-child{margin-left:0}
+.dn{color:#5b7a86}.dcols{display:flex;gap:8px;height:320px;align-items:flex-end}.dc{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end}
+.pair{display:flex;align-items:flex-end;gap:3px;height:285px}.pair i{flex:1;min-height:2px;border-radius:3px 3px 0 0;position:relative}.pair i b{position:absolute;top:-17px;left:-4px;right:-4px;text-align:center;font-size:12px;color:#213a44}
+.dc label{text-align:center;font-size:13px;color:#5b7a86;margin-top:5px}
+.slpg{position:absolute;right:44px;bottom:16px;font-size:14px;color:#8aa0a8}
+.sl.hd .hcard.g span{color:#5b7a86}
 #sprintbox{display:none}
 @media print{body.sp>*:not(#sprintbox){display:none!important}body.sp #sprintbox{display:block}#sprintbox .sl{page-break-after:always;break-after:page;-webkit-print-color-adjust:exact;print-color-adjust:exact}body.sp{background:#fff!important}}
 
@@ -454,6 +465,7 @@ table.fm.m78{table-layout:fixed;font-size:8.5px;width:100%}table.fm.m78 th,table
   <div id="sstage"><div id="sview"></div></div>
   <div id="sbar">
     <button id="sprev">‹</button><span id="scnt"></span><button id="snext">›</button>
+    <label style="font-size:13px"><input type="checkbox" id="ssec"> Trang phân đoạn</label>
     <select id="stype"><option value="tgd">BC TGĐ (KQCV phòng ban)</option><option value="hdqt">BC HĐQT</option></select>
     <select id="sper"><option value="half">6 tháng</option><option value="quarter">Quý</option><option value="month">Tháng</option><option value="year">Năm</option></select>
     <select id="skp"><option value="0">Kỳ hiện tại</option><option value="1">Kỳ trước</option></select>
@@ -874,6 +886,7 @@ function kqSlides(p,off,co){
   const tt=rw.reduce((y,r)=>y.map((v,i)=>i?v+(+r[i]):v),["TỔNG CỘNG",0,0,0,0,0]);
   const kp=[["Tiếp nhận",tt[1]],["Hoàn thành",tt[2]],["Tồn cuối kỳ",tt[3]],["Quá hạn",tt[4]],["Hợp đồng đã kiểm tra",tt[5]]];
   S.push(P(T("TỔNG QUAN CÔNG VIỆC "+L)+`<div class="kpis">${kp.map(k=>`<div class="kpi"><b>${k[1]}</b><span>${esc(k[0])}</span></div>`).join("")}</div>`+(rw.length?tbl(["Đơn vị","Tiếp nhận","Hoàn thành","Tồn cuối kỳ","Quá hạn","Hợp đồng đã kiểm tra"],rw.concat([tt.map(String)]),"ctr tt"):`<p class="none">Không phát sinh công việc trong kỳ</p>`)));
+  S.push(P(T("DASHBOARD CÔNG VIỆC "+L)+kqDash(p,off,co)));
   const WN=54,rows=[];
   TYPES.forEach(ty=>{
     const x=list.filter(t=>t.type===ty).sort((u,v)=>((u.recv||"")<(v.recv||"")?-1:1));
@@ -920,10 +933,35 @@ function kqSlides(p,off,co){
   S.push(`<section class="sl cover thx"><img class="cvarc" src="${KQ_ARC}" style="position:absolute;right:0;bottom:0;height:380px"><img class="cvlogo" src="${kqLogo()}" style="position:absolute;left:64px;top:40px;height:110px"><div class="cvt">CẢM ƠN QUÝ LÃNH ĐẠO<br>ĐÃ LẮNG NGHE</div></section>`);
   return{S,kk,def,ov};
 }
+const fT=n=>{const a=Math.abs(n);return a>=1e9?(n/1e9).toLocaleString("vi-VN",{maximumFractionDigits:2})+" tỷ":a>=1e6?(n/1e6).toLocaleString("vi-VN",{maximumFractionDigits:1})+" triệu":money(n)};
+function kqMet(p,off,co){
+  const [a,b]=range(p,off),asOf=b<today()?b:today();
+  const inR=s=>s&&s>=a&&s<=b,openAt=t=>(!t.recv||t.recv<=b)&&!(t.st==="Hoàn thành"&&t.done&&t.done<=b);
+  const l=tasks.filter(t=>(!co||t.co===co)&&(inR(t.recv)||inR(t.done)||openAt(t)));
+  return{a,b,l,openAt,inR,asOf,n1:l.filter(t=>inR(t.recv)).length,n2:l.filter(t=>t.st==="Hoàn thành"&&inR(t.done)).length,n3:l.filter(openAt).length,n4:l.filter(t=>openAt(t)&&t.due&&t.due<asOf).length,n5:l.filter(t=>inR(t.done||t.recv)).reduce((y,t)=>y+(+t.hd||0),0)};
+}
+const kqDelta=(v,pv)=>{const d=v-pv;return d?(d>0?"▲ +":"▼ ")+d+" so với kỳ trước":"= kỳ trước"};
+const kqShort=(p,a)=>{const m=a.slice(5,7),y=a.slice(2,4);return p==="month"?m+"/"+y:p==="quarter"?"Q"+(Math.floor((+m-1)/3)+1)+"/"+y:p==="half"?"H"+(+m<7?1:2)+"/"+y:p==="year"?"20"+y:a.slice(8)+"/"+m};
+function kqDash(p,off,co){
+  const M=kqMet(p,off,co),Q=kqMet(p,off+1,co);
+  const kp=[["VIỆC XỬ LÝ TRONG KỲ",M.l.length,Q.l.length,""],["HOÀN THÀNH",M.n2,Q.n2,"g"],["TỒN CUỐI KỲ",M.n3,Q.n3,""],["QUÁ HẠN",M.n4,Q.n4,M.n4?"r":"g"],["HỢP ĐỒNG ĐÃ KIỂM TRA",M.n5,Q.n5,""]];
+  const cards=`<div class="hcards">${kp.map(k=>`<div class="hcard ${k[3]}"><small>${k[0]}</small><b>${k[1]}</b><span>${kqDelta(k[1],k[2])}</span></div>`).join("")}</div>`;
+  const cos=[...new Set(M.l.map(t=>t.co))].filter(Boolean);
+  const rows=cos.map(c=>{const x=M.l.filter(t=>t.co===c),d=x.filter(t=>t.st==="Hoàn thành"&&M.inR(t.done)).length,od=x.filter(t=>M.openAt(t)&&t.due&&t.due<M.asOf).length,o=x.filter(M.openAt).length-od;return{c,d,o,od,t:d+o+od}});
+  const mx=Math.max(1,...rows.map(r=>r.t)),seg=(n,cl)=>n?`<i class="${cl}" style="width:${n/mx*100}%">${n}</i>`:"";
+  const A=`<div class="dp"><h4>Theo pháp nhân</h4>${rows.map(r=>`<div class="db"><span class="n">${esc(r.c)}</span><div class="bt">${seg(r.d,"cd")}${seg(r.o,"co")}${seg(r.od,"cr")}</div></div>`).join("")||'<p class="dn">Không có dữ liệu</p>'}<div class="dl"><i class="cd"></i>Hoàn thành <i class="co"></i>Đang xử lý <i class="cr"></i>Quá hạn</div></div>`;
+  const ty=TYPES.map(t=>[t.replace("Pháp lý ",""),M.l.filter(x=>x.type===t).length]).filter(x=>x[1]||BASE.some(b=>b.endsWith(x[0])));
+  const mt=Math.max(1,...ty.map(x=>x[1]));
+  const B=`<div class="dp"><h4>Theo lĩnh vực</h4>${ty.map(x=>`<div class="db"><span class="n" style="width:130px">${esc(x[0])}</span><div class="bt"><i class="co" style="width:${x[1]/mt*100}%">${x[1]}</i></div></div>`).join("")}</div>`;
+  const tr=[5,4,3,2,1,0].map(k=>{const m=kqMet(p,off+k,co);return{l:kqShort(p,m.a),n1:m.n1,n2:m.n2}});
+  const tm=Math.max(1,...tr.map(x=>Math.max(x.n1,x.n2)));
+  const C=`<div class="dp"><h4>Xu hướng 6 kỳ gần nhất</h4><div class="dcols">${tr.map(x=>`<div class="dc"><div class="pair"><i class="co" style="height:${x.n1/tm*100}%"><b>${x.n1}</b></i><i class="cd" style="height:${x.n2/tm*100}%"><b>${x.n2}</b></i></div><label>${x.l}</label></div>`).join("")}</div><div class="dl"><i class="co"></i>Tiếp nhận <i class="cd"></i>Hoàn thành</div></div>`;
+  return cards+`<div class="dgrid">${A}${B}${C}</div>`;
+}
 const kqLogo=()=>CFG.logo||KQ_LOGO;
 function hdSlides(p,off,co){
   const [a,b]=range(p,off),[na,nb]=range(p,off-1),asOf=b<today()?b:today();
-  const kk="hd|"+kqKey(p,off,co);
+  const kk="hd|"+kqKey(p,off,co),Pm=kqMet(p,off+1,co);
   const inR=s=>s&&s>=a&&s<=b;
   const openAt=t=>(!t.recv||t.recv<=b)&&!(t.st==="Hoàn thành"&&t.done&&t.done<=b);
   const rel=t=>inR(t.recv)||inR(t.done)||openAt(t);
@@ -948,6 +986,7 @@ function hdSlides(p,off,co){
   const ex=ct.filter(x=>x.hh&&x.hh>=na&&x.hh<=nb);if(ex.length)rk.push(["TRUNG BÌNH","Hợp đồng sắp hết hạn",`${ex.length} hợp đồng hết hạn trong kỳ tới: ${ex.slice(0,2).map(x=>x.ten).join("; ")}.`,"Quyết định gia hạn, thanh lý hoặc ký mới trước ngày hết hạn."]);
   if(wait.length)rk.push(["TRUNG BÌNH","Chi chưa đủ chứng từ",`${wait.length} khoản chi (${money(wait.reduce((s,x)=>s+(+x.amount||0),0))} đồng) chờ bổ sung chứng từ.`,"Thu thập chứng từ và hoàn ứng đúng quy định."]);
   def.rr=rk.slice(0,5).map(r=>r.join(" | ")).join("\n")||"THẤP | Chưa ghi nhận rủi ro trọng yếu | Các công việc pháp lý đang được kiểm soát theo kế hoạch. | Tiếp tục theo dõi định kỳ.";
+  def.dn=rk.filter(r=>/CAO/.test(r[0])).map(r=>`${r[1]} | ${r[3]}`).join("\n")||"Không có vấn đề cần HĐQT chỉ đạo trong kỳ | Tiếp tục theo dõi định kỳ.";
   def.ut=top.slice(0,4).map(t=>`${t.title} | ${(t.co?t.co+". ":"")}${t.due?"Hạn "+fmt(t.due)+". ":""}${t.st}.`).join("\n")||"Duy trì công việc pháp lý thường xuyên | Thực hiện theo chỉ đạo của Lãnh đạo.";
   def.td="Ưu tiên kỳ tới là xử lý dứt điểm công việc và hồ sơ pháp lý tồn đọng, kiểm soát thời hạn các thủ tục với cơ quan đăng ký, bảo đảm hợp đồng được rà soát trước khi ký.";
   def.nth=(def.td||"");
@@ -961,10 +1000,8 @@ function hdSlides(p,off,co){
   const S=[];
   const cvm=(k,v)=>`<div><small>${esc(k)}</small><b>${esc(v)}</b></div>`;
   S.push(`<section class="sl cover hdc"><img class="cvlogo" src="${kqLogo()}"><img class="cvarc" src="${KQ_ARC}"><div class="cvt">BÁO CÁO HĐQT ${esc(L)}</div><div class="cvsub">Kết quả hoạt động ${esc(plab(p,a,b))} &amp; Kế hoạch trọng tâm ${esc(plab(p,na,nb))}</div><div class="cvm">${cvm("NGƯỜI BÁO CÁO","Trưởng phòng "+CFG.unit)}${cvm("NGÀY BÁO CÁO","Tháng "+today().slice(5,7)+"/"+today().slice(0,4))}${cvm("PHẠM VI",co||"Toàn chuỗi pháp nhân")}</div></section>`);
-  S.push(P(T("Tình hình công việc pháp chế "+plab(p,a,b))+`<div class="hcards">${card("TIẾP NHẬN",n1,"việc trong kỳ")}${card("HOÀN THÀNH",n2,n1?Math.round(n2/n1*100)+"% số tiếp nhận":"","g")}${card("TỒN CUỐI KỲ",n3,"việc đang xử lý")}${card("QUÁ HẠN",n4,n4?"cần xử lý ngay":"không có",n4?"r":"g")}${card("HỢP ĐỒNG ĐÃ KIỂM TRA",n5,"hợp đồng")}</div><div class="hbox"><h3>KẾT LUẬN ĐIỀU HÀNH</h3><p>${br(V("kl"))}</p></div><div class="hbox o"><h3>TRỌNG TÂM ĐIỀU HÀNH ${esc(plab(p,na,nb,1))}</h3><p>${br(V("tt"))}</p></div>`));
-  const cos=[...new Set(list.map(t=>t.co))].filter(Boolean);
-  if(cos.length){const mx=Math.max(1,...cos.map(c=>list.filter(t=>t.co===c&&(inR(t.recv)||openAt(t))).length));
-    S.push(P(T("Khối lượng công việc theo pháp nhân")+`<div class="hbars">${cos.map(c=>{const x=list.filter(t=>t.co===c),d=x.filter(t=>t.st==="Hoàn thành"&&inR(t.done)).length,o=x.filter(openAt).length;return `<div class="hb"><span class="hbn">${esc(c)}</span><div class="hbt"><i class="hbd" style="width:${d/mx*100}%">${d||""}</i><i class="hbo" style="width:${o/mx*100}%">${o||""}</i></div></div>`}).join("")}</div><div class="hleg"><i class="hbd"></i> Hoàn thành trong kỳ &nbsp; <i class="hbo"></i> Tồn cuối kỳ</div>`))}
+  S.push(P(T("Tình hình công việc pháp chế "+plab(p,a,b))+`<div class="hcards">${card("TIẾP NHẬN",n1,kqDelta(n1,Pm.n1))}${card("HOÀN THÀNH",n2,kqDelta(n2,Pm.n2),"g")}${card("TỒN CUỐI KỲ",n3,kqDelta(n3,Pm.n3))}${card("QUÁ HẠN",n4,n4?kqDelta(n4,Pm.n4):"không có",n4?"r":"g")}${card("HỢP ĐỒNG ĐÃ KIỂM TRA",n5,kqDelta(n5,Pm.n5))}</div><div class="hbox"><h3>KẾT LUẬN ĐIỀU HÀNH</h3><p>${br(V("kl"))}</p></div><div class="hbox o"><h3>TRỌNG TÂM ĐIỀU HÀNH ${esc(plab(p,na,nb,1))}</h3><p>${br(V("tt"))}</p></div>`));
+  S.push(P(T("Dashboard công việc "+plab(p,a,b))+kqDash(p,off,co)));
   /* Hồ sơ nộp Sở */
   const hsSh=hs.filter(x=>x.st!=="Đã có kết quả"||inR(x.kq));
   const stc=["Đang soạn","Chờ ký","Đã nộp","Cần bổ sung hồ sơ","Đã có kết quả"].map(s=>[s,hs.filter(x=>x.st===s).length]);
@@ -979,10 +1016,12 @@ function hdSlides(p,off,co){
   if(ct.length){const cs=["Chờ review","Đang review","Đã trả ý kiến","Đã ký"].map(s=>[s,ct.filter(x=>x.st===s).length]);
     S.push(P(T("Hợp đồng")+`<div class="hcards s">${cs.map(s=>card(s[0].toUpperCase(),s[1],"hợp đồng"))}</div>`+(cl.length?`<h3 class="hsub">Hợp đồng cần lưu ý</h3>`+tbl(["Doanh nghiệp","Hợp đồng","Đối tác","Tình trạng","Rủi ro","Hết hạn"],cl.slice(0,7).map(x=>[x.co,{h:esc(x.ten),c:"l sm"},x.party||"",x.st||"",x.rr||"",fmt(x.hh)]),"ctr"):"")))}
   /* Kinh phí */
-  S.push(P(T("Kinh phí pháp chế "+plab(p,a,b))+`<div class="hcards s">${card("SỐ DƯ ĐẦU KỲ",money(o0),"đồng")}${card("TẠM ỨNG TRONG KỲ",money(adv),"đồng")}${card("CHI TRONG KỲ",money(chi),"đồng")}${card("HOÀN ỨNG",money(ret),"đồng")}${card(bal<0?"CHI VƯỢT TẠM ỨNG":"SỐ DƯ CUỐI KỲ",money(Math.abs(bal)),"đồng",bal<0?"r":"g")}</div>`+`<div class="hbox ${wait.length?"o":""}"><h3>CHỨNG TỪ</h3><p>${wait.length?`Có ${wait.length} khoản chi (${money(wait.reduce((s,x)=>s+(+x.amount||0),0))} đồng) đang chờ bổ sung chứng từ.`:"Tất cả khoản chi trong kỳ đã đủ chứng từ hoặc không phát sinh."}</p></div>`));
+  S.push(P(T("Kinh phí pháp chế "+plab(p,a,b))+`<div class="hcards s">${card("SỐ DƯ ĐẦU KỲ",fT(o0),money(o0)+" đồng")}${card("TẠM ỨNG TRONG KỲ",fT(adv),money(adv)+" đồng")}${card("CHI TRONG KỲ",fT(chi),money(chi)+" đồng")}${card("HOÀN ỨNG",fT(ret),money(ret)+" đồng")}${card(bal<0?"CHI VƯỢT TẠM ỨNG":"SỐ DƯ CUỐI KỲ",fT(Math.abs(bal)),money(Math.abs(bal))+" đồng",bal<0?"r":"g")}</div>`+`<div class="hbox ${wait.length?"o":""}"><h3>CHỨNG TỪ</h3><p>${wait.length?`Có ${wait.length} khoản chi (${money(wait.reduce((s,x)=>s+(+x.amount||0),0))} đồng) đang chờ bổ sung chứng từ.`:"Tất cả khoản chi trong kỳ đã đủ chứng từ hoặc không phát sinh."}</p></div>`));
   /* Rủi ro */
   const rl=kqLn(V("rr")).map(l=>kqSp(l));
   S.push(P(T("Rủi ro pháp lý cần giám sát")+`<div class="hrisks">${rl.slice(0,5).map((c,i)=>{const lv=(c[0]||"").toUpperCase(),cl=/RẤT/.test(lv)?"vh":/CAO/.test(lv)&&!/TRUNG/.test(lv)?"h":/TRUNG/.test(lv)?"m":"l";return `<div class="hr ${cl}"><em>${esc(lv)}</em><b>R${i+1}</b><h4>${esc(c[1]||"")}</h4><p>${esc(c[2]||"")}</p><div class="ha"><strong>HÀNH ĐỘNG:</strong> ${esc(c[3]||"")}</div></div>`}).join("")}</div>`));
+  const dl=kqLn(V("dn")).map(l=>kqSp(l));
+  S.push(P(T("Vấn đề đề nghị HĐQT / TGĐ chỉ đạo")+tbl(["STT","Vấn đề","Đề nghị chỉ đạo"],dl.slice(0,6).map((c,i)=>[String(i+1),{h:esc(c[0]||""),c:"l"},{h:esc(c[1]||""),c:"l"}]),"ctr dn")));
   /* Ưu tiên */
   const ul=kqLn(V("ut")).map(l=>kqSp(l));
   S.push(P(T(ul.length+" ưu tiên điều hành trọng tâm "+plab(p,na,nb))+`<div class="hprio">${ul.slice(0,6).map((c,i)=>`<div class="hp"><b>${String(i+1).padStart(2,"0")}</b><h4>${esc(c[0]||"")}</h4><p>${esc(c[1]||"")}</p></div>`).join("")}</div>`));
@@ -994,13 +1033,13 @@ function kqFit(){const st=$("sstage"),v=$("sview");if(!st||!st.clientWidth)retur
 function kqShow(){SI=Math.max(0,Math.min(SL.length-1,SI));$("sview").innerHTML=SL[SI];$("scnt").textContent=(SI+1)+" / "+SL.length;kqFit()}
 function kqGen(keep){
   const p=$("sper").value,off=+$("skp").value,co=$("sco").value;
-  SCUR=$("stype").value==="hdqt"?hdSlides(p,off,co):kqSlides(p,off,co);SL=SCUR.S;if(!keep)SI=0;kqShow();
+  SCUR=$("stype").value==="hdqt"?hdSlides(p,off,co):kqSlides(p,off,co);SL=SCUR.S.filter(h=>$("ssec").checked||!h.includes('class="sl sect"'));SL=SL.map((h,i)=>i&&i<SL.length-1?h.replace(/<\/section>$/,`<div class="slpg">${i+1}</div></section>`):h);if(!keep)SI=0;kqShow();
 }
 $("kq").onclick=()=>{
   const s=$("sco"),v=s.value;s.innerHTML='<option value="">Tất cả đơn vị</option>'+COS().map(c=>`<option>${esc(c)}</option>`).join("");s.value=v;
   $("sdlg").showModal();kqGen();
 };
-["stype","sper","skp","sco"].forEach(i=>$(i).onchange=()=>kqGen());
+["ssec","stype","sper","skp","sco"].forEach(i=>$(i).onchange=()=>kqGen());
 $("sprev").onclick=()=>{SI--;kqShow()};$("snext").onclick=()=>{SI++;kqShow()};
 $("sclose").onclick=()=>$("sdlg").close();
 $("sfull").onclick=()=>{const d=$("sdlg");if(document.fullscreenElement)document.exitFullscreen();else d.requestFullscreen&&d.requestFullscreen()};
@@ -1012,7 +1051,7 @@ $("sprint").onclick=()=>{
   document.body.classList.add("sp");
   try{window.print()}finally{document.body.classList.remove("sp");d.remove();st.remove()}
 };
-const KQH={kl:["Kết luận điều hành","Đoạn văn tóm tắt kết quả kỳ báo cáo"],tt:["Trọng tâm điều hành kỳ tới","Đoạn văn"],rr:["Rủi ro pháp lý cần giám sát","Mỗi dòng: Mức (RẤT CAO / CAO / TRUNG BÌNH / THẤP) | Tên rủi ro | Mô tả | Hành động. Tối đa 5 dòng"],ut:["Ưu tiên điều hành kỳ tới","Mỗi dòng: Tiêu đề | Mô tả. Tối đa 6 dòng"],td:["Thông điệp từ Phòng Pháp chế","Đoạn văn"]};
+const KQH={dn:["Vấn đề đề nghị HĐQT / TGĐ chỉ đạo","Mỗi dòng: Vấn đề | Đề nghị chỉ đạo. Tối đa 6 dòng"],kl:["Kết luận điều hành","Đoạn văn tóm tắt kết quả kỳ báo cáo"],tt:["Trọng tâm điều hành kỳ tới","Đoạn văn"],rr:["Rủi ro pháp lý cần giám sát","Mỗi dòng: Mức (RẤT CAO / CAO / TRUNG BÌNH / THẤP) | Tên rủi ro | Mô tả | Hành động. Tối đa 5 dòng"],ut:["Ưu tiên điều hành kỳ tới","Mỗi dòng: Tiêu đề | Mô tả. Tối đa 6 dòng"],td:["Thông điệp từ Phòng Pháp chế","Đoạn văn"]};
 const KQL0={hrr:["Nhân sự đầu kỳ / biến động trong kỳ","Mỗi dòng: Chức danh | Số lượng đầu kỳ | Tăng | Giảm | Ghi chú"],hrk:["Kế hoạch nhân sự kỳ tới","Mỗi dòng: Chức danh | Số lượng đầu kỳ | Đề xuất tuyển | Giảm | Ghi chú"],bk:["Kế hoạch ngân sách kỳ tới","Mỗi dòng: Nội dung | Công ty | Số tiền (đồng). Mặc định lấy các khoản Chi đã nhập ở tab Kinh phí cho kỳ tới"],dx:["Đề xuất - Kiến nghị","Mỗi dòng: Hạng mục | Vướng mắc - Khó khăn | Giải pháp. Mặc định lấy việc quá hạn, chờ phản hồi, tạm dừng"]};
 $("sedit").onclick=()=>{
   const c=SCUR;const KQL=c.kind==="hd"?KQH:KQL0;SKQL=KQL;$("kinfo").textContent="Kỳ: "+$("sper").selectedOptions[0].text+" - "+$("skp").selectedOptions[0].text+". Nội dung đã sửa được giữ nguyên cho kỳ này.";
