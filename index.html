@@ -233,6 +233,7 @@ table.rt tr.sec td{background:#f1f1ec;font-weight:700;text-align:center}
 #vprof .kpis{display:flex;flex-wrap:wrap;gap:10px 14px}#vprof .kpis .kpi{flex:1 1 150px;max-width:210px}
 .pcap{position:relative;overflow:hidden}.pcap::after{content:"";position:absolute;left:0;right:0;bottom:0;height:70px;background:linear-gradient(transparent,var(--card) 82%);pointer-events:none}
 .pmore{position:absolute;left:50%;transform:translateX(-50%);bottom:8px;z-index:2;font-size:12.5px;padding:4px 14px;border-radius:999px}
+.pcap.open{max-height:none!important;overflow:visible;padding-bottom:14px}.pcap.open::after{display:none}.pcap.open .pmore{position:static;transform:none;display:block;margin:12px auto 0}
 body.pd .pcap{max-height:none!important;overflow:visible}body.pd .pcap::after,body.pd .pmore{display:none}
 #pdet{width:min(940px,96vw)}#pdb{max-height:72vh;overflow:auto}#pdet .panel{border:0;background:transparent;padding:0}#pdet .pmore{display:none}
 #sprintbox{display:none}
@@ -1595,7 +1596,7 @@ dls.innerHTML=`<datalist id="p_codes"></datalist><datalist id="p_mt"></datalist>
 document.body.appendChild(dls);
 const dlg=document.createElement("dialog");
 dlg.id="hsdlg";
-dlg.innerHTML=`<h2 id="hsdt"></h2><div class="grid" id="hsform"></div>
+dlg.innerHTML=`<h2 id="hsdt"></h2><div class="grid" id="hsform"></div><div id="hswarn" style="display:none;margin-top:10px;padding:10px 12px;border-radius:10px;background:#fff7e6;border:1px solid #f0d9a8;color:#7a5200;font-size:13px;line-height:1.5"></div>
 <div class="foot"><button id="hsdel" style="margin-right:auto;color:var(--seal)">Xóa</button><button id="hscancel">Đóng</button><button class="primary" id="hsok">Lưu</button></div>`;
 document.body.appendChild(dlg);
 
@@ -1739,8 +1740,9 @@ function fitPanels(){
 }
 $("plist").addEventListener("click",e=>{
   const b=e.target.closest(".pmore");if(!b)return;
-  let d=$("pdet");if(!d){d=document.createElement("dialog");d.id="pdet";d.innerHTML='<div id="pdb"></div><div class="foot"><button class="primary" id="pdx">Đóng</button></div>';$("vprof").appendChild(d);d.querySelector("#pdx").onclick=()=>d.close()}
-  const c=b.closest(".panel").cloneNode(true);c.querySelector(".pmore").remove();c.classList.remove("pcap");c.style.maxHeight="";$("pdb").innerHTML="";$("pdb").appendChild(c);d.showModal();
+  const p=b.closest(".panel"),o=p.classList.toggle("open");
+  b.textContent=o?"Thu gọn ‹":"Xem chi tiết ›";
+  if(!o)p.scrollIntoView({block:"nearest",behavior:"smooth"});
 });
 function rCo(r,all){
   const sum=k=>all.reduce((s,x)=>s+(+x[k]||0),0),miss=all.filter(x=>!x.msdn||!x.vdl||!x.addr).length;
@@ -2852,6 +2854,30 @@ $("plist").onclick=e=>{const gn=e.target.closest("[data-gtnext]");if(gn){e.stopP
   if(e.target.closest("[data-dgo]")){const gb=e.target.closest("[data-dgo]"),bx=gb.closest("[data-docbox]"),q=k=>bx.querySelector('[data-dk="'+k+'"]').value,it=HSI.find(x=>x.t===q("it"));if(!it)return;const oo={};bx.querySelectorAll("[data-dk]").forEach(e=>{oo[e.dataset.dk]=e.type==="checkbox"?e.checked:e.value});oo.so=q("so").trim();oo.only=gb.dataset.dgo==="chk"?"chk":"";oo.step=/^s[123]$/.test(gb.dataset.dgo)?gb.dataset.dgo[1]:"";const R=buildBo(it,q("co"),oo);showSheet(R.html,{title:it.t+" - "+q("co")});return}if(e.target.closest("[data-pfco]"))return;const ah=e.target.closest("[data-addhs]");if(ah){const it=HSI.find(i=>i.t===ah.dataset.addhs)||{};openD(null,"hs",{tt:ah.dataset.addhs,mau:(it.m||[]).map(n=>"Mẫu "+n).join(", "),st:"Đang soạn"});return}const ab=e.target.closest("[data-addbo]");if(ab){const q=ab.dataset.addbo.split("|");openD(null,"bo",{co:q[0],name:q[1],tc:q[3]==="g"?BOTC[1]:BOTC[0],tl:q[2],dk:"Đã đăng ký"});return}const a=e.target.closest("[data-addpos]");if(a){openD(null,"pos",{name:a.dataset.addpos});return}const pp=e.target.closest("[data-pid]");if(pp){openD(pp.dataset.pid,"pos");return}const tr=e.target.closest("tr[data-id]");if(tr)openD(tr.dataset.id,tr.dataset.nsec||undefined)};
 
 /* ---------- Thêm / sửa / xóa ---------- */
+function pplCheck(){
+  const W=$("hswarn");if(!W)return;if(dsec!=="ppl"){W.style.display="none";return}
+  const g=k=>($("h_"+k)||{value:""}).value.trim(),w=[],now=new Date().toISOString().slice(0,10);
+  const cc=g("cccd"),dob=g("dob"),gt=g("gt"),cn=g("cccdngay"),sd=g("sdt"),em=g("email");
+  if(cc){const d=cc.replace(/\s/g,"");
+    if(!/^\d+$/.test(d))w.push("Số CCCD chỉ gồm chữ số.");
+    else if(d.length!==12)w.push("Số CCCD phải đủ 12 chữ số (hiện có "+d.length+").");
+    else{const sx=+d[3],yy=d.slice(4,6);
+      if(sx>9)w.push("Chữ số thứ 4 của CCCD (mã thế kỷ/giới tính) không hợp lệ.");
+      else{const sex=sx%2===0?"Nam":"Nữ",cent=1900+Math.floor(sx/2)*100;
+        if(gt&&gt!==sex)w.push("CCCD cho thấy giới tính "+sex+" nhưng đang chọn "+gt+".");
+        if(dob&&(+dob.slice(0,4)!==cent+ +yy))w.push("Năm sinh trong CCCD ("+(cent+ +yy)+") khác ngày sinh đã nhập ("+dob.slice(0,4)+").");}}}
+  if(dob&&dob>now)w.push("Ngày sinh nằm trong tương lai.");
+  if(cn){if(cn>now)w.push("Ngày cấp CCCD nằm trong tương lai.");
+    else if(dob){const m=new Date(dob);m.setFullYear(m.getFullYear()+14);if(cn<m.toISOString().slice(0,10))w.push("Ngày cấp CCCD trước khi đủ 14 tuổi (CCCD chỉ cấp từ 14 tuổi).")}}
+  if(cc&&!cn)w.push("Có số CCCD nhưng chưa có ngày cấp.");
+  if(cc&&!g("cccdnoi"))w.push("Có số CCCD nhưng chưa có nơi cấp.");
+  if(sd&&!/^0\d{9}$/.test(sd.replace(/[\s.\-]/g,""))&&!/^\+84\d{9}$/.test(sd.replace(/[\s.\-]/g,"")))w.push("Điện thoại nên gồm 10 số, bắt đầu bằng 0 (hoặc +84...).");
+  if(em&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em))w.push("Thư điện tử chưa đúng định dạng.");
+  if(!cc&&!g("hc"))w.push("Chưa có số CCCD hoặc số hộ chiếu để định danh.");
+  if(g("hc")&&!g("hcngay"))w.push("Có số hộ chiếu nhưng chưa có ngày cấp.");
+  W.style.display=w.length?"block":"none";
+  W.innerHTML="<b>Cần kiểm tra lại:</b><ul style='margin:4px 0 0 18px;padding:0'>"+w.map(x=>"<li>"+esc(x)+"</li>").join("")+"</ul><div style='margin-top:4px;opacity:.75'>Chỉ là cảnh báo, vẫn có thể lưu.</div>";
+}
 function openD(id,s,pre){
   dsec=s||sec;editId=id||null;const S=SEC[dsec],x=PD()[dsec].find(v=>v.id===id)||pre||{};
   $("hsdt").textContent=(id?"Sửa ":"Thêm ")+S.one;$("hsdel").style.display=id?"":"none";
@@ -2868,6 +2894,7 @@ function openD(id,s,pre){
     L.addEventListener("change",sync);
     T.addEventListener("change",sug);
     if(!H.value)sug();else{const it=HSI.find(i=>i.t===T.value);if(it)L.querySelectorAll("label").forEach(l=>l.classList.toggle("sg",(it.m||[]).includes(+l.dataset.n)))}}
+  $("hsform").oninput=$("hsform").onchange=pplCheck;pplCheck();
   dlg.showModal();
 }
 $("pcol").onclick=()=>{if(sec==="pos")PD().pos.forEach(x=>posClosed.add(norm(x.co)));else grp(PD().own).forEach(g=>ownClosed.add(g.co+"|"+g.asof));renderProf()};$("pexpd").onclick=()=>{(sec==="pos"?posClosed:ownClosed).clear();renderProf()};
