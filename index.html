@@ -685,44 +685,38 @@ ghInit();
 <!-- ===== MODULE HỒ SƠ CÔNG TY ===== -->
 <style>
 #vprof .tabs{margin-top:6px}
-#vprof{--c0:#4d6285;--c1:#3f8791;--c2:#5b8a6f;--c3:#a68a52;--c4:#7f6d99;--c5:#a65d63}
-@media(prefers-color-scheme:dark){#vprof{--c0:#8fa6cc;--c1:#6fb4bd;--c2:#82b498;--c3:#cdb27a;--c4:#b5a3cc;--c5:#d89096}}
-#vprof[data-sec=dash],#vprof[data-sec=co]{--ac:var(--c0)}#vprof[data-sec=ppl]{--ac:var(--c1)}#vprof[data-sec=pos]{--ac:var(--c4)}#vprof[data-sec=own]{--ac:var(--c2)}#vprof[data-sec=prj]{--ac:var(--c3)}
-#vprof #psub button[data-s=dash],#vprof #psub button[data-s=co]{--t:var(--c0)}#vprof #psub button[data-s=ppl]{--t:var(--c1)}#vprof #psub button[data-s=pos]{--t:var(--c4)}#vprof #psub button[data-s=own]{--t:var(--c2)}#vprof #psub button[data-s=prj]{--t:var(--c3)}
+#vprof{--c0:#4d6285;--c1:#3f8791;--c2:#5b8a6f;--c3:#a68a52;--c4:#7f6d99;--c5:#a65d63;--c9:#8a8f9c}
+@media(prefers-color-scheme:dark){#vprof{--c0:#8fa6cc;--c1:#6fb4bd;--c2:#82b498;--c3:#cdb27a;--c4:#b5a3cc;--c5:#d89096;--c9:#9aa1b2}}
+#vprof .cc0{--cc:var(--c0)}#vprof .cc1{--cc:var(--c1)}#vprof .cc2{--cc:var(--c2)}#vprof .cc3{--cc:var(--c3)}#vprof .cc4{--cc:var(--c4)}#vprof .cc5{--cc:var(--c5)}#vprof .cc9{--cc:var(--c9)}
+#vprof .chip{display:inline-block;padding:0 9px;border-radius:99px;font-weight:600;font-size:12.5px;line-height:1.7;color:var(--ink);background:color-mix(in srgb,var(--cc,var(--c9)) 14%,var(--card));border:1px solid color-mix(in srgb,var(--cc,var(--c9)) 55%,var(--card))}
 #vprof #psub button{border-bottom:2px solid transparent;color:var(--mute);padding:7px 12px}
-#vprof #psub button.on{border-bottom-color:var(--t);color:var(--ink);font-weight:600}
+#vprof #psub button.on{border-bottom-color:var(--brand);color:var(--ink);font-weight:600}
 #vprof .stats{grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;padding:8px 24px}
-#vprof .stats .stat{padding:6px 12px;border-left:3px solid var(--ac,var(--c0))}
+#vprof .stats .stat{padding:6px 12px;border-left:3px solid var(--line)}
 #vprof .stats .stat b{font-size:18px;color:var(--ink)}
 #vprof .stats .stat.late{border-left-color:var(--seal)}#vprof .stats .stat.late b{color:var(--seal)}
 #vprof .filters{padding:6px 24px}
-#vprof table.m{font-size:13px;border:1px solid var(--line);border-top:2px solid var(--ac,var(--line))}
+#vprof table.m{font-size:13px;border:1px solid var(--line)}
 #vprof table.m th,#vprof table.m td{padding:5px 10px}
-#vprof table.m th{background:color-mix(in srgb,var(--ac,var(--brand)) 7%,var(--card));color:var(--mute);border-bottom:1px solid var(--line)}
-#vprof table.m tbody tr:nth-child(even) td{background:color-mix(in srgb,var(--ac,var(--brand)) 2.5%,var(--card))}
-#vprof table.m tr[data-id]:hover td{background:color-mix(in srgb,var(--ac,var(--brand)) 9%,var(--card))}
-#vprof table.m tr.tot td{background:color-mix(in srgb,var(--ac,var(--brand)) 9%,var(--card));font-weight:600;border-top:1px solid var(--line)}
+#vprof table.m th{background:var(--bg);color:var(--mute);border-bottom:1px solid var(--line)}
+#vprof table.m tbody tr:nth-child(even):not(.tot) td{background:color-mix(in srgb,var(--ink) 2.5%,var(--card))}
+#vprof table.m tr[data-id]:hover td{background:color-mix(in srgb,var(--brand) 8%,var(--card))}
+#vprof table.m tr.tot td{background:color-mix(in srgb,var(--brand) 7%,var(--card));font-weight:600;border-top:1px solid var(--line)}
 #vprof table.m td small{font-size:11.5px;line-height:1.35}
 #vprof .wrap>table.m{margin-bottom:16px}
+#vprof table.m tr.tot.g td{background:color-mix(in srgb,var(--cc) 9%,var(--card));cursor:pointer;user-select:none;padding-top:4px;padding-bottom:4px;font-size:12.5px;border-top:1px solid color-mix(in srgb,var(--cc) 35%,var(--line))}
+#vprof table.m tr.tot.g td:first-child{border-left:3px solid var(--cc)}
+#vprof table.m tr.tot.g td:first-child::before{content:"▾ ";color:var(--mute)}#vprof table.m tr.tot.g.col td:first-child::before{content:"▸ "}
 #vprof .ow{margin:0 0 12px;border-radius:var(--r);border:1px solid var(--line);border-left:3px solid var(--cc);background:var(--card);padding:0 10px 8px}
-#vprof .ow h3.gh{margin:0 -10px 6px;padding:6px 10px;background:color-mix(in srgb,var(--cc) 8%,var(--card));color:var(--ink);border-bottom:1px solid var(--line);font-size:13.5px}
-#vprof .ow table.m{--ac:var(--cc);border-top-width:1px}
-#vprof tr.tot.g td{background:color-mix(in srgb,var(--cc) 9%,var(--card));padding-top:4px;padding-bottom:4px;font-size:12.5px}
-#vprof tr.tot.g td:first-child{border-left:3px solid var(--cc)}
-#vprof .cc0{--cc:var(--c0)}#vprof .cc1{--cc:var(--c1)}#vprof .cc2{--cc:var(--c2)}#vprof .cc3{--cc:var(--c3)}#vprof .cc4{--cc:var(--c4)}#vprof .cc5{--cc:var(--c5)}
-#vprof .dash{gap:10px;padding:8px 24px 24px}
-#vprof .panel{border:1px solid var(--line);border-top:2px solid var(--cc,var(--c0));background:var(--card);padding:10px 12px}
-#vprof .panel h3{color:var(--ink);font-size:13.5px;padding-bottom:5px;margin-bottom:8px;border-bottom:1px solid var(--line)}
-#vprof .panel .kpi{border-left:2px solid var(--cc,var(--c0));padding-left:10px}
-#vprof .panel .kpi b{font-size:21px;color:var(--ink)}#vprof .panel .kpi.late{border-left-color:var(--seal)}#vprof .panel .kpi.late b{color:var(--seal)}
-#vprof .panel table.m{--ac:var(--cc,var(--c0))}
-#vprof .ow h3.gh{cursor:pointer;user-select:none}#vprof .ow h3.gh::before{content:"▾ ";color:var(--mute)}#vprof .ow.col h3.gh::before{content:"▸ "}
+#vprof .ow h3.gh{margin:0 -10px 6px;padding:6px 10px;background:color-mix(in srgb,var(--cc) 8%,var(--card));color:var(--ink);border-bottom:1px solid var(--line);font-size:13.5px;cursor:pointer;user-select:none}
+#vprof .ow h3.gh::before{content:"▾ ";color:var(--mute)}#vprof .ow.col h3.gh::before{content:"▸ "}
 #vprof .ow.col .owb{display:none}#vprof .ow.col{padding-bottom:0}#vprof .ow.col h3.gh{margin-bottom:0;border-bottom:0}
+#vprof .dash{gap:10px;padding:8px 24px 24px}
+#vprof .panel{border:1px solid var(--line);border-top:2px solid var(--line);background:var(--card);padding:10px 12px}
+#vprof .panel h3{color:var(--ink);font-size:13.5px;padding-bottom:5px;margin-bottom:8px;border-bottom:1px solid var(--line)}
+#vprof .panel .kpi{border-left:2px solid var(--line);padding-left:10px}
+#vprof .panel .kpi b{font-size:21px;color:var(--ink)}#vprof .panel .kpi.late{border-left-color:var(--seal)}#vprof .panel .kpi.late b{color:var(--seal)}
 #vprof summary::-webkit-details-marker{display:none}
-#vprof tr.tot.g td{background:color-mix(in srgb,var(--cc) 22%,var(--card));border-left:0}
-#vprof tr.tot.g td:first-child{border-left:5px solid var(--cc)}
-#vprof .cc0{--cc:var(--c0)}#vprof .cc1{--cc:var(--c1)}#vprof .cc2{--cc:var(--c2)}#vprof .cc3{--cc:var(--c3)}#vprof .cc4{--cc:var(--c4)}#vprof .cc5{--cc:var(--c5)}
-#vprof .dash{gap:16px}
 #vprof .panel{border-top:4px solid var(--cc,var(--c0));background:color-mix(in srgb,var(--cc,var(--c0)) 4%,var(--card))}
 #vprof .panel h3{color:var(--cc,var(--c0));font-size:15px;padding-bottom:6px;margin-bottom:10px;border-bottom:1px solid color-mix(in srgb,var(--cc,var(--c0)) 35%,var(--line))}
 #vprof .panel .kpi{border-left:3px solid var(--cc,var(--c0));padding-left:10px}
@@ -793,7 +787,7 @@ const SEC={
        {k:"note",l:"Ghi chú, vấn đề pháp lý đang theo dõi",t:"area",full:1}]}
 };
 const ORDER=["co","ppl","pos","own","prj"];
-let sec="dash",dsec="co",editId=null,seq=0;const ownClosed=new Set();
+let sec="dash",dsec="co",editId=null,seq=0;const ownClosed=new Set(),posClosed=new Set();
 
 /* ---------- Tiện ích ---------- */
 function norm(s){return String(s==null?"":s).replace(/[đĐ]/g,"d").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"")}
@@ -833,6 +827,8 @@ function parseCSV(t){
 }
 const ci=c=>{const i=COS().findIndex(x=>norm(x)===norm(c));return i<0?999:i};
 const same=(a,b)=>norm(a)===norm(b);
+const cx=c=>{const i=COS().findIndex(x=>same(x,c));return i<0?"cc9":"cc"+(i%6)};
+const chip=c=>c?`<span class="chip ${cx(c)}">${esc(c)}</span>`:"";
 
 /* ---------- Khung giao diện ---------- */
 const nav=document.querySelector("nav.tabs")||document.querySelector(".tabs")||($("tl")&&$("tl").parentNode);
@@ -910,7 +906,7 @@ function renderProf(){
   vp.dataset.sec=sec;document.querySelectorAll("#psub button").forEach(b=>b.classList.toggle("on",b.dataset.s===sec));
   const dsh=sec==="dash";$("pflt").hidden=dsh;$("pstats").hidden=dsh;if(dsh){rDash();return}
   const all=PD()[sec],q=$("pq").value.toLowerCase().trim(),c=$("pfc").value;
-  $("pfc").hidden=sec==="prj";$("padd").textContent="Thêm "+SEC[sec].one;$("padd2").hidden=sec!=="ppl";$("pcol").hidden=$("pexpd").hidden=sec!=="own";
+  $("pfc").hidden=sec==="prj";$("padd").textContent="Thêm "+SEC[sec].one;$("padd2").hidden=sec!=="ppl";$("pcol").hidden=$("pexpd").hidden=!(sec==="own"||sec==="pos");
   document.querySelectorAll("#psub button").forEach(b=>b.classList.toggle("on",b.dataset.s===sec));
   const fk=sec==="co"?"code":"co";
   const posOf=n=>PD().pos.filter(p=>same(p.name,n));
@@ -941,28 +937,28 @@ function rDash(){
   d.pos.filter(x=>x.dk==="Chưa đăng ký"&&activeP(x,t0)).forEach(x=>W.push([x.co||"-",x.name+": chưa đăng ký thay đổi với cơ quan đăng ký"]));
   d.ppl.forEach(x=>{if(!x.cccd&&act.some(p=>same(p.name,x.name)))W.push([x.name,"thiếu số CCCD"])});
   d.prj.forEach(x=>{if(!x.owner)W.push([x.name,"thiếu chủ đầu tư"]);if(!x.nddpl)W.push([x.name,"thiếu NĐDPL / người điều hành dự án"])});
-  const pW=`<div class="panel full cc5"><h3>Cảnh báo cần xử lý (${W.length})</h3>${W.length?W.map(w=>`<div class="act" style="cursor:default"><span class="d late-d">${esc(w[0])}</span><span>${esc(w[1])}</span></div>`).join(""):'<small style="color:var(--mute)">Hồ sơ đã đủ, không có cảnh báo.</small>'}</div>`;
+  const pW=`<div class="panel full"><h3>Cảnh báo cần xử lý (${W.length})</h3>${W.length?W.map(w=>`<div class="act" style="cursor:default"><span class="d">${COS().some(c=>same(c,w[0]))?chip(w[0]):`<b class="late-d">${esc(w[0])}</b>`}</span><span>${esc(w[1])}</span></div>`).join(""):'<small style="color:var(--mute)">Hồ sơ đã đủ, không có cảnh báo.</small>'}</div>`;
   /* bảng pháp nhân */
-  const tb=cos.length?`<div style="overflow-x:auto"><table class="m"><thead><tr><th>Mã</th><th>Doanh nghiệp</th><th>MSDN</th><th>Vốn điều lệ</th><th>Vốn thực góp</th><th>NĐDPL hiện hành</th><th>Số cổ đông</th><th>Đối chiếu vốn</th></tr></thead><tbody>`+cos.map(x=>{const g=latest[norm(x.code)];return `<tr><td><b>${esc(x.code)}</b></td><td class="t">${esc(x.name)}</td><td>${esc(x.msdn)}</td><td class="num">${money(x.vdl)}</td><td class="num">${x.vtg===""||x.vtg==null?"":money(x.vtg)}</td><td>${rep(x.code)}</td><td class="num">${g?g.rows.length:""}</td><td class="${g&&g.ok===true?"ok":g&&g.ok===false?"bad":""}">${g?esc(g.msg):""}</td></tr>`}).join("")+"</tbody></table></div>":'<div class="empty">Chưa có pháp nhân nào. Vào mục Pháp nhân để thêm hoặc nhập CSV.</div>';
-  const pCo=`<div class="panel full cc0"><h3>Tổng quan pháp nhân</h3>${tb}</div>`;
+  const tb=cos.length?`<div style="overflow-x:auto"><table class="m"><thead><tr><th>Mã</th><th>Doanh nghiệp</th><th>MSDN</th><th>Vốn điều lệ</th><th>Vốn thực góp</th><th>NĐDPL hiện hành</th><th>Số cổ đông</th><th>Đối chiếu vốn</th></tr></thead><tbody>`+cos.map(x=>{const g=latest[norm(x.code)];return `<tr><td>${chip(x.code)}</td><td class="t">${esc(x.name)}</td><td>${esc(x.msdn)}</td><td class="num">${money(x.vdl)}</td><td class="num">${x.vtg===""||x.vtg==null?"":money(x.vtg)}</td><td>${rep(x.code)}</td><td class="num">${g?g.rows.length:""}</td><td class="${g&&g.ok===true?"ok":g&&g.ok===false?"bad":""}">${g?esc(g.msg):""}</td></tr>`}).join("")+"</tbody></table></div>":'<div class="empty">Chưa có pháp nhân nào. Vào mục Pháp nhân để thêm hoặc nhập CSV.</div>';
+  const pCo=`<div class="panel full"><h3>Tổng quan pháp nhân</h3>${tb}</div>`;
   /* vốn */
   const mxV=Math.max(1,...cos.map(x=>Math.max(+x.vdl||0,+x.vtg||0)));
-  const vr=cos.filter(x=>x.vdl||x.vtg).map(x=>{const v=+x.vdl||0,g=+x.vtg||0,paid=Math.min(g,v||g),rest=Math.max(v-g,0);return `<div class="row" style="grid-template-columns:90px 1fr 80px"><span>${esc(x.code)}</span><div class="track"><i style="width:${paid/mxV*100}%;background:var(--ok)" title="Đã góp ${money(g)}"></i><i style="width:${rest/mxV*100}%;background:var(--warn)" title="Chưa góp ${money(rest)}"></i></div><span class="n">${bil(v)}</span></div>`}).join("");
-  const pV=`<div class="panel cc3"><h3>Vốn điều lệ và vốn thực góp</h3>${vr||'<small style="color:var(--mute)">Chưa có số liệu vốn.</small>'}<div class="lg"><span><i style="background:var(--ok)"></i>Đã góp</span><span><i style="background:var(--warn)"></i>Chưa góp</span></div></div>`;
+  const vr=cos.filter(x=>x.vdl||x.vtg).map(x=>{const v=+x.vdl||0,g=+x.vtg||0,paid=Math.min(g,v||g),rest=Math.max(v-g,0);return `<div class="row" style="grid-template-columns:90px 1fr 80px"><span>${chip(x.code)}</span><div class="track"><i style="width:${paid/mxV*100}%;background:var(--ok)" title="Đã góp ${money(g)}"></i><i style="width:${rest/mxV*100}%;background:var(--warn)" title="Chưa góp ${money(rest)}"></i></div><span class="n">${bil(v)}</span></div>`}).join("");
+  const pV=`<div class="panel"><h3>Vốn điều lệ và vốn thực góp</h3>${vr||'<small style="color:var(--mute)">Chưa có số liệu vốn.</small>'}<div class="lg"><span><i style="background:var(--ok)"></i>Đã góp</span><span><i style="background:var(--warn)"></i>Chưa góp</span></div></div>`;
   /* sở hữu */
   const ow=cos.map(x=>latest[norm(x.code)]).filter(Boolean).concat(Object.values(latest).filter(g=>!cos.some(x=>same(x.code,g.co))));
   const pctOf=(x,g)=>g.base?(+x.shares||0)*g.par/g.base*100:0;
   const ownRow=(x,g)=>{const p=pctOf(x,g);return `<div class="row" style="grid-template-columns:150px 1fr 56px"><span style="word-break:break-word">${esc(x.holder)}</span><div class="track"><i style="width:${Math.min(p,100)}%;background:var(--brand)"></i></div><span class="n">${nf(p)}%</span></div>`};
   const ownBlock=g=>{const rs=[...g.rows].sort((a,b)=>(+b.shares||0)-(+a.shares||0)),big=rs.filter(x=>pctOf(x,g)>=1),sm=rs.filter(x=>pctOf(x,g)<1);let h=big.map(x=>ownRow(x,g)).join("");
     if(sm.length>1){const tp=sm.reduce((a,x)=>a+pctOf(x,g),0);h+=`<details style="margin:2px 0"><summary style="cursor:pointer;list-style:none"><div class="row" style="grid-template-columns:150px 1fr 56px;margin:7px 0"><span>▸ Nhóm dưới 1% (${sm.length} cổ đông)</span><div class="track"><i style="width:${Math.min(tp,100)}%;background:var(--mute)"></i></div><span class="n">${nf(tp)}%</span></div></summary>${sm.map(x=>ownRow(x,g)).join("")}</details>`}else h+=sm.map(x=>ownRow(x,g)).join("");return h};
-  const pO=`<div class="panel cc2"><h3>Cơ cấu sở hữu mới nhất</h3>${ow.length?ow.map(g=>`<div style="margin:0 0 14px"><b>${esc(g.co)}</b>${g.asof?`<small style="color:var(--mute)"> chốt ${fmt(g.asof)}</small>`:""}${ownBlock(g)}</div>`).join(""):'<small style="color:var(--mute)">Chưa có dữ liệu sở hữu vốn.</small>'}</div>`;
+  const pO=`<div class="panel"><h3>Cơ cấu sở hữu mới nhất</h3>${ow.length?ow.map(g=>`<div style="margin:0 0 14px">${chip(g.co)}${g.asof?`<small style="color:var(--mute)"> chốt ${fmt(g.asof)}</small>`:""}${ownBlock(g)}</div>`).join(""):'<small style="color:var(--mute)">Chưa có dữ liệu sở hữu vốn.</small>'}</div>`;
   /* nhân sự */
   const rc={};act.forEach(x=>{const r=ROLES.includes(x.role)?x.role:"Khác";rc[r]=(rc[r]||0)+1});
   const mxR=Math.max(1,...Object.values(rc));
-  const pP=`<div class="panel cc4"><h3>Chức vụ đang hiệu lực (${act.length}/${d.pos.length})</h3>${Object.keys(rc).length?ROLES.filter(r=>rc[r]).map(r=>`<div class="row" style="grid-template-columns:150px 1fr 30px"><span>${esc(r)}</span><div class="track"><i style="width:${rc[r]/mxR*100}%;background:var(--brand)"></i></div><span class="n">${rc[r]}</span></div>`).join(""):'<small style="color:var(--mute)">Chưa có hồ sơ nhân sự đang hiệu lực.</small>'}</div>`;
+  const pP=`<div class="panel"><h3>Chức vụ đang hiệu lực (${act.length}/${d.pos.length})</h3>${Object.keys(rc).length?ROLES.filter(r=>rc[r]).map(r=>`<div class="row" style="grid-template-columns:150px 1fr 30px"><span>${esc(r)}</span><div class="track"><i style="width:${rc[r]/mxR*100}%;background:var(--brand)"></i></div><span class="n">${rc[r]}</span></div>`).join(""):'<small style="color:var(--mute)">Chưa có hồ sơ nhân sự đang hiệu lực.</small>'}</div>`;
   /* dự án */
-  const pJ=`<div class="panel cc1"><h3>Dự án (${d.prj.length})</h3>${d.prj.length?d.prj.map(x=>`<div style="padding:6px 0;border-bottom:1px solid var(--line)"><b>${esc(x.name)}</b><br><small style="color:var(--mute)">${[x.owner?"CĐT: "+esc(x.owner):"",x.dt!==""&&x.dt!=null?"đất "+nf(x.dt)+" m²":"",x.tvdt?"vốn đầu tư "+bil(x.tvdt):"","việc đang xử lý: "+op(x)].filter(Boolean).join(" | ")}</small></div>`).join(""):'<small style="color:var(--mute)">Chưa có dự án.</small>'}</div>`;
-  const K=`<div class="panel full cc0"><div class="kpis">${kpi(cos.length,"Pháp nhân")}${kpi(bil(sum(d.co,"vdl")),"Tổng vốn điều lệ")}${kpi(bil(sum(d.co,"vtg")),"Tổng vốn thực góp")}${kpi(new Set(act.map(x=>norm(x.name))).size,"Nhân sự đang giữ chức vụ")}${kpi(d.prj.length,"Dự án")}${kpi(bil(sum(d.prj,"tvdt")),"Tổng vốn đầu tư dự án")}${kpi(W.length,"Cảnh báo",W.length?"late":"")}</div></div>`;
+  const pJ=`<div class="panel"><h3>Dự án (${d.prj.length})</h3>${d.prj.length?d.prj.map(x=>`<div style="padding:6px 0;border-bottom:1px solid var(--line)"><b>${esc(x.name)}</b><br><small style="color:var(--mute)">${[x.owner?"CĐT: "+esc(x.owner):"",x.dt!==""&&x.dt!=null?"đất "+nf(x.dt)+" m²":"",x.tvdt?"vốn đầu tư "+bil(x.tvdt):"","việc đang xử lý: "+op(x)].filter(Boolean).join(" | ")}</small></div>`).join(""):'<small style="color:var(--mute)">Chưa có dự án.</small>'}</div>`;
+  const K=`<div class="panel full"><div class="kpis">${kpi(cos.length,"Pháp nhân")}${kpi(bil(sum(d.co,"vdl")),"Tổng vốn điều lệ")}${kpi(bil(sum(d.co,"vtg")),"Tổng vốn thực góp")}${kpi(new Set(act.map(x=>norm(x.name))).size,"Nhân sự đang giữ chức vụ")}${kpi(d.prj.length,"Dự án")}${kpi(bil(sum(d.prj,"tvdt")),"Tổng vốn đầu tư dự án")}${kpi(W.length,"Cảnh báo",W.length?"late":"")}</div></div>`;
   $("plist").innerHTML=`<div class="dash" style="padding:12px 0 0">${K}${pW}${pCo}${pV}${pO}${pP}${pJ}</div>`;
 }
 function rCo(r,all){
@@ -972,7 +968,7 @@ function rCo(r,all){
   r=[...r].sort((a,b)=>ci(a.code)-ci(b.code)||a.code.localeCompare(b.code));
   $("plist").innerHTML=`<table class="m"><thead><tr><th>Mã</th><th>Doanh nghiệp</th><th>MSDN</th><th>Vốn điều lệ</th><th>Vốn thực góp</th><th>NĐDPL hiện hành</th></tr></thead><tbody>`+
   r.map(x=>{const lack=x.vtg!==""&&x.vtg!=null&&x.vdl&&+x.vtg<+x.vdl;
-    return `<tr data-id="${x.id}"><td><b>${esc(x.code)}</b></td><td class="t">${esc(x.name)}<small>${esc(x.addr)}</small></td><td>${esc(x.msdn)}<small class="s">${[x.lan?"Lần "+x.lan:"",x.ngay?fmt(x.ngay):""].filter(Boolean).join(" - ")}</small></td><td class="num">${money(x.vdl)}</td><td class="num">${x.vtg===""||x.vtg==null?"":money(x.vtg)}${lack?`<small class="s bad">Thấp hơn vốn điều lệ ${money(+x.vdl-+x.vtg)}</small>`:""}</td><td>${rep(x.code)}</td></tr>`}).join("")+"</tbody></table>";
+    return `<tr data-id="${x.id}"><td>${chip(x.code)}</td><td class="t">${esc(x.name)}<small>${esc(x.addr)}</small></td><td>${esc(x.msdn)}<small class="s">${[x.lan?"Lần "+x.lan:"",x.ngay?fmt(x.ngay):""].filter(Boolean).join(" - ")}</small></td><td class="num">${money(x.vdl)}</td><td class="num">${x.vtg===""||x.vtg==null?"":money(x.vtg)}${lack?`<small class="s bad">Thấp hơn vốn điều lệ ${money(+x.vdl-+x.vtg)}</small>`:""}</td><td>${rep(x.code)}</td></tr>`}).join("")+"</tbody></table>";
 }
 function rPpl(r,all){
   const t0=today(),P=PD().pos,isN=p=>/nddpl|daidienphapluat/.test(norm(p.role));
@@ -987,7 +983,7 @@ function rPpl(r,all){
   r.map(x=>{
     const idl=[x.cccdngay||x.cccdnoi?"Cấp "+[x.cccdngay?fmt(x.cccdngay):"",x.cccdnoi].filter(Boolean).join(" - "):"",x.addr?"Thường trú: "+x.addr:""].filter(Boolean);
     const pl=posOf(x.name).map(p=>{const on=activeP(p,t0),ended=p.to&&p.to<t0;
-      return `<div data-pid="${p.id}" style="padding:3px 0;cursor:pointer;${on?"":"opacity:.6"}"><span class="tag">${esc(p.co)}</span> <b>${esc(p.role)}</b>${p.title?" - "+esc(p.title):""}<span style="display:block;color:var(--mute);font-size:12px">${p.from?fmt(p.from):"…"} đến ${p.to?fmt(p.to):"nay"}${p.uq?" | "+esc(p.uq):""}${p.dk==="Chưa đăng ký"?' | <span class="bad">Chưa đăng ký thay đổi</span>':p.dk==="Đã đăng ký"?" | Đã đăng ký":""}${ended?' | <span class="bad">Hết hiệu lực</span>':""}</span></div>`}).join("");
+      return `<div data-pid="${p.id}" style="padding:3px 0;cursor:pointer;${on?"":"opacity:.6"}">${chip(p.co)} <b>${esc(p.role)}</b>${p.title?" - "+esc(p.title):""}<span style="display:block;color:var(--mute);font-size:12px">${p.from?fmt(p.from):"…"} đến ${p.to?fmt(p.to):"nay"}${p.uq?" | "+esc(p.uq):""}${p.dk==="Chưa đăng ký"?' | <span class="bad">Chưa đăng ký thay đổi</span>':p.dk==="Đã đăng ký"?" | Đã đăng ký":""}${ended?' | <span class="bad">Hết hiệu lực</span>':""}</span></div>`}).join("");
     return `<tr data-id="${x.id}"><td class="t"><b>${esc(x.name)}</b><span style="display:block">${x.cccd?esc(x.cccd):'<span class="bad">Chưa có CCCD</span>'}</span>${x.note?`<small>${esc(x.note)}</small>`:""}</td><td>${idl.map(l=>`<div style="color:var(--mute);font-size:12px">${esc(l)}</div>`).join("")}</td><td>${pl}<a data-addpos="${esc(x.name)}" style="color:var(--brand);cursor:pointer;font-size:12px">+ Thêm chức vụ</a></td></tr>`}).join("")+"</tbody></table>";
 }
 function rPos(r,all){
@@ -997,9 +993,10 @@ function rPos(r,all){
   r=[...r].sort((a,b)=>ci(a.co)-ci(b.co)||String(a.co).localeCompare(String(b.co))||(activeP(b,t0)-activeP(a,t0))||String(a.name).localeCompare(String(b.name),"vi"));
   let h=`<table class="m" style="min-width:760px;table-layout:fixed"><colgroup><col style="width:22%"><col style="width:22%"><col style="width:15%"><col style="width:29%"><col style="width:12%"></colgroup><thead><tr><th>Họ và tên</th><th>Vai trò, chức danh</th><th>Hiệu lực</th><th>Bổ nhiệm / ủy quyền</th><th>Đăng ký</th></tr></thead><tbody>`,cur=null;
   r.forEach(x=>{
-    if(cur!==norm(x.co)){cur=norm(x.co);h+=`<tr class="tot g cc${Math.max(0,COS().findIndex(c=>same(c,x.co)))%6}"><td colspan="5">${esc(x.co)} <small style="font-weight:400;color:var(--mute)">${r.filter(y=>same(y.co,x.co)).length} chức vụ</small></td></tr>`}
+    const gk=norm(x.co),cl=posClosed.has(gk);
+    if(cur!==gk){cur=gk;const rs=r.filter(y=>same(y.co,x.co)),na=rs.filter(y=>activeP(y,t0)).length;h+=`<tr class="tot g ${cx(x.co)}${cl?" col":""}" data-pg="${esc(gk)}"><td colspan="5">${chip(x.co)} <small style="font-weight:400;color:var(--mute)">${rs.length} chức vụ, ${na} đang hiệu lực</small></td></tr>`}
     const on=activeP(x,t0);
-    h+=`<tr data-id="${x.id}"${on?"":' style="opacity:.6"'}><td class="t"><b>${esc(x.name)}</b>${x.note?`<small>${esc(x.note)}</small>`:""}</td><td>${esc(x.role)}<small class="s">${esc(x.title)}</small></td><td>${x.from?fmt(x.from):"…"} đến ${x.to?fmt(x.to):"nay"}${x.to&&x.to<t0?'<small class="s bad">Hết hiệu lực</small>':""}</td><td>${esc(x.uq)}</td><td${x.dk==="Chưa đăng ký"?' class="bad"':""}>${x.dk==="Không áp dụng"?"":esc(x.dk)}</td></tr>`});
+    h+=`<tr data-id="${x.id}" data-gk="${esc(gk)}"${cl?" hidden":""}${on?"":' style="opacity:.6"'}><td class="t"><b>${esc(x.name)}</b>${x.note?`<small>${esc(x.note)}</small>`:""}</td><td>${esc(x.role)}<small class="s">${esc(x.title)}</small></td><td>${x.from?fmt(x.from):"…"} đến ${x.to?fmt(x.to):"nay"}${x.to&&x.to<t0?'<small class="s bad">Hết hiệu lực</small>':""}</td><td>${esc(x.uq)}</td><td${x.dk==="Chưa đăng ký"?' class="bad"':""}>${x.dk==="Không áp dụng"?"":esc(x.dk)}</td></tr>`});
   $("plist").innerHTML=h+"</tbody></table>";
 }
 function rOwn(r,all){
@@ -1008,7 +1005,7 @@ function rOwn(r,all){
   if(!r.length){$("plist").innerHTML=empty();return}
   $("plist").innerHTML=grp(r).map(g=>{
     const pctSum=g.base?g.val/g.base*100:0,ix=Math.max(0,COS().findIndex(c=>same(c,g.co)));
-    const key=g.co+"|"+g.asof;return `<div class="ow cc${ix%6}${ownClosed.has(key)?" col":""}" data-k="${esc(key)}"><h3 class="gh" data-og="${esc(key)}">${esc(g.co)}${g.asof?` - chốt ngày ${fmt(g.asof)}`:""}<small>mệnh giá ${money(g.par)} đồng${g.vdl?`, vốn điều lệ ${money(g.vdl)} đồng`:""}</small><small>| ${g.rows.length} cổ đông</small></h3><div class="owb">
+    const key=g.co+"|"+g.asof;return `<div class="ow ${cx(g.co)}${ownClosed.has(key)?" col":""}" data-k="${esc(key)}"><h3 class="gh" data-og="${esc(key)}">${esc(g.co)}${g.asof?` - chốt ngày ${fmt(g.asof)}`:""}<small>mệnh giá ${money(g.par)} đồng${g.vdl?`, vốn điều lệ ${money(g.vdl)} đồng`:""}</small><small>| ${g.rows.length} cổ đông</small></h3><div class="owb">
 <table class="m" style="min-width:640px"><thead><tr><th>Cổ đông</th><th>Số cổ phần</th><th>Giá trị (đồng)</th><th>Tỷ lệ</th><th>Ghi chú</th></tr></thead><tbody>`+
     g.rows.map(x=>`<tr data-id="${x.id}"><td>${esc(x.holder)}</td><td class="num">${nf(x.shares)}</td><td class="num">${money((+x.shares||0)*g.par)}</td><td class="num">${g.base?nf((+x.shares||0)*g.par/g.base*100)+"%":""}</td><td>${esc(x.note)}</td></tr>`).join("")+
     `<tr class="tot"><td>Tổng cộng</td><td class="num">${nf(g.sh)}</td><td class="num">${money(g.val)}</td><td class="num">${nf(pctSum)}%</td><td class="${g.ok===true?"ok":g.ok===false?"bad":""}">${esc(g.msg)}</td></tr></tbody></table></div></div>`}).join("");
@@ -1020,7 +1017,7 @@ function rPrj(r,all){
   $("plist").innerHTML=`<table class="m"><thead><tr><th>Dự án</th><th>Chủ đầu tư, NĐDPL</th><th>Địa điểm</th><th>Diện tích đất / kho xưởng (m²)</th><th>Tổng vốn đầu tư</th><th>Việc đang xử lý</th></tr></thead><tbody>`+
   r.map(x=>`<tr data-id="${x.id}"><td class="t"><b>${esc(x.name)}</b><small>${esc(x.code?"Mã dự án: "+x.code:"")}</small>${x.note?`<small>${esc(x.note)}</small>`:""}</td><td>${esc(x.owner)}<small class="s">${esc(x.nddpl)}</small></td><td>${esc(x.addr)}</td><td class="num">${nf(x.dt)}${x.dtxd!==""&&x.dtxd!=null?" / "+nf(x.dtxd):""}</td><td class="num">${money(x.tvdt)}</td><td class="num">${op(x)}</td></tr>`).join("")+"</tbody></table>";
 }
-$("plist").onclick=e=>{const og=e.target.closest("[data-og]");if(og){const b=og.closest(".ow"),k=og.dataset.og;if(ownClosed.has(k))ownClosed.delete(k);else ownClosed.add(k);b.classList.toggle("col");return}const a=e.target.closest("[data-addpos]");if(a){openD(null,"pos",{name:a.dataset.addpos});return}const pp=e.target.closest("[data-pid]");if(pp){openD(pp.dataset.pid,"pos");return}const tr=e.target.closest("tr[data-id]");if(tr)openD(tr.dataset.id)};
+$("plist").onclick=e=>{const pg=e.target.closest("[data-pg]");if(pg){const k=pg.dataset.pg;if(posClosed.has(k))posClosed.delete(k);else posClosed.add(k);pg.classList.toggle("col");$("plist").querySelectorAll("tr[data-gk]").forEach(tr=>{if(tr.dataset.gk===k)tr.hidden=posClosed.has(k)});return}const og=e.target.closest("[data-og]");if(og){const b=og.closest(".ow"),k=og.dataset.og;if(ownClosed.has(k))ownClosed.delete(k);else ownClosed.add(k);b.classList.toggle("col");return}const a=e.target.closest("[data-addpos]");if(a){openD(null,"pos",{name:a.dataset.addpos});return}const pp=e.target.closest("[data-pid]");if(pp){openD(pp.dataset.pid,"pos");return}const tr=e.target.closest("tr[data-id]");if(tr)openD(tr.dataset.id)};
 
 /* ---------- Thêm / sửa / xóa ---------- */
 function openD(id,s,pre){
@@ -1033,7 +1030,7 @@ function openD(id,s,pre){
     return `<label${f.full?' class="full"':""}>${esc(f.l)}${inp}</label>`}).join("");
   dlg.showModal();
 }
-$("pcol").onclick=()=>{grp(PD().own).forEach(g=>ownClosed.add(g.co+"|"+g.asof));renderProf()};$("pexpd").onclick=()=>{ownClosed.clear();renderProf()};
+$("pcol").onclick=()=>{if(sec==="pos")PD().pos.forEach(x=>posClosed.add(norm(x.co)));else grp(PD().own).forEach(g=>ownClosed.add(g.co+"|"+g.asof));renderProf()};$("pexpd").onclick=()=>{(sec==="pos"?posClosed:ownClosed).clear();renderProf()};
 $("padd").onclick=()=>openD(null);$("padd2").onclick=()=>openD(null,"pos");
 $("hscancel").onclick=()=>dlg.close();
 $("hsok").onclick=()=>{
@@ -1094,7 +1091,7 @@ const pcss=document.createElement("style");
 pcss.textContent=`#pprint{display:none}
 @media print{
 body.pp{--bg:#fff;--card:#fff;--ink:#1c2333;--mute:#667085;--line:#cfcbc2;--brand:#23395b;--seal:#a4262c;--ok:#2e6b4f;--warn:#b7791f;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-body.pp #vprof{--c0:#23395b;--c1:#0f7b8a;--c2:#2e7d4f;--c3:#b7791f;--c4:#7a3e9d;--c5:#b23a48}
+body.pp #vprof{--c0:#4d6285;--c1:#3f8791;--c2:#5b8a6f;--c3:#a68a52;--c4:#7f6d99;--c5:#a65d63;--c9:#8a8f9c}
 body.pp header,body.pp #vlist,body.pp #vbud,body.pp #vdash{display:none!important}
 body.pp #vprof #psub,body.pp #vprof .filters,body.pp #vprof .bhint{display:none!important}
 body.pp #pprint{display:block;margin:0 0 10px;padding:0 0 8px;border-bottom:2px solid var(--brand)}
@@ -1106,7 +1103,7 @@ body.pp #vprof table.m{min-width:0;font-size:11px}
 body.pp #vprof .panel,body.pp #vprof .ow,body.pp #vprof tr{break-inside:avoid}
 body.pp #vprof .dash{padding:0}
 body.pp #vprof .ow.col .owb{display:block!important}
-body.pp #vprof .sechead{margin:0 0 8px;padding:5px 10px;font-size:14px;color:var(--ink);background:color-mix(in srgb,var(--cc) 10%,#fff);border-left:4px solid var(--cc);border-radius:3px;break-before:page}
+body.pp #vprof .sechead{margin:0 0 8px;padding:5px 10px;font-size:14px;color:var(--ink);background:color-mix(in srgb,var(--brand) 10%,#fff);border-left:4px solid var(--brand);border-radius:3px;break-before:page}
 body.pp #vprof .sechead.first{break-before:auto}
 }`;
 document.head.appendChild(pcss);
@@ -1117,11 +1114,11 @@ function printProf(all){
   if(all){
     ["dash",...ORDER].forEach((k,i)=>{
       sec=k;if(k==="dash")rDash();else{const a=PD()[k];RN[k](a,a)}
-      html+=`<h2 class="sechead cc${cc[k]}${i?"":" first"}">${k==="dash"?"Tổng quan":SEC[k].lab}</h2>`+$("plist").innerHTML});
+      html+=`<h2 class="sechead${i?"":" first"}">${k==="dash"?"Tổng quan":SEC[k].lab}</h2>`+$("plist").innerHTML});
     sec=prev;$("plist").innerHTML=html;$("pstats").hidden=true;label="Toàn bộ hồ sơ";
   }else label=sec==="dash"?"Tổng quan":SEC[sec].lab;
   $("pprint").innerHTML=`<h2>HỒ SƠ PHÁP LÝ CÔNG TY</h2><small>${esc(CFG.org)} | Mục: ${esc(label)} | Ngày xuất: ${fmt(today())}</small>`;
-  document.querySelectorAll("#vprof details").forEach(d=>d.open=true);
+  document.querySelectorAll("#vprof details").forEach(d=>d.open=true);document.querySelectorAll("#vprof tr[data-gk]").forEach(r=>r.hidden=false);
   const pg=document.createElement("style");pg.textContent="@page{size:A4 landscape;margin:10mm}";document.head.appendChild(pg);
   document.title="Ho_so_cong_ty_"+(all?"toan_bo":sec)+"_"+today();document.body.classList.add("pp");
   const done=()=>{document.body.classList.remove("pp");document.title=t0;pg.remove();window.removeEventListener("afterprint",done);if(all)renderProf()};
