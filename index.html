@@ -97,6 +97,22 @@ body.pd .act{cursor:default}
 }
 
 /* ===== MÀU SẮC ===== */
+#vprof .bo-card{margin:0 0 12px;border:1px solid var(--line);border-left:3px solid var(--cc);border-radius:var(--r);background:var(--card)}
+#vprof .bo-card h3{margin:0;padding:7px 12px;background:color-mix(in srgb,var(--cc) 8%,var(--card));font-size:13.5px;border-bottom:1px solid var(--line)}
+#vprof .bo-card .bb{padding:8px 12px 10px}
+#vprof .bo-bar{position:relative;height:14px;background:var(--bg);border-radius:3px;min-width:120px}
+#vprof .bo-bar i{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:var(--c9)}
+#vprof .bo-bar i.hit{background:var(--c0)}
+#vprof .bo-bar u{position:absolute;left:25%;top:-2px;bottom:-2px;border-left:2px dashed var(--seal);text-decoration:none}
+#vprof .bo-st{display:inline-block;padding:0 8px;border-radius:99px;font-size:12px;font-weight:600;border:1px solid var(--line)}
+#vprof .bo-st.ok{color:var(--ok);background:color-mix(in srgb,var(--ok) 12%,var(--card))}
+#vprof .bo-st.wr{color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,var(--card))}
+#vprof .bo-st.bd{color:var(--seal);background:color-mix(in srgb,var(--seal) 10%,var(--card))}
+#vprof .bo-law{margin:0 0 12px;border:1px solid var(--line);border-radius:var(--r);background:var(--card);padding:0 12px}
+#vprof .bo-law summary{cursor:pointer;padding:8px 0;font-weight:600;font-size:13.5px}
+#vprof .bo-law ul{margin:0 0 10px;padding-left:18px;font-size:13px;line-height:1.55}
+#vprof .bo-add{color:var(--brand);cursor:pointer;font-size:12px;text-decoration:underline}
+
 /* dashboard sở hữu vốn */
 #vprof details.oad{margin:0 0 14px;border:1px solid var(--line);border-radius:6px;background:var(--card)}
 #vprof details.oad>summary{cursor:pointer;padding:9px 12px;font-weight:600;font-size:14px;list-style:none}
@@ -812,6 +828,7 @@ const bootHoSoCongTy=()=>{
 /* ---------- Lược đồ 4 mục ---------- */
 const ROLES=["NĐDPL","Chủ tịch HĐQT","Tổng Giám đốc","Giám đốc","Giám đốc điều hành","Người được ủy quyền","Cổ đông","Khác"];
 const DKS=["Không áp dụng","Đã đăng ký","Đang thực hiện đăng ký","Chưa đăng ký"];
+const BOTC=["Tiêu chí 1: sở hữu từ 25% trở lên","Tiêu chí 1: nhóm có quan hệ gia đình / hợp đồng đạt 25%","Tiêu chí 2: kiểm soát trên thực tế","Tiêu chí 3: người quản lý có quyền hạn cao nhất","Thành viên hợp danh"];
 const dkTag=x=>x.dk==="Chưa đăng ký"?'<span class="bad">Chưa đăng ký</span>':x.dk==="Đang thực hiện đăng ký"?'<span class="dkp">Đang thực hiện đăng ký</span>':x.dk==="Đã đăng ký"?"Đã đăng ký":"";
 const SEC={
   co:{lab:"Pháp nhân",one:"pháp nhân",req:["code"],
@@ -834,6 +851,7 @@ const SEC={
        {k:"cccd",l:"Số CCCD",ph:"12 chữ số"},
        {k:"cccdngay",l:"Ngày cấp CCCD",t:"date"},
        {k:"cccdnoi",l:"Nơi cấp CCCD"},
+       {k:"nhom",l:"Nhóm có quan hệ gia đình / hợp đồng (cùng tên nhóm để cộng gộp tỷ lệ)",ph:"VD: Gia đình Ngô"},
        {k:"addr",l:"Địa chỉ thường trú / liên lạc",full:1},
        {k:"note",l:"Ghi chú",t:"area",full:1}]},
   pos:{lab:"Chức vụ",one:"chức vụ",req:["name","co"],
@@ -855,6 +873,16 @@ const SEC={
        {k:"shares",l:"Số cổ phần",t:"int"},
        {k:"asof",l:"Ngày chốt số liệu",t:"date"},
        {k:"note",l:"Ghi chú",t:"area",full:1}]},
+  bo:{lab:"CSHHL",one:"chủ sở hữu hưởng lợi",req:["co","name"],
+    key:o=>[o.co,o.name].map(norm).join("|"),
+    f:[{k:"co",l:"Doanh nghiệp",list:"p_codes"},
+       {k:"name",l:"Họ và tên cá nhân là chủ sở hữu hưởng lợi",list:"p_names"},
+       {k:"tc",l:"Tiêu chí xác định",t:"sel",o:BOTC},
+       {k:"tl",l:"Tỷ lệ sở hữu / quyền biểu quyết đã kê khai (%)",t:"dec"},
+       {k:"ngay",l:"Ngày kê khai / thông báo đến cơ quan đăng ký kinh doanh",t:"date"},
+       {k:"dk",l:"Kê khai, thông báo với cơ quan đăng ký kinh doanh",t:"sel",o:DKS},
+       {k:"dknd",l:"Nội dung kê khai / thay đổi (VD: bổ sung CSHHL mới sau tăng vốn)",full:1},
+       {k:"note",l:"Ghi chú",t:"area",full:1}]},
   prj:{lab:"Dự án",one:"dự án",req:["name"],
     key:o=>norm(o.name),
     f:[{k:"name",l:"Tên dự án",list:"projs"},
@@ -869,7 +897,7 @@ const SEC={
        {k:"dknd",l:"Nội dung đăng ký điều chỉnh (VD: điều chỉnh tiến độ, vốn đầu tư)",full:1},
        {k:"note",l:"Ghi chú, vấn đề pháp lý đang theo dõi",t:"area",full:1}]}
 };
-const ORDER=["co","ppl","pos","own","prj"];
+const ORDER=["co","ppl","pos","own","bo","prj"];
 let sec="dash",dsec="co",editId=null,seq=0;const ownClosed=new Set(),posClosed=new Set();
 
 /* ---------- Tiện ích ---------- */
@@ -994,7 +1022,7 @@ function renderProf(){
   const fk=sec==="co"?"code":"co";
   const posOf=n=>PD().pos.filter(p=>same(p.name,n));
   const r=all.filter(x=>(!c||sec==="prj"||(sec==="ppl"?posOf(x.name).some(p=>same(p.co,c)):same(x[fk],c)))&&(!q||(Object.values(x).join(" ")+(sec==="ppl"?" "+posOf(x.name).map(p=>Object.values(p).join(" ")).join(" "):"")).toLowerCase().includes(q)));
-  ({co:rCo,ppl:rPpl,pos:rPos,own:rOwn,prj:rPrj})[sec](r,all);
+  ({co:rCo,ppl:rPpl,pos:rPos,own:rOwn,bo:rBo,prj:rPrj})[sec](r,all);
 }
 function rDash(){
   const d=PD(),t0=today(),sum=(a,k)=>a.reduce((s,x)=>s+(+x[k]||0),0);
@@ -1020,6 +1048,7 @@ function rDash(){
   const DKI=[],IP="Đang thực hiện đăng ký",CD="Chưa đăng ký",hit=x=>x.dk===IP||x.dk===CD;
   d.co.filter(hit).forEach(x=>DKI.push({c:x.code,co:1,t:"Giấy chứng nhận đăng ký doanh nghiệp"+(x.dknd?": "+x.dknd:""),dk:x.dk}));
   d.pos.filter(x=>hit(x)&&activeP(x,t0)).forEach(x=>DKI.push({c:x.co||"-",co:1,t:x.name+" - "+[x.role,x.title].filter(Boolean).join(", "),dk:x.dk}));
+  d.bo.filter(hit).forEach(x=>DKI.push({c:x.co,co:1,t:"Kê khai CSHHL: "+x.name+(x.dknd?" - "+x.dknd:""),dk:x.dk}));
   d.prj.filter(hit).forEach(x=>DKI.push({c:x.name,co:0,t:"Giấy chứng nhận đăng ký đầu tư"+(x.dknd?": "+x.dknd:""),dk:x.dk}));
   DKI.sort((a,b)=>(a.dk===CD?0:1)-(b.dk===CD?0:1));
   const pD=`<div class="panel full"><h3>Đăng ký thay đổi với cơ quan nhà nước (${DKI.length})</h3>${DKI.length?DKI.map(i=>`<div class="act" style="cursor:default"><span class="d">${i.co?chip(i.c):`<b>${esc(i.c)}</b>`}</span><span>${esc(i.t)}</span><span style="margin-left:auto;white-space:nowrap">${dkTag(i)}</span></div>`).join(""):'<small style="color:var(--mute)">Không có hồ sơ nào đang chờ hoặc đang thực hiện đăng ký.</small>'}</div>`;
@@ -1168,6 +1197,60 @@ function ownDash(){
   const mt=`<div class="opn nt full" style="grid-column:1/-1"><h4>Tỷ lệ sở hữu thực chất của cổ đông cuối cùng (trực tiếp + gián tiếp qua các công ty trong hệ thống)</h4><div style="overflow-x:auto"><table class="m ox" style="min-width:560px"><thead><tr><th>Cổ đông cuối cùng</th>${cs.map(c=>`<th class="${cx(c)}" style="text-align:right">${esc(c)}</th>`).join("")}</tr></thead><tbody>${top.map(a=>`<tr><td class="t"><b>${esc(a.name)}</b></td>${cs.map(c=>cell(a,c)).join("")}</tr>`).join("")}${rest.length?`<tr><td class="t" style="color:var(--mute)">Nhóm dưới 1% (${rest.length} cổ đông)</td>${cs.map(c=>{const t=rest.reduce((s,a)=>s+((a.by[c]?a.by[c].d+a.by[c].i:0)),0);return `<td class="hc" style="color:var(--mute)">${t>0?nf(t)+"%":"-"}</td>`}).join("")}</tr>`:""}</tbody></table></div><small style="color:var(--mute);display:block;margin-top:6px">TT: trực tiếp. GT: gián tiếp, tính bằng tỷ lệ công ty trung gian nắm giữ nhân với tỷ lệ cổ đông tại công ty trung gian. Cổ đông là công ty được nhận diện theo mã, tên pháp nhân hoặc cột "Mã công ty" của dòng sở hữu.</small></div>`;
   return `<details class="oad" open><summary>Dashboard và biểu đồ sở hữu vốn</summary><div class="od">${K}${og}${dn}${mt}</div></details>`;
 }
+
+/* ===== Chủ sở hữu hưởng lợi (CSHHL) ===== */
+const isEnt=n=>/(^|\s)(cong ty|cty|ctcp|tnhh|tap doan|quy|corp|corporation|ltd|limited|inc|co\.|company|jsc|holding)(\s|$|\.)/i.test(String(n).replace(/[đĐ]/g,"d").normalize("NFD").replace(/[̀-ͯ]/g,""));
+function boModel(){
+  const d=PD(),M=ownModel(),t0=today(),grpOf={};
+  d.ppl.forEach(x=>{if(x.nhom)grpOf[pn(x.name)]=norm(x.nhom)});
+  const gname={};d.ppl.forEach(x=>{if(x.nhom)gname[norm(x.nhom)]=x.nhom});
+  const out=M.cs.sort((a,b)=>ci(a)-ci(b)).map(c=>{
+    const list=Object.keys(M.U[c]).filter(k=>k.slice(0,3)!=="co:").map(k=>{const o=M.U[c][k];return{key:k,name:o.name,d:o.d,i:o.i,t:o.d+o.i,ent:isEnt(o.name),grp:grpOf[k]||""}}).filter(x=>x.t>0).sort((a,b)=>b.t-a.t);
+    const gt={};list.forEach(x=>{if(x.grp&&!x.ent)gt[x.grp]=(gt[x.grp]||0)+x.t});
+    const bo=[];
+    list.forEach(x=>{if(x.ent)return;
+      if(x.t>=25-1e-9)bo.push({name:x.name,key:x.key,t:x.t,d:x.d,i:x.i,how:"cá nhân"});
+      else if(x.grp&&gt[x.grp]>=25-1e-9)bo.push({name:x.name,key:x.key,t:x.t,d:x.d,i:x.i,how:"nhóm",grp:gname[x.grp],gt:gt[x.grp]})});
+    const ents=list.filter(x=>x.ent&&x.t>=25-1e-9);
+    const mgr=d.pos.filter(p=>same(p.co,c)&&activeP(p,t0)&&/nddpl|daidienphapluat|tonggiamdoc|giamdoc|chutichhdqt|chutich/.test(norm(p.role)));
+    const decl=d.bo.filter(x=>same(x.co,c));
+    const warn=[];
+    bo.forEach(b=>{if(!decl.some(x=>pn(x.name)===b.key))warn.push({k:"miss",b})});
+    if(bo.length)decl.forEach(x=>{if(!bo.some(b=>b.key===pn(x.name))&&/Tiêu chí 1|Thành viên/.test(x.tc||""))warn.push({k:"stale",x})});
+    return{c,list,bo,ents,mgr,decl,warn,g:M.latest[norm(c)]};
+  });
+  return{out,M};
+}
+function rBo(r,all){
+  const{out}=boModel(),d=PD();
+  const nMiss=out.reduce((s,o)=>s+o.warn.filter(w=>w.k==="miss").length,0),nTc1=out.filter(o=>o.bo.length).length,nNo=out.filter(o=>!o.bo.length).length;
+  $("pstats").innerHTML=st(out.length,"Doanh nghiệp được phân tích")+st(out.reduce((s,o)=>s+o.bo.length,0),"CSHHL xác định theo tiêu chí sở hữu 25%")+st(nNo,"Chưa có cá nhân đạt 25% (xét tiêu chí kiểm soát)",nNo?"":"")+st(nMiss,"CSHHL đạt ngưỡng nhưng chưa ghi nhận kê khai",nMiss?"late":"")+st(all.filter(x=>x.dk==="Đang thực hiện đăng ký").length,"Đang thực hiện kê khai, thông báo")+st(all.length,"Dòng đã ghi nhận");
+  const law=`<details class="bo-law"><summary>Căn cứ và tiêu chí xác định CSHHL</summary><ul>
+<li>Căn cứ: Luật Doanh nghiệp, Nghị định 168/2025/NĐ-CP về đăng ký doanh nghiệp (Điều 17, 18), được sửa đổi bởi Nghị định 296/2026/NĐ-CP. Cần đối chiếu văn bản gốc trước khi kê khai chính thức.</li>
+<li>CSHHL là cá nhân trực tiếp hoặc gián tiếp sở hữu hoặc kiểm soát cuối cùng trên thực tế đối với doanh nghiệp. Người đại diện phần vốn nhà nước không được coi là CSHHL.</li>
+<li>Tiêu chí 1 (sở hữu): cá nhân sở hữu trực tiếp, gián tiếp hoặc cả hai từ 25% vốn điều lệ hoặc 25% tổng số cổ phần có quyền biểu quyết. Nhóm cá nhân có quan hệ gia đình hoặc hợp đồng cùng sở hữu mà tổng đạt 25% thì mọi thành viên trong nhóm đều là CSHHL. Công ty hợp danh: mọi thành viên hợp danh.</li>
+<li>Tiêu chí 2 (kiểm soát thực tế): áp dụng khi không có ai đạt tiêu chí 1, hoặc có căn cứ cho thấy người đạt tiêu chí 1 không phải CSHHL (quyền bổ nhiệm, miễn nhiệm đa số thành viên HĐQT, giám đốc; sửa đổi điều lệ; quyết định chính sách tài chính, đầu tư; tổ chức lại, giải thể).</li>
+<li>Tiêu chí 3 (dự phòng): xác định một người quản lý có quyền hạn cao nhất để hành động thay mặt doanh nghiệp.</li>
+<li>Khi cổ đông là pháp nhân, phải rà soát từng cấp đến cá nhân cuối cùng. Công cụ này tự cộng sở hữu gián tiếp qua các công ty trong hệ thống và coi mọi cổ phần là có quyền biểu quyết. Đặt "Nhóm có quan hệ gia đình / hợp đồng" tại tab Nhân sự để cộng gộp theo nhóm. Thời hạn thông báo khi có thay đổi: đối chiếu Nghị định 168/2025/NĐ-CP.</li></ul></details>`;
+  const cards=out.map(o=>{
+    const rows=o.list.filter(x=>x.t>=5||x.grp).slice(0,12);
+    const isBo=x=>o.bo.some(b=>b.key===x.key);
+    const tb=rows.length?`<table class="m" style="min-width:560px"><thead><tr><th>Cổ đông cuối cùng</th><th style="width:34%">Tỷ lệ thực chất (vạch đứt: 25%)</th><th>Trực tiếp</th><th>Gián tiếp</th><th>Kết luận</th></tr></thead><tbody>`+rows.map(x=>{const b=o.bo.find(z=>z.key===x.key),dec=o.decl.some(z=>pn(z.name)===x.key);
+      return `<tr><td class="t"><b>${esc(x.name)}</b>${x.ent?'<small class="s bad">Tổ chức ngoài hệ thống: cần truy xuất đến cá nhân cuối cùng</small>':""}${x.grp?`<small class="s">Nhóm: ${esc(gname0(x.grp))}</small>`:""}</td><td><div class="bo-bar"><i class="${b?"hit":""}" style="width:${Math.min(100,x.t)}%"></i><u></u></div><small class="s">${nf(x.t)}%</small></td><td class="num">${nf(x.d)}%</td><td class="num">${x.i>0.005?nf(x.i)+"%":"-"}</td><td>${b?`<span class="bo-st ok">CSHHL${b.how==="nhóm"?" (nhóm "+nf(b.gt)+"%)":""}</span>${dec?"":` <a class="bo-add" data-addbo="${esc(o.c)}|${esc(x.name)}|${nf(x.t).replace(/\./g,"").replace(",",".")}|${b.how==="nhóm"?"g":"c"}">Ghi nhận kê khai</a>`}`:x.ent&&x.t>=25?'<span class="bo-st wr">Cần truy xuất</span>':'<span style="color:var(--mute)">Dưới ngưỡng</span>'}</td></tr>`}).join("")+`</tbody></table>`:'<small style="color:var(--mute)">Chưa có dữ liệu sở hữu để phân tích.</small>';
+    let sttxt;
+    if(o.bo.length)sttxt=`<span class="bo-st ok">Xác định theo tiêu chí 1: ${o.bo.length} cá nhân</span>`;
+    else if(o.ents.length)sttxt=`<span class="bo-st wr">Có tổ chức ngoài hệ thống đạt 25%, cần truy xuất đến cá nhân</span>`;
+    else sttxt=`<span class="bo-st wr">Không ai đạt 25%: xét tiêu chí 2 (kiểm soát), hoặc tiêu chí 3</span>`;
+    const mg=!o.bo.length&&o.mgr.length?`<div style="margin-top:6px;font-size:12.5px;color:var(--mute)">Gợi ý để xét tiêu chí 2, 3 (đang giữ chức vụ): ${[...new Set(o.mgr.map(p=>p.name+" ("+p.role+")"))].map(esc).join("; ")}</div>`:"";
+    const wr=o.warn.map(w=>w.k==="miss"?`<div class="bad" style="font-size:12.5px;margin-top:4px">${esc(w.b.name)} đạt ngưỡng nhưng chưa có dòng kê khai trong mục này.</div>`:`<div style="color:var(--warn);font-weight:600;font-size:12.5px;margin-top:4px">${esc(w.x.name)} đã ghi nhận theo tiêu chí sở hữu nhưng hiện không đạt 25%: rà soát để cập nhật.</div>`).join("");
+    return `<div class="bo-card ${cx(o.c)}"><h3>${chip(o.c)} <small style="font-weight:400;color:var(--mute)">${o.g&&o.g.asof?"số liệu chốt "+fmt(o.g.asof):""}</small> ${sttxt}</h3><div class="bb"><div style="overflow-x:auto">${tb}</div>${mg}${wr}</div></div>`}).join("");
+  function gname0(k){const x=d.ppl.find(p=>norm(p.nhom)===k);return x?x.nhom:k}
+  let reg="";
+  if(!r.length)reg=`<div class="empty">Chưa ghi nhận danh sách CSHHL đã kê khai. Bấm "Ghi nhận kê khai" ở bảng phân tích trên hoặc "Thêm chủ sở hữu hưởng lợi".</div>`;
+  else{r=[...r].sort((a,b)=>ci(a.co)-ci(b.co)||String(a.name).localeCompare(String(b.name),"vi"));
+    reg=`<table class="m"><thead><tr><th>Doanh nghiệp</th><th>Cá nhân là CSHHL</th><th>Tiêu chí</th><th>Tỷ lệ kê khai</th><th>Ngày kê khai</th><th>Kê khai, thông báo</th></tr></thead><tbody>`+r.map(x=>`<tr data-id="${x.id}"><td>${chip(x.co)}</td><td class="t"><b>${esc(x.name)}</b>${x.note?`<small>${esc(x.note)}</small>`:""}</td><td>${esc(x.tc)}</td><td class="num">${x.tl!==""&&x.tl!=null?nf(x.tl)+"%":""}</td><td>${x.ngay?fmt(x.ngay):""}</td><td>${dkTag(x)}${x.dknd?`<small class="s">${esc(x.dknd)}</small>`:""}</td></tr>`).join("")+`</tbody></table>`}
+  $("plist").innerHTML=law+cards+`<h3 style="margin:14px 0 6px;font-size:14px">Danh sách CSHHL đã ghi nhận kê khai</h3>`+reg;
+}
 function rOwn(r,all){
   const ga=grp(all);
   $("pstats").innerHTML=st(new Set(all.map(x=>norm(x.co))).size,"Công ty có cơ cấu sở hữu")+st(all.length,"Dòng cổ đông")+st(ga.filter(g=>g.ok===false).length,"Bảng lệch vốn điều lệ",ga.some(g=>g.ok===false)?"late":"")+st(ga.filter(g=>g.ok===null).length,"Bảng chưa đối chiếu được");
@@ -1186,7 +1269,7 @@ function rPrj(r,all){
   $("plist").innerHTML=`<table class="m"><thead><tr><th>Dự án</th><th>Chủ đầu tư, NĐDPL</th><th>Địa điểm</th><th>Diện tích đất / kho xưởng (m²)</th><th>Tổng vốn đầu tư</th><th>Việc đang xử lý</th></tr></thead><tbody>`+
   r.map(x=>`<tr data-id="${x.id}"><td class="t"><b>${esc(x.name)}</b><small>${esc(x.code?"Mã dự án: "+x.code:"")}</small>${x.dk&&x.dk!=="Không áp dụng"?`<small>Đăng ký điều chỉnh GCNĐKĐT: ${dkTag(x)}${x.dknd?" - "+esc(x.dknd):""}</small>`:""}${x.note?`<small>${esc(x.note)}</small>`:""}</td><td>${esc(x.owner)}<small class="s">${esc(x.nddpl)}</small></td><td>${esc(x.addr)}</td><td class="num">${nf(x.dt)}${x.dtxd!==""&&x.dtxd!=null?" / "+nf(x.dtxd):""}</td><td class="num">${money(x.tvdt)}</td><td class="num">${op(x)}</td></tr>`).join("")+"</tbody></table>";
 }
-$("plist").onclick=e=>{const pg=e.target.closest("[data-pg]");if(pg){const k=pg.dataset.pg;if(posClosed.has(k))posClosed.delete(k);else posClosed.add(k);pg.classList.toggle("col");$("plist").querySelectorAll("tr[data-gk]").forEach(tr=>{if(tr.dataset.gk===k)tr.hidden=posClosed.has(k)});return}const og=e.target.closest("[data-og]");if(og){const b=og.closest(".ow"),k=og.dataset.og;if(ownClosed.has(k))ownClosed.delete(k);else ownClosed.add(k);b.classList.toggle("col");return}const a=e.target.closest("[data-addpos]");if(a){openD(null,"pos",{name:a.dataset.addpos});return}const pp=e.target.closest("[data-pid]");if(pp){openD(pp.dataset.pid,"pos");return}const tr=e.target.closest("tr[data-id]");if(tr)openD(tr.dataset.id)};
+$("plist").onclick=e=>{const pg=e.target.closest("[data-pg]");if(pg){const k=pg.dataset.pg;if(posClosed.has(k))posClosed.delete(k);else posClosed.add(k);pg.classList.toggle("col");$("plist").querySelectorAll("tr[data-gk]").forEach(tr=>{if(tr.dataset.gk===k)tr.hidden=posClosed.has(k)});return}const og=e.target.closest("[data-og]");if(og){const b=og.closest(".ow"),k=og.dataset.og;if(ownClosed.has(k))ownClosed.delete(k);else ownClosed.add(k);b.classList.toggle("col");return}const ab=e.target.closest("[data-addbo]");if(ab){const q=ab.dataset.addbo.split("|");openD(null,"bo",{co:q[0],name:q[1],tc:q[3]==="g"?BOTC[1]:BOTC[0],tl:q[2],dk:"Đã đăng ký"});return}const a=e.target.closest("[data-addpos]");if(a){openD(null,"pos",{name:a.dataset.addpos});return}const pp=e.target.closest("[data-pid]");if(pp){openD(pp.dataset.pid,"pos");return}const tr=e.target.closest("tr[data-id]");if(tr)openD(tr.dataset.id)};
 
 /* ---------- Thêm / sửa / xóa ---------- */
 function openD(id,s,pre){
@@ -1276,9 +1359,9 @@ body.pp #vprof .sechead{margin:0 0 8px;padding:5px 10px;font-size:14px;color:var
 body.pp #vprof .sechead.first{break-before:auto}
 }`;
 document.head.appendChild(pcss);
-const RN={co:rCo,ppl:rPpl,pos:rPos,own:rOwn,prj:rPrj};
+const RN={co:rCo,ppl:rPpl,pos:rPos,own:rOwn,bo:rBo,prj:rPrj};
 function printProf(all){
-  const prev=sec,t0=document.title,cc={dash:0,co:0,ppl:1,pos:4,own:2,prj:3};
+  const prev=sec,t0=document.title,cc={dash:0,co:0,ppl:1,pos:4,own:2,bo:5,prj:3};
   let html="",label;
   if(all){
     ["dash",...ORDER].forEach((k,i)=>{
