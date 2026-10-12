@@ -1172,14 +1172,20 @@ function ownDash(){
     const lay={};nodes.forEach(n=>lay[n]=0);
     for(let it=0;it<nodes.length+1;it++)M.edges.forEach(e=>{if(lay[e.to]<lay[e.from]+1&&lay[e.from]+1<nodes.length)lay[e.to]=lay[e.from]+1});
     const L=[];nodes.forEach(n=>{(L[lay[n]]=L[lay[n]]||[]).push(n)});L.forEach(l=>l&&l.sort((a,b)=>ci(a)-ci(b)));
-    const W=Math.max(520,Math.max(...L.filter(Boolean).map(l=>l.length))*180),H=L.length*96+8,pos={};
-    L.forEach((l,i)=>{if(!l)return;l.forEach((n,j)=>{pos[n]={x:W*(j+1)/(l.length+1),y:4+i*96}})});
-    const bw=130,bh=40,out={},inn={};M.edges.forEach(e=>{(out[e.from]=out[e.from]||[]).push(e);(inn[e.to]=inn[e.to]||[]).push(e)});const spread=(o,k,e)=>{const l=o[k].slice().sort((a,b)=>pos[a.from].x-pos[b.from].x||pos[a.to].x-pos[b.to].x);return (l.indexOf(e)-(l.length-1)/2)*26};
-    const ed=M.edges.map(e=>{const a=pos[e.from],b=pos[e.to];if(!a||!b)return"";const x1=a.x+spread(out,e.from,e),y1=a.y+bh,x2=b.x+spread(inn,e.to,e),y2=b.y,my=(y1+y2)/2,t=.68,u=1-t,lx=u*u*u*x1+3*u*u*t*x1+3*u*t*t*x2+t*t*t*x2,ly=u*u*u*y1+3*u*u*t*my+3*u*t*t*my+t*t*t*y2;
-      return `<path class="ed" d="M${x1},${y1} C${x1},${my} ${x2},${my} ${x2},${y2}" marker-end="url(#ar)"/><g><rect class="lb" x="${lx-24}" y="${ly-8}" width="48" height="16" rx="8"/><text class="lt" x="${lx}" y="${ly+4}" text-anchor="middle">${nf(e.p)}%</text></g>`}).join("");
-    const nd=nodes.map(n=>{const p=pos[n],g=M.latest[norm(n)],cl=cx(n);const ind=g?(Object.values(M.U[n]||{}).filter(o=>o.name&&true)):[];
-      return `<g class="${cl}" style="--cc:var(--${cl==="cc9"?"c9":cl.replace("cc","c")})"><rect class="bx" x="${p.x-bw/2}" y="${p.y}" width="${bw}" height="${bh}" rx="8"/><text x="${p.x}" y="${p.y+17}" text-anchor="middle" style="font-weight:700;font-size:13px">${esc(n)}</text><text x="${p.x}" y="${p.y+32}" text-anchor="middle" style="font-size:10.5px;fill:var(--mute)">${g&&g.vdl?"VĐL "+(g.vdl/1e9).toLocaleString("vi-VN",{maximumFractionDigits:2})+" tỷ":""}</text></g>`}).join("");
-    og=`<div class="opn nt full" style="grid-column:1/-1"><h4>Sơ đồ sở hữu liên kết giữa các công ty (mũi tên: bên sở hữu → bên được sở hữu, nhãn là tỷ lệ sở hữu trực tiếp)</h4><div class="og"><svg style="max-width:${W}px;margin:0 auto" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--mute)"/></marker></defs>${ed}${nd}</svg></div></div>`;
+    const bw=132,bh=42,gx=230,gy=72,W=(L.length-1)*gx+bw+16,rowsMax=Math.max(...L.filter(Boolean).map(l=>l.length)),pos={},out={},inn={};let H=rowsMax*gy+10;
+    L.forEach((l,i)=>{if(!l)return;const off=(rowsMax-l.length)*gy/2;l.forEach((n,j)=>{pos[n]={x:8+i*gx,y:6+off+j*gy}})});
+    M.edges.forEach(e=>{(out[e.from]=out[e.from]||[]).push(e);(inn[e.to]=inn[e.to]||[]).push(e)});
+    const spread=(o,k,e,key)=>{const l=o[k].slice().sort((a,b)=>pos[a[key]].y-pos[b[key]].y);return (l.indexOf(e)-(l.length-1)/2)*13};
+    let nl=0;const cub=(t,a,b,c,d)=>{const u=1-t;return u*u*u*a+3*u*u*t*b+3*u*t*t*c+t*t*t*d};
+    const ed=M.edges.map(e=>{const a=pos[e.from],b=pos[e.to];if(!a||!b)return"";const x1=a.x+bw,y1=a.y+bh/2+spread(out,e.from,e,"to"),x2=b.x,y2=b.y+bh/2+spread(inn,e.to,e,"from"),mx=(x1+x2)/2,long=lay[e.to]-lay[e.from]>1;
+      let c1x,c1y,c2x,c2y,t=.5;
+      if(long){const yc=Math.max(y1,y2)+78+30*nl++;c1x=x1+70;c1y=yc;c2x=x2-70;c2y=yc;t=.5;H=Math.max(H,yc*.75+y1*.125+y2*.125+34)}
+      else{c1x=mx;c1y=y1;c2x=mx;c2y=y2}
+      const lx=cub(t,x1,c1x,c2x,x2),ly=cub(t,y1,c1y,c2y,y2);
+      return `<path class="ed" d="M${x1},${y1} C${c1x},${c1y} ${c2x},${c2y} ${x2},${y2}" marker-end="url(#ar)"/><g><rect class="lb" x="${lx-25}" y="${ly-9}" width="50" height="18" rx="9"/><text class="lt" x="${lx}" y="${ly+4}" text-anchor="middle">${nf(e.p)}%</text></g>`}).join("");
+    const nd=nodes.map(n=>{const p=pos[n],g=M.latest[norm(n)],cl=cx(n);
+      return `<g class="${cl}" style="--cc:var(--${cl==="cc9"?"c9":cl.replace("cc","c")})"><rect class="bx" x="${p.x}" y="${p.y}" width="${bw}" height="${bh}" rx="8"/><text x="${p.x+bw/2}" y="${p.y+18}" text-anchor="middle" style="font-weight:700;font-size:13px">${esc(n)}</text><text x="${p.x+bw/2}" y="${p.y+33}" text-anchor="middle" style="font-size:10.5px;fill:var(--mute)">${g&&g.vdl?"VĐL "+(g.vdl/1e9).toLocaleString("vi-VN",{maximumFractionDigits:2})+" tỷ":""}</text></g>`}).join("");
+    og=`<div class="opn nt full" style="grid-column:1/-1"><h4>Sơ đồ sở hữu liên kết giữa các công ty (đọc từ trái sang phải: bên sở hữu → bên được sở hữu, nhãn là tỷ lệ sở hữu trực tiếp)</h4><div class="og"><svg style="max-width:${W}px;margin:0 auto" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg"><defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--mute)"/></marker></defs>${ed}${nd}</svg></div></div>`;
   }
   /* donut từng công ty */
   const dn=cs.map(c=>{
