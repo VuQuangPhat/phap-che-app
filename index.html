@@ -239,6 +239,7 @@ table.rt th{background:#2f4a73;color:#fff}
 .mm-ol{list-style:none;counter-reset:st;padding-left:0!important}.mm-ol li{counter-increment:st;position:relative;padding-left:30px;margin:6px 0!important}.mm-ol li::before{content:var(--n,"") counter(st);position:absolute;left:0;top:0;min-width:22px;height:22px;border-radius:50%;background:var(--bc);color:#fff;font-size:11px;font-weight:700;text-align:center;line-height:22px}
 .mm-m{display:inline-block;margin:4px 0;padding:2px 8px;border-radius:999px;background:var(--bc);color:#fff;font-size:11px}.mm-b.c7{--bc:#0f766e}
 .mchk{display:grid;grid-template-columns:1fr;gap:2px;max-height:190px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:6px 8px;margin-top:4px}
+[data-m12box] [hidden]{display:none!important}
 .mck{display:flex!important;flex-direction:row!important;align-items:flex-start;gap:8px;font-weight:400!important;font-size:13px;padding:3px 4px;border-radius:6px;cursor:pointer}.mck input{width:auto!important;margin-top:3px}.mck.sg{background:rgba(37,99,235,.10)}.mck.gn{opacity:.6}.mck i{font-style:normal;font-size:11px;padding:0 6px;border-radius:999px}.mck i.nw{background:#dbeafe;color:#1d4ed8}.mck i.gn{background:#e5e7eb;color:#6b7280}
 .fpage.nq p{margin:6px 0;text-align:justify;font-size:13px}.fpage.nq .pb{margin:4px 0 8px 18px;line-height:1.55}.fpage.nq h2{font-size:16px;margin:4px 0}.fpage.nq .fs{margin-bottom:8px}
 .stgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px 12px;margin-top:8px}.stl{display:flex;flex-direction:column;font-size:12px;gap:2px;color:var(--mute)}.stl select,.stl input,.rpl select{font-size:13px;padding:5px 6px;color:var(--ink)}.rpl{font-size:12px;color:var(--mute)}
@@ -260,7 +261,7 @@ body.pv .mp{border-bottom:2px dashed #aab;margin-bottom:0}
 .msg{position:absolute;width:300px;text-align:center;font-size:17px;font-family:"Times New Roman",Times,serif;color:#000}
 table.fm.m78{table-layout:fixed;font-size:8.5px;width:100%}table.fm.m78 th,table.fm.m78 td{padding:2px 3px;word-break:break-word;overflow-wrap:anywhere}
 .m78f{font-size:8.5px;line-height:1.3;margin-top:8px;border-top:1px solid #000;padding-top:3px;text-align:justify}
-@media print{#pvbar{display:none!important}body.pv #vprof{padding-top:0!important}body.pv #plist{width:auto;min-width:0;max-width:none;margin:0;box-shadow:none;overflow:visible}body.pv .fpage,body.pv .fpage.land{padding:0;border:0}body.pv .mp{border:0}}
+@media print{#pvbar{display:none!important}body.pv #vprof{padding-top:0!important}html,body.pv{background:#fff!important}body.pv #plist{width:auto;min-width:0;max-width:none;margin:0;box-shadow:none;overflow:visible}body.pv .fpage,body.pv .fpage.land{padding:0;border:0}body.pv .mp{border:0}}
 </style>
 </head>
 <body>
@@ -1692,6 +1693,70 @@ function vnWords(n){n=Math.round(+n||0);if(!n)return"";const d=["không","một"
   const U=["","nghìn","triệu","tỷ"],parts=[];let i=0,x=n;while(x>0){parts.push(x%1000);x=Math.floor(x/1000);i++}
   let out=[];for(let k=parts.length-1;k>=0;k--){const p=parts[k];if(!p)continue;const higher=parts.slice(k+1).some(v=>v);let s=r3(p,higher&&p<100);out.push(s+(k<4?" "+U[k]:" tỷ"))}
   let s=out.join(" ").replace(/\s+/g," ").trim();return s.charAt(0).toUpperCase()+s.slice(1)+" đồng"}
+/* ===== Bộ hồ sơ thay đổi nội dung ĐKDN: biên bản họp, nghị quyết ĐHĐCĐ, giấy ủy quyền ===== */
+const ND_GRP={ten:["tenvn","tenen","tentat"],tru:["tsno","tspx","tstinh","tsdt","tsem","tsweb","khu","thue"],von:["vmoi","mg","vtd","vht"],nganh:["ngadd","ngdel","ngmod"],cd:["hth","tsan"],meet:["mngay","mgio","mdd","mchair","mtk","mbb","mnq","mpct","mtt"],auth:["uq","sguq","nguq"]};
+function m12Vis(bx){const it=bx.querySelector('[data-m12k="it"]').value,other=/khác/.test(it),S={};
+  bx.querySelectorAll("[data-m12c]").forEach(e=>{S[e.dataset.m12c]=e.checked});
+  const meet=!!(S.ten||S.tru||S.von||S.nganh),show={ten:S.ten,tru:S.tru,von:S.von,nganh:S.nganh,cd:S.cd,meet:meet,auth:true};
+  Object.keys(ND_GRP).forEach(g=>ND_GRP[g].forEach(k=>{const e=bx.querySelector('[data-m12k="'+k+'"]');if(!e)return;const l=e.closest("label");if(l)l.hidden=!show[g]}));
+  const sel=bx.querySelector("[data-g=cd]");if(sel)sel.style.display=S.cd?"":"none";
+  const row=bx.querySelector("[data-g=sel]");if(row)row.style.display=other?"":"none";
+  const nt=bx.querySelector("[data-g=note]");if(nt){const t=[];if(S.ten)t.push("tên công ty");if(S.tru)t.push("trụ sở");if(S.von)t.push("vốn điều lệ");if(S.nganh)t.push("ngành, nghề");if(S.cd)t.push("cổ đông (Mẫu 7, 8)");if(S.bo)t.push("CSHHL (Mẫu 10)");if(S.thue)t.push("thông tin thuế");if(S.bs)t.push("mục B");
+    nt.innerHTML=t.length?"Bộ in gồm: danh mục hồ sơ, Mẫu 12 ("+t.join(", ")+")"+(meet?", biên bản họp ĐHĐCĐ, danh sách cổ đông dự họp, nghị quyết ĐHĐCĐ":"")+", giấy ủy quyền (nếu chọn người được ủy quyền).":"Chọn nội dung thay đổi ở trên."}}
+function ndPeopleOpts(c){const t0=today(),ch=chairOf(c);return`<option value="">(tự lấy từ tab Chức vụ)</option>`+[...new Set(PD().ppl.map(p=>cleanN(p.name)))].filter(Boolean).sort((a,b)=>a.localeCompare(b,"vi")).map(n=>`<option>${esc(n)}</option>`).join("")}
+function ndIssues(r,o,S){const I=[],ln=t=>String(t||"").split(/\n/).map(x=>x.trim()).filter(Boolean).map(x=>x.split("|").map(y=>y.trim()));
+  const mg=+o.mg||+r.menhgia||10000,vm=+o.vmoi||0,vc=+r.vdl||0,sl=vm?Math.round(vm/mg):0;
+  if(S.ten)I.push({t:"Đổi tên công ty",d:`Tên hiện tại: ${esc((r.name||r.code).toUpperCase())}.<br>Tên mới bằng tiếng Việt: <b>${esc((o.tenvn||"").toUpperCase())||blank}</b><br>Tên bằng tiếng nước ngoài: ${esc(o.tenen||"")||blank}<br>Tên viết tắt: ${esc(o.tentat||"")||blank}`,dl:"các nội dung về tên công ty tại Điều lệ"});
+  if(S.tru){const a=[o.tsno,o.tspx,o.tstinh].filter(Boolean).join(", ");I.push({t:"Thay đổi địa chỉ trụ sở chính",d:`Địa chỉ trụ sở chính hiện tại: ${esc(fixProv(r.addr)||"……")}.<br>Địa chỉ trụ sở chính mới: <b>${esc(a)||blank}</b>`,dl:"nội dung về địa chỉ trụ sở chính tại Điều lệ"})}
+  if(S.von)I.push({t:o.vht==="Giảm vốn"?"Giảm vốn điều lệ":"Tăng vốn điều lệ",d:`Vốn điều lệ hiện tại: ${vc?money(vc)+" đồng":blank}.<br>Vốn điều lệ sau thay đổi: <b>${vm?money(vm)+" đồng":blank}</b>${sl?` (tương ứng ${nf(sl)} cổ phần, mệnh giá ${money(mg)} đồng/cổ phần)`:""}.<br>Thời điểm thay đổi vốn: ${o.vtd?fmt(o.vtd):blank}`,dl:"nội dung về vốn điều lệ, số cổ phần tại Điều lệ"});
+  if(S.nganh){const add=ln(o.ngadd),del=ln(o.ngdel),mod=ln(o.ngmod),L=a=>a.map((x,i)=>`${i+1}. ${esc(x[0]||"")} (mã ngành ${esc(x[1]||"……")})${x[2]&&/^x$/i.test(x[2])?" - ngành chính":""}`).join("<br>");
+    I.push({t:"Thay đổi ngành, nghề kinh doanh",d:(add.length?`<b>Bổ sung:</b><br>${L(add)}<br>`:"")+(del.length?`<b>Bỏ:</b><br>${L(del)}<br>`:"")+(mod.length?`<b>Sửa đổi chi tiết:</b><br>${L(mod)}`:"")||blank,dl:"nội dung về ngành, nghề kinh doanh tại Điều lệ"})}
+  return I}
+function ndCtx(c,o,S){const X=setCtx(c,{chair:o.mchair,tk:o.mtk,soBB:o.mbb,soNQ:o.mnq}),ch=chairOf(c);
+  X.m={ngay:o.mngay||"",gio:o.mgio||"08:30",dd:o.mdd||""};X.pct=+o.mpct||100;X.tt=+o.mtt||100;
+  if(!X.chair&&ch)X.chair=cleanN(ch.name);X.iss=ndIssues(X.r,o,S);return X}
+function ndBB(X,o){const {r,m,rows,tot,pct,tt}=X,ng=m.ngay,dd=m.dd||("tại trụ sở "+(r.name||r.code)),I=X.iss,att=rows.length,v=Math.round(tot*pct/100),ok=Math.round(v*tt/100),g=m.gio||"08:30";
+  const lines=rows.map((x,i)=>{const i2=x.info,p=x.rec,rp=i2.rep?persOf(i2.rep):{},isCh=X.chair&&pn(i2.rep||i2.name)===pn(X.chair);
+    return i2.ent?`${i+1}. ${ttl(rp)} <b>${esc((i2.rep||"……………").toUpperCase())}</b>${isCh?" chức vụ: Chủ tịch Hội đồng quản trị,":","} đại diện ${esc(i2.name)}, sở hữu ${nf(x.sh)} cổ phần trị giá ${money(x.sh*X.par)} VND chiếm ${nf(x.p)}% vốn điều lệ${isCh?". - Chủ tọa cuộc họp":""}`:`${i+1}. ${ttl(persOf(i2.name))} <b>${esc(i2.name.toUpperCase())}</b> cổ đông sở hữu ${nf(x.sh)} cổ phần trị giá ${money(x.sh*X.par)} VND chiếm ${nf(x.p)}% vốn điều lệ${isCh?". - Chủ tọa cuộc họp":""}`}).join("<br>");
+  const vote=lbl=>`- ${lbl} Tổng số phiếu biểu quyết: ${nf(v)} phiếu<br>- Phương thức biểu quyết: Bỏ phiếu kín<br>- Tổng số phiếu biểu quyết hợp lệ: ${nf(v)} phiếu; không hợp lệ: 0 phiếu<br>- Tổng số phiếu tán thành: ${nf(ok)} phiếu, đạt tỷ lệ ${nf(tt)}% trên tổng số phiếu biểu quyết của cổ đông dự họp<br>- Tổng số phiếu không tán thành: ${nf(v-ok)} phiếu; không có ý kiến: 0 phiếu`;
+  const ord=["thứ nhất","thứ hai","thứ ba","thứ tư","thứ năm"];
+  const ykien=rows.map(x=>`- Ý kiến của ${x.info.ent?ttl(persOf(x.info.rep))+" "+esc((x.info.rep||"……").toUpperCase())+" đại diện "+esc(x.info.name):ttl(persOf(x.info.name))+" "+esc(x.info.name.toUpperCase())}: Đồng ý`).join("<br>");
+  const tt0=I.map(i=>i.t.toLowerCase()).join("; ");
+  return `<div class="fpage nq">${lh(r,X.bbh,X.dia,dmy(ng),"")}
+<div class="fh"><h2 style="margin-top:12px">BIÊN BẢN HỌP ĐẠI HỘI ĐỒNG CỔ ĐÔNG</h2><div class="fs"><b>Về việc ${esc(tt0)}</b></div></div>
+<p><b>1. Tên, địa chỉ trụ sở chính, mã số doanh nghiệp, thời gian, địa điểm họp:</b></p>
+<p>Hôm nay vào lúc ${esc(gioText(m.gio))} ${ng?"ngày "+fmt(ng):"ngày ……/……/………"}, ${esc(dd)}, ${esc(r.name||r.code)}, mã số doanh nghiệp: ${esc(r.msdn||"……")}, địa chỉ: ${esc(fixProv(r.addr)||"……")}, chúng tôi gồm có:</p><p>${lines||blank}</p>
+<p><b>2. Chương trình và nội dung họp:</b></p>
+<table class="fm"><thead><tr><th style="width:22%">Thời gian</th><th class="l">Nội dung</th></tr></thead><tbody>
+<tr><td>${addMin(g,0)} - ${addMin(g,15)}</td><td class="l">Đón tiếp đại biểu</td></tr>
+<tr><td>${addMin(g,15)} - ${addMin(g,30)}</td><td class="l">- Tuyên bố lý do;<br>- Giới thiệu thành phần tham dự<br>- Báo cáo kết quả kiểm tra tư cách đại biểu, tuyên bố đủ điều kiện tiến hành cuộc họp</td></tr>
+<tr><td>${addMin(g,30)} - ${addMin(g,60)}</td><td class="l">- Đại hội thảo luận và biểu quyết: ${esc(tt0)}</td></tr>
+<tr><td>${addMin(g,60)} - ${addMin(g,90)}</td><td class="l">- Biểu quyết thông qua Biên bản và Nghị quyết;<br>- Bế mạc.</td></tr></tbody></table>
+<p>Họ, tên chủ tọa, thư ký:<br>${ttl(persOf(X.tk))} ${esc(X.tk||"……………")} - Thư ký cuộc họp<br>Chủ tịch Hội đồng quản trị - Chủ tọa cuộc họp: ${esc(X.chair?ttl(persOf(X.chair))+" "+X.chair.toUpperCase():"……………")} tuyên bố số cổ đông dự họp đại diện ${nf(pct)}% tổng số cổ phần có quyền biểu quyết của Công ty, đủ điều kiện tiến hành họp Đại hội đồng cổ đông.</p>
+<p><b>Nội dung họp:</b><br>Đại hội đồng cổ đông thảo luận, lấy ý kiến các cổ đông dự họp đối với các vấn đề sau:</p>${I.map((i,k)=>`<p><b>Vấn đề ${ord[k]||k+1}:</b> ${esc(i.t)}.<br>${i.d}<br>Sửa đổi, bổ sung ${esc(i.dl)} cho phù hợp.</p>`).join("")}
+<p><b>3. Tóm tắt diễn biến cuộc họp và các ý kiến phát biểu:</b><br>- Chủ tọa tuyên bố việc triệu tập họp, điều kiện và thể thức tiến hành họp phù hợp với Luật Doanh nghiệp và Điều lệ công ty; số cổ đông dự họp đại diện ${nf(pct)}% tổng số cổ phần có quyền biểu quyết, đủ điều kiện tiến hành họp.<br>- Đại hội thảo luận và nêu ý kiến về các vấn đề nêu trên.<br>${I.map((i,k)=>`<b>Vấn đề ${ord[k]||k+1}:</b> ${esc(i.t)}<br>${ykien}`).join("<br>")}</p>
+<p><b>4. Số cổ đông và tổng số phiếu biểu quyết của các cổ đông dự họp:</b><br>Số cổ đông: ${String(att).padStart(2,"0")}<br>Tổng số phiếu biểu quyết của các cổ đông dự họp: ${nf(v)} phiếu<br>Phụ lục danh sách đăng ký cổ đông: Đính kèm<br>Đại diện cổ đông dự họp: ${String(att).padStart(2,"0")}/${String(att).padStart(2,"0")} cổ đông đại diện cho ${nf(v)}/${nf(tot)} phiếu</p>
+<p><b>5. Tổng số phiếu biểu quyết đối với từng vấn đề:</b><br>${I.map((i,k)=>vote(`<b>Vấn đề biểu quyết ${ord[k]||k+1}:</b> ${esc(i.t)}.`)).join("<br>")}</p>
+<p><b>6. Các vấn đề được thông qua và tỷ lệ phiếu biểu quyết thông qua tương ứng</b><br>Đại hội thông qua các nội dung nêu trên với tỷ lệ ${nf(tt)}% tổng số phiếu biểu quyết tán thành.<br>Tất cả cổ đông dự họp đã đọc nội dung biên bản, đồng ý nội dung, biểu quyết nhất trí ${String(att).padStart(2,"0")}/${String(att).padStart(2,"0")} cổ đông.<br>Chủ tọa và thư ký ghi biên bản cuộc họp, ký tên chịu trách nhiệm về tính trung thực và chính xác của nội dung biên bản.<br>Giao cho Hội đồng quản trị tiến hành các thủ tục cần thiết theo quy định của pháp luật.<br>Cuộc họp kết thúc vào lúc ${esc(gioText(addMin(g,90).replace("h",":")))} cùng ngày./.</p>
+${sigTwo(X.tk.toUpperCase(),X.chair.toUpperCase(),"THƯ KÝ CUỘC HỌP","CHỦ TỌA CUỘC HỌP")}</div>`}
+function ndNQ(X,o){const {r,m}=X,I=X.iss,tt0=I.map(i=>i.t.toLowerCase()).join("; ");
+  return `<div class="fpage nq">${lh(r,X.nqn,X.dia,dmy(m.ngay),"")}
+<div class="fh"><h2 style="margin-top:12px">NGHỊ QUYẾT<br>ĐẠI HỘI ĐỒNG CỔ ĐÔNG</h2></div>
+<p style="margin-left:18px">- Căn cứ Luật Doanh nghiệp;<br>- Căn cứ Điều lệ ${esc(r.name||r.code)};<br>- Căn cứ Biên bản họp số ${esc(X.bbh)||blank} ${dmy(m.ngay)}.</p>
+<h3 style="text-align:center">QUYẾT NGHỊ</h3><p style="text-align:center"><b>"Về việc: ${esc(tt0)}"</b></p>
+${I.map((i,k)=>`<p><b>Điều ${k+1}. ${esc(i.t)}:</b><br>${i.d}<br>Sửa đổi, bổ sung ${esc(i.dl)} tương ứng.</p>`).join("")}
+<p><b>Điều ${I.length+1}. Tổ chức thực hiện.</b><br>Hội đồng quản trị và người đại diện theo pháp luật của Công ty chịu trách nhiệm thi hành Nghị quyết này và thực hiện các thủ tục pháp lý để đăng ký thay đổi tại cơ quan nhà nước có thẩm quyền.<br>Nghị quyết này có hiệu lực kể từ ngày ký./.</p>
+<p><b>Nơi nhận:</b><br>- Như Điều ${I.length+1};<br>- ${esc(X.cq)} để đăng ký;<br>- Lưu hồ sơ.</p>
+<div class="fsig"><b>TM. ĐẠI HỘI ĐỒNG CỔ ĐÔNG<br>CHỦ TỊCH HỘI ĐỒNG QUẢN TRỊ</b><div style="height:70px"></div><b>${esc((X.chair||"").toUpperCase())}</b></div></div>`}
+function ndGUQ(c,o,it){const r=coRec(c),t0=today(),p=PD().pos.filter(q=>same(q.co,c)&&/nddpl|daidienphapluat/.test(norm(q.role))&&activeP(q,t0))[0],old=p?{name:p.name,title:p.title||p.role}:null,w=persOf(o.uq||""),cq=cqOf(r)||"Cơ quan đăng ký kinh doanh ……………",dia=diaOf(r)||"……………";
+  return `<div class="fpage nq">${lh(r,o.sguq||"",dia,dmy(o.nguq||o.ngay),"")}
+<div class="fh"><h2 style="margin-top:12px">GIẤY ỦY QUYỀN</h2></div>
+<p>Tên tổ chức: <b>${esc((r.name||r.code).toUpperCase())}</b><br>GCN ĐKDN số: ${esc(r.msdn||"……")} do ${esc(cq)} cấp.<br>Người đại diện pháp luật: ${old?ttl(persOf(old.name))+" <b>"+esc(cleanN(old.name).toUpperCase())+"</b> - Chức vụ: "+esc(old.title||""):"…………………"}</p>
+<p>Nay ủy quyền cho:<br>${ttl(w)}: <b>${esc(cleanN(w.name)||"……………")}</b> &nbsp;&nbsp;&nbsp; CCCD số: ${esc(w.cccd||"")||blank}<br>SĐT: ${esc(w.sdt||"")||blank} &nbsp;&nbsp; - &nbsp;&nbsp; E-mail: ${esc(w.email||"")||blank}</p>
+<p>Được thay mặt tôi thực hiện các công việc sau:<br>(i) Liên hệ với ${esc(cq)} để nộp hồ sơ ${esc(it.toLowerCase())} của Công ty;<br>(ii) Giải trình, soạn thảo các giấy tờ cần thiết liên quan đến hồ sơ nêu trên; nhận các thông báo, quyết định, văn bản của cơ quan có thẩm quyền liên quan đến thủ tục nêu trên;<br>(iii) Nộp, rút lại giấy tờ, tài liệu, nộp lệ phí và thực hiện các công việc cần thiết khác cho việc thực hiện thủ tục; và<br>(iv) Nhận bản chính Giấy chứng nhận, giấy xác nhận, thông báo hoặc kết quả khác được cấp cho Công ty.</p>
+<p>Giấy ủy quyền này được cấp mà không có quyền ủy quyền lại, trừ trường hợp ủy quyền cho đơn vị Bưu điện thực hiện việc nộp hồ sơ và nhận kết quả.<br>Thời hạn ủy quyền: kể từ ngày ký cho đến khi hoàn thành công việc ủy quyền.<br>Tôi xác nhận và chịu trách nhiệm trước pháp luật về các công việc được thực hiện hợp pháp bởi bên được ủy quyền trong phạm vi ủy quyền nêu trên.</p>
+<div class="fsig"><b>${esc(old?(old.title||"").toUpperCase():"NGƯỜI ĐẠI DIỆN THEO PHÁP LUẬT")}</b><br><i>(Ký và ghi rõ họ tên, đóng dấu)</i><div style="height:70px"></div><b>${esc(old?cleanN(old.name).toUpperCase():"")}</b></div></div>`}
+function ndMeetPages(c,o,S){const pages=[],X=ndCtx(c,o,S);if(!X.iss.length)return pages;pages.push(ndBB(X,o));if(X.rows.length)pages.push(setDS(X));pages.push(ndNQ(X,o));return pages}
 const M12S=[["ten","Thay đổi tên doanh nghiệp"],["tru","Thay đổi địa chỉ trụ sở chính"],["von","Thay đổi vốn điều lệ (công ty cổ phần)"],["nganh","Thông báo thay đổi ngành, nghề kinh doanh"],["cd","Thay đổi cổ đông sáng lập / cổ đông là nhà đầu tư nước ngoài (kèm Mẫu 7, Mẫu 8)"],["thue","Thông báo thay đổi thông tin đăng ký thuế"],["bo","Thông báo thay đổi thông tin chủ sở hữu hưởng lợi (kèm Mẫu 10)"],["bs","Mục B: bổ sung, cập nhật thông tin đăng ký doanh nghiệp"]];
 function m12Box(cos){
   const L=(t,i,full)=>`<label class="stl"${full?' style="grid-column:1/-1"':""}>${t}${i}</label>`,I=(k,ph,ty)=>`<input data-m12k="${k}" type="${ty||"text"}"${ph?` placeholder="${esc(ph)}"`:""}>`,A=(k,ph)=>`<textarea data-m12k="${k}" rows="3" placeholder="${esc(ph)}" style="width:100%"></textarea>`;
@@ -1700,7 +1765,7 @@ function m12Box(cos){
 ${L("Thủ tục",`<select data-m12k="it">${HSG.find(g=>g.id==="nd").items.map(i=>`<option>${esc(i.t)}</option>`).join("")}</select>`)}${L("Doanh nghiệp",`<select data-m12k="co">${cos.map(c=>`<option>${esc(c)}</option>`).join("")}</select>`)}
 ${L("Người ký (người đại diện theo pháp luật)",`<select data-m12k="sign"><option value="">(tự lấy NĐDPL hiện hành)</option>${ppl.map(n=>`<option>${esc(n)}</option>`).join("")}</select>`)}
 ${L("Số văn bản",I("so","để trống nếu chưa có"))}${L("Ngày văn bản",I("ngay","","date"))}
-<div style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:10px"><b>Nội dung thay đổi:</b>${M12S.map(([k,t])=>`<label class="mck"><input type="checkbox" data-m12c="${k}"> ${esc(t)}</label>`).join("")}</div>
+<div data-g="sel" style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:10px"><b>Nội dung thay đổi:</b>${M12S.map(([k,t])=>`<label class="mck"><input type="checkbox" data-m12c="${k}"> ${esc(t)}</label>`).join("")}</div>
 ${L("Tên tiếng Việt sau thay đổi (in hoa)",I("tenvn"),1)}${L("Tên tiếng nước ngoài (nếu có)",I("tenen"))}${L("Tên viết tắt (nếu có)",I("tentat"))}
 ${L("Trụ sở mới: số nhà, đường/phố, tổ/ấp",I("tsno"),1)}${L("Xã/Phường/Đặc khu",I("tspx"))}${L("Tỉnh/Thành phố",I("tstinh"))}
 ${L("Điện thoại",I("tsdt"))}${L("Thư điện tử",I("tsem"))}${L("Website",I("tsweb"))}
@@ -1708,7 +1773,11 @@ ${L("Khu",`<select data-m12k="khu"><option value="">Không nằm trong khu</opti
 ${L("Vốn điều lệ sau thay đổi (đồng)",I("vmoi","VD: 580000000000"))}${L("Mệnh giá cổ phần (đồng)",I("mg","mặc định theo tab Pháp nhân"))}${L("Thời điểm thay đổi vốn",I("vtd","","date"))}
 ${L("Hình thức tăng, giảm vốn",`<select data-m12k="vht"><option>Tăng vốn</option><option>Giảm vốn</option></select>`)}
 ${L("Bổ sung ngành, nghề (mỗi dòng: Tên | Mã ngành | x nếu là ngành chính)",A("ngadd","Bán buôn kim loại | 4662 | x"),1)}${L("Bỏ ngành, nghề (mỗi dòng: Tên | Mã ngành | Ghi chú)",A("ngdel","Tên ngành | Mã"),1)}${L("Sửa đổi chi tiết ngành, nghề (mỗi dòng: Tên | Mã ngành | x nếu chính)",A("ngmod","Tên ngành | Mã"),1)}
-<div style="grid-column:1/-1"><b>Cổ đông liệt kê trong Mẫu 7 / Mẫu 8</b> <small style="color:var(--mute)">(chỉ cần khi thủ tục có Mẫu 7, Mẫu 8)</small><div data-m78list style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px"></div></div>${L("Thời hạn góp vốn (Mẫu 7, 8)",I("hth","VD: đã góp đủ"))}${L("Loại tài sản góp vốn (Mẫu 7, 8)",I("tsan","Đồng Việt Nam"))}
+<div data-g="cd" style="grid-column:1/-1"><b>Cổ đông liệt kê trong Mẫu 7 / Mẫu 8</b> <small style="color:var(--mute)">(chỉ cần khi thủ tục có Mẫu 7, Mẫu 8)</small><div data-m78list style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px"></div></div>${L("Thời hạn góp vốn (Mẫu 7, 8)",I("hth","VD: đã góp đủ"))}${L("Loại tài sản góp vốn (Mẫu 7, 8)",I("tsan","Đồng Việt Nam"))}
+${L("Ngày họp ĐHĐCĐ",I("mngay","","date"))}${L("Giờ họp",I("mgio","08:30"))}${L("Địa điểm họp",I("mdd","VD: tại trụ sở công ty"),1)}
+${L("Chủ tọa",`<select data-m12k="mchair">${ndPeopleOpts("")}</select>`)}${L("Thư ký",`<select data-m12k="mtk">${ndPeopleOpts("")}</select>`)}${L("Số biên bản họp",I("mbb"))}${L("Số nghị quyết",I("mnq"))}${L("Tỷ lệ cổ phần dự họp (%)",I("mpct","100"))}${L("Tỷ lệ tán thành (%)",I("mtt","100"))}
+${L("Người được ủy quyền nộp hồ sơ",`<select data-m12k="uq">${ndPeopleOpts("").replace("(tự lấy từ tab Chức vụ)","(không in giấy ủy quyền)")}</select>`)}${L("Số giấy ủy quyền",I("sguq"))}${L("Ngày giấy ủy quyền",I("nguq","","date"))}
+<div data-g="note" style="grid-column:1/-1;font-size:12px;color:var(--mute)"></div>
 <div style="grid-column:1/-1"><button class="primary" data-m12go>Xem trước và in cả bộ</button> <button data-m12go="chk">In riêng danh mục hồ sơ</button> <button data-m12go="m12">Chỉ in Mẫu 12</button></div></div>
 <small style="display:block;color:var(--mute);margin-top:4px">Dựng theo Mẫu số 12 của Thông tư 121/2026/TT-BTC (thay thế từ 21/08/2026), đối chiếu từ file Thông tư. Các phần B (bổ sung, cập nhật) và C (hiệu đính) không in; thông tin đăng ký thuế không in. Cổ đông sáng lập và nhà đầu tư nước ngoài kê khai tại Mẫu 7, Mẫu 8 gửi kèm.</small></div>`}
 function m12Read(bx){const o={};bx.querySelectorAll("[data-m12k]").forEach(e=>{o[e.dataset.m12k]=e.type==="checkbox"?e.checked:e.value});o.s={};bx.querySelectorAll("[data-m12c]").forEach(e=>{o.s[e.dataset.m12c]=e.checked});o.sel=[...bx.querySelectorAll("[data-m78n]")].filter(e=>e.checked).map(e=>e.value);return o}
@@ -1775,7 +1844,9 @@ function printM12(o,mode){const c=o.co;if(!c)return;const it=HSI.find(x=>x.t===o
   if(mode!=="chk"){if(Object.values(S).some(Boolean))pages.push(formM12(c,o2));
     if((P.m||[]).includes(7)&&(o.sel||[]).length&&(S.cd||/sáng lập/.test(it.t)))pages.push(formM78(7,c,o2));
     if((P.m||[]).includes(8)&&(o.sel||[]).length&&(S.cd||/nước ngoài/.test(it.t)))pages.push(formM78(8,c,o2));
-    if(S.bo||(S.von&&false))pages.push(formM10(c))}
+    if(S.bo||(S.von&&false))pages.push(formM10(c));
+    if(S.ten||S.tru||S.von||S.nganh)ndMeetPages(c,o2,S).forEach(x=>pages.push(x));
+    if(o.uq)pages.push(ndGUQ(c,o2,it.t))}
   showSheet(pages.join(""),{title:it.t+" - "+c})}
 const FORMS={m10:{t:"Danh sách CSHHL (Mẫu 10)",f:formM10},m13:{t:"Thay đổi NĐDPL (Mẫu 13)",f:formM13}};
 function printForm(key,co){
@@ -1835,9 +1906,9 @@ ${g.id==="bo"?'<small style="display:block;margin-top:8px;color:var(--mute)">Th�
 <li>Biểu mẫu in theo bố cục văn bản hợp nhất 28/2026/VBHN-TT-BTC và TT 121/2026/TT-BTC. Các dòng ghi "Thông lệ, cần đối chiếu" chưa xác nhận từ văn bản chính thức: kiểm tra lại trước khi nộp.</li></ul></details>`;
   $("plist").innerHTML=nav+notice+body;
   try{const bx=$("plist").querySelector("[data-setbox]");if(bx)fillSetBox(bx)}catch(e){}
-  try{const bx=$("plist").querySelector("[data-m12box]");if(bx){fillM78(bx);applyNdItem(bx)}}catch(e){}
+  try{const bx=$("plist").querySelector("[data-m12box]");if(bx){fillM78(bx);applyNdItem(bx);m12Vis(bx)}}catch(e){}
 }
-$("plist").addEventListener("change",e=>{const t=e.target;if(t&&t.dataset&&t.dataset.m12k&&(t.dataset.m12k==="co"||t.dataset.m12k==="it")){const bx=t.closest("[data-m12box]");if(bx){fillM78(bx);if(t.dataset.m12k==="it")applyNdItem(bx)}return}if(t&&t.dataset&&t.dataset.mesel!==undefined){PD().me=t.value;saveC();rMe();return}if(t&&t.dataset&&t.dataset.pfco==="set"&&(t.dataset.k==="co"||t.dataset.k==="mt")){const bx=t.closest("[data-setbox]");if(bx)fillSetBox(bx,true)}});
+$("plist").addEventListener("change",e=>{const t=e.target;if(t&&t.dataset&&t.dataset.m12k&&(t.dataset.m12k==="co"||t.dataset.m12k==="it")){const bx=t.closest("[data-m12box]");if(bx){fillM78(bx);if(t.dataset.m12k==="it")applyNdItem(bx);m12Vis(bx)}return}if(t&&t.dataset&&t.dataset.m12c){const bx=t.closest("[data-m12box]");if(bx)m12Vis(bx);return}if(t&&t.dataset&&t.dataset.mesel!==undefined){PD().me=t.value;saveC();rMe();return}if(t&&t.dataset&&t.dataset.pfco==="set"&&(t.dataset.k==="co"||t.dataset.k==="mt")){const bx=t.closest("[data-setbox]");if(bx)fillSetBox(bx,true)}});
 /* ===== Họp HĐQT / ĐHĐCĐ ===== */
 const mtTitle=m=>(m.co||"")+": "+(m.ten||m.loai||"")+(m.ngay?" ("+fmt(m.ngay)+")":"");
 const dDiff=(a,b)=>Math.round((new Date(b+"T00:00:00")-new Date(a+"T00:00:00"))/864e5);
