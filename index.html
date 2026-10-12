@@ -1472,7 +1472,7 @@ function hsGaps(){
   const grpOf=h=>(HSI.find(i=>i.t===h.tt)||{}).g;
   const has=(c,g)=>d.hs.some(h=>same(h.co,c)&&grpOf(h)===g);
   const pend=x=>x.dk==="Đang thực hiện đăng ký"||x.dk==="Chưa đăng ký";
-  d.co.filter(pend).forEach(x=>{if(!has(x.code,"nd"))out.push({c:x.code,t:"Đang hoặc chưa đăng ký thay đổi GCNĐKDN nhưng chưa có hồ sơ nộp Sở TC (nhóm Thay đổi nội dung ĐKDN)"})});
+  d.co.filter(pend).forEach(x=>{const dn=x.dknd||"",gid=/chi nhánh|văn phòng đại diện|địa điểm kinh doanh/i.test(dn)?"cn":/giải thể|tạm ngừng/i.test(dn)?"tn":"nd",gl={cn:"Chi nhánh, VPĐD, địa điểm KD",tn:"Tạm ngừng, giải thể",nd:"Thay đổi nội dung ĐKDN"};if(!has(x.code,gid))out.push({c:x.code,t:"Đang hoặc chưa đăng ký thay đổi GCNĐKDN nhưng chưa có hồ sơ nộp Sở TC (nhóm "+gl[gid]+")"})});
   d.pos.filter(p=>pend(p)&&isN(p)&&activeP(p,t0)).forEach(p=>{if(!has(p.co,"dd"))out.push({c:p.co,t:"Thay đổi NĐDPL "+p.name+" chưa có hồ sơ nộp Sở TC (Mẫu 13)"})});
   d.bo.filter(pend).forEach(x=>{if(!has(x.co,"bo"))out.push({c:x.co,t:"CSHHL "+x.name+" chưa có hồ sơ nộp Sở TC (Mẫu 10)"})});
   d.hs.filter(h=>h.st==="Đã có kết quả").forEach(h=>{const g=grpOf(h);
