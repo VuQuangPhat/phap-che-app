@@ -1788,8 +1788,9 @@ function splitAddr(a){const P=fixProv(a).split(",").map(x=>x.trim()).filter(Bool
 function persBlock(name,title){const p=persOf(name);
   return `<div class="pb">- Họ và tên: <b>${esc(cleanN(name).toUpperCase())||blank}</b> &nbsp;&nbsp;&nbsp;&nbsp; Giới tính: ${esc(p.gt||"")||blank}<br>- Chức danh: ${esc(title||"")||blank}<br>- Sinh ngày: ${p.dob?fmt(p.dob):blank} &nbsp;&nbsp; Dân tộc: ${esc(p.dt||"Kinh")} &nbsp;&nbsp; Quốc tịch: ${esc(p.qt||"Việt Nam")}<br>- Căn cước công dân: ${esc(p.cccd||"")||blank} &nbsp;&nbsp; Ngày cấp: ${p.cccdngay?fmt(p.cccdngay):blank}<br>- Nơi cấp: ${esc(p.cccdnoi||"")||blank}<br>- Địa chỉ thường trú: ${esc(fixProv(p.ttru||p.addr||""))||blank}</div>`}
 function holderInfo(row){const n=row.n,ent=isEnt(n);
-  if(ent){const lk=row.rec&&row.rec.lk,c=PD().co.find(x=>(lk&&same(x.code,lk))||same(x.code,n)||pn(x.name)===pn(n)||cn(x.name)===cn(n));
-    return{ent:1,name:c?c.name:n,addr:fixProv(c&&c.addr||""),qt:"",gp:c?"GPKD số: "+(c.msdn||"……")+(c.ngaylan1?" ngày cấp "+fmt(c.ngaylan1):"")+(c.noicap?" tại: "+c.noicap:""):"",rep:cleanN((row.rec&&row.rec.dd)||"")}}
+  if(ent){const par=((n.match(/\(([^)]+)\)/)||[])[1]||"").trim(),clean=n.replace(/\s*\([^)]*\)\s*/g," ").trim(),lk=row.rec&&row.rec.lk;
+    const c=PD().co.find(x=>(lk&&same(x.code,lk))||same(x.code,n)||(par&&same(x.code,par))||pn(x.name)===pn(clean)||cn(x.name)===cn(clean));
+    return{ent:1,name:c?c.name:clean,addr:fixProv(c&&c.addr||""),qt:"",gp:c?"GPKD số: "+(c.msdn||"……")+(c.ngaylan1?" ngày cấp "+fmt(c.ngaylan1):"")+(c.noicap?" tại: "+c.noicap:""):"",rep:cleanN((row.rec&&row.rec.dd)||"")}}
   const p=persOf(n);return{ent:0,name:cleanN(n),addr:fixProv(p.addr||""),qt:p.qt||"Việt Nam",gp:p.cccd?"CCCD: "+p.cccd+(p.cccdngay?"; Cấp ngày: "+fmt(p.cccdngay):"")+(p.cccdnoi?"; tại "+p.cccdnoi:""):"",rep:cleanN(n)}}
 function fixProv(a){return String(a||"").replace(/(tỉnh\s+)?long an(?=\s*(,\s*việt nam)?\s*$)/i,m=>/^tỉnh/i.test(m)?"Tỉnh Tây Ninh":"Tây Ninh")}
 function provOf(addr0){const addr=fixProv(addr0);const P=String(addr||"").split(",").map(x=>x.trim()).filter(Boolean);while(P.length&&/^(việt nam|vietnam|viet nam)$/i.test(P[P.length-1]))P.pop();if(!P.length)return{name:"",city:false};
