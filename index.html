@@ -717,6 +717,7 @@ ghInit();
 #vprof .panel .kpi{border-left:2px solid var(--line);padding-left:10px}
 #vprof .panel .kpi b{font-size:21px;color:var(--ink)}#vprof .panel .kpi.late{border-left-color:var(--seal)}#vprof .panel .kpi.late b{color:var(--seal)}
 #vprof summary::-webkit-details-marker{display:none}
+#vprof .dkp{color:var(--warn);font-weight:600}
 #vprof .panel{border-top:4px solid var(--cc,var(--c0));background:color-mix(in srgb,var(--cc,var(--c0)) 4%,var(--card))}
 #vprof .panel h3{color:var(--cc,var(--c0));font-size:15px;padding-bottom:6px;margin-bottom:10px;border-bottom:1px solid color-mix(in srgb,var(--cc,var(--c0)) 35%,var(--line))}
 #vprof .panel .kpi{border-left:3px solid var(--cc,var(--c0));padding-left:10px}
@@ -734,7 +735,8 @@ ghInit();
 const bootHoSoCongTy=()=>{
 /* ---------- Lược đồ 4 mục ---------- */
 const ROLES=["NĐDPL","Chủ tịch HĐQT","Tổng Giám đốc","Giám đốc","Giám đốc điều hành","Người được ủy quyền","Cổ đông","Khác"];
-const DKS=["Không áp dụng","Đã đăng ký","Chưa đăng ký"];
+const DKS=["Không áp dụng","Đã đăng ký","Đang thực hiện đăng ký","Chưa đăng ký"];
+const dkTag=x=>x.dk==="Chưa đăng ký"?'<span class="bad">Chưa đăng ký</span>':x.dk==="Đang thực hiện đăng ký"?'<span class="dkp">Đang thực hiện đăng ký</span>':x.dk==="Đã đăng ký"?"Đã đăng ký":"";
 const SEC={
   co:{lab:"Pháp nhân",one:"pháp nhân",req:["code"],
     key:o=>norm(o.code),
@@ -743,6 +745,8 @@ const SEC={
        {k:"msdn",l:"Mã số doanh nghiệp / MST"},
        {k:"lan",l:"Lần đăng ký thay đổi (số lần)",t:"int"},
        {k:"ngay",l:"Ngày cấp lần đăng ký hiện hành",t:"date"},
+       {k:"dk",l:"Đăng ký thay đổi GCNĐKDN với cơ quan đăng ký",t:"sel",o:DKS},
+       {k:"dknd",l:"Nội dung đăng ký thay đổi (VD: tăng vốn, đổi NĐDPL, đổi địa chỉ)",full:1},
        {k:"vdl",l:"Vốn điều lệ đăng ký (đồng)",t:"int"},
        {k:"vtg",l:"Vốn thực góp (đồng)",t:"int"},
        {k:"menhgia",l:"Mệnh giá cổ phần (đồng)",t:"int",ph:"10000"},
@@ -784,6 +788,8 @@ const SEC={
        {k:"dt",l:"Diện tích đất (m²)",t:"dec"},
        {k:"dtxd",l:"Diện tích kho xưởng (m²)",t:"dec"},
        {k:"tvdt",l:"Tổng vốn đầu tư (đồng)",t:"int"},
+       {k:"dk",l:"Đăng ký điều chỉnh GCNĐKĐT với cơ quan đăng ký",t:"sel",o:DKS},
+       {k:"dknd",l:"Nội dung đăng ký điều chỉnh (VD: điều chỉnh tiến độ, vốn đầu tư)",full:1},
        {k:"note",l:"Ghi chú, vấn đề pháp lý đang theo dõi",t:"area",full:1}]}
 };
 const ORDER=["co","ppl","pos","own","prj"];
@@ -934,7 +940,12 @@ function rDash(){
     if(!g)m.push("chưa có cơ cấu sở hữu vốn");else if(g.ok===false)m.push("cơ cấu sở hữu lệch vốn điều lệ ("+g.msg.toLowerCase()+")");
     m.forEach(s=>W.push([x.code,s]));
   });
-  d.pos.filter(x=>x.dk==="Chưa đăng ký"&&activeP(x,t0)).forEach(x=>W.push([x.co||"-",x.name+": chưa đăng ký thay đổi với cơ quan đăng ký"]));
+  const DKI=[],IP="Đang thực hiện đăng ký",CD="Chưa đăng ký",hit=x=>x.dk===IP||x.dk===CD;
+  d.co.filter(hit).forEach(x=>DKI.push({c:x.code,co:1,t:"Giấy chứng nhận đăng ký doanh nghiệp"+(x.dknd?": "+x.dknd:""),dk:x.dk}));
+  d.pos.filter(x=>hit(x)&&activeP(x,t0)).forEach(x=>DKI.push({c:x.co||"-",co:1,t:x.name+" - "+[x.role,x.title].filter(Boolean).join(", "),dk:x.dk}));
+  d.prj.filter(hit).forEach(x=>DKI.push({c:x.name,co:0,t:"Giấy chứng nhận đăng ký đầu tư"+(x.dknd?": "+x.dknd:""),dk:x.dk}));
+  DKI.sort((a,b)=>(a.dk===CD?0:1)-(b.dk===CD?0:1));
+  const pD=`<div class="panel full"><h3>Đăng ký thay đổi với cơ quan nhà nước (${DKI.length})</h3>${DKI.length?DKI.map(i=>`<div class="act" style="cursor:default"><span class="d">${i.co?chip(i.c):`<b>${esc(i.c)}</b>`}</span><span>${esc(i.t)}</span><span style="margin-left:auto;white-space:nowrap">${dkTag(i)}</span></div>`).join(""):'<small style="color:var(--mute)">Không có hồ sơ nào đang chờ hoặc đang thực hiện đăng ký.</small>'}</div>`;
   d.ppl.forEach(x=>{if(!x.cccd&&act.some(p=>same(p.name,x.name)))W.push([x.name,"thiếu số CCCD"])});
   d.prj.forEach(x=>{if(!x.owner)W.push([x.name,"thiếu chủ đầu tư"]);if(!x.nddpl)W.push([x.name,"thiếu NĐDPL / người điều hành dự án"])});
   const pW=`<div class="panel full"><h3>Cảnh báo cần xử lý (${W.length})</h3>${W.length?W.map(w=>`<div class="act" style="cursor:default"><span class="d">${COS().some(c=>same(c,w[0]))?chip(w[0]):`<b class="late-d">${esc(w[0])}</b>`}</span><span>${esc(w[1])}</span></div>`).join(""):'<small style="color:var(--mute)">Hồ sơ đã đủ, không có cảnh báo.</small>'}</div>`;
@@ -958,24 +969,24 @@ function rDash(){
   const pP=`<div class="panel"><h3>Chức vụ đang hiệu lực (${act.length}/${d.pos.length})</h3>${Object.keys(rc).length?ROLES.filter(r=>rc[r]).map(r=>`<div class="row" style="grid-template-columns:150px 1fr 30px"><span>${esc(r)}</span><div class="track"><i style="width:${rc[r]/mxR*100}%;background:var(--brand)"></i></div><span class="n">${rc[r]}</span></div>`).join(""):'<small style="color:var(--mute)">Chưa có hồ sơ nhân sự đang hiệu lực.</small>'}</div>`;
   /* dự án */
   const pJ=`<div class="panel"><h3>Dự án (${d.prj.length})</h3>${d.prj.length?d.prj.map(x=>`<div style="padding:6px 0;border-bottom:1px solid var(--line)"><b>${esc(x.name)}</b><br><small style="color:var(--mute)">${[x.owner?"CĐT: "+esc(x.owner):"",x.dt!==""&&x.dt!=null?"đất "+nf(x.dt)+" m²":"",x.tvdt?"vốn đầu tư "+bil(x.tvdt):"","việc đang xử lý: "+op(x)].filter(Boolean).join(" | ")}</small></div>`).join(""):'<small style="color:var(--mute)">Chưa có dự án.</small>'}</div>`;
-  const K=`<div class="panel full"><div class="kpis">${kpi(cos.length,"Pháp nhân")}${kpi(bil(sum(d.co,"vdl")),"Tổng vốn điều lệ")}${kpi(bil(sum(d.co,"vtg")),"Tổng vốn thực góp")}${kpi(new Set(act.map(x=>norm(x.name))).size,"Nhân sự đang giữ chức vụ")}${kpi(d.prj.length,"Dự án")}${kpi(bil(sum(d.prj,"tvdt")),"Tổng vốn đầu tư dự án")}${kpi(W.length,"Cảnh báo",W.length?"late":"")}</div></div>`;
-  $("plist").innerHTML=`<div class="dash" style="padding:12px 0 0">${K}${pW}${pCo}${pV}${pO}${pP}${pJ}</div>`;
+  const K=`<div class="panel full"><div class="kpis">${kpi(cos.length,"Pháp nhân")}${kpi(bil(sum(d.co,"vdl")),"Tổng vốn điều lệ")}${kpi(bil(sum(d.co,"vtg")),"Tổng vốn thực góp")}${kpi(new Set(act.map(x=>norm(x.name))).size,"Nhân sự đang giữ chức vụ")}${kpi(d.prj.length,"Dự án")}${kpi(bil(sum(d.prj,"tvdt")),"Tổng vốn đầu tư dự án")}${kpi(DKI.filter(i=>i.dk===IP).length,"Đang đăng ký với CQNN")}${kpi(W.length,"Cảnh báo",W.length?"late":"")}</div></div>`;
+  $("plist").innerHTML=`<div class="dash" style="padding:12px 0 0">${K}${pW}${pD}${pCo}${pV}${pO}${pP}${pJ}</div>`;
 }
 function rCo(r,all){
   const sum=k=>all.reduce((s,x)=>s+(+x[k]||0),0),miss=all.filter(x=>!x.msdn||!x.vdl||!x.addr).length;
-  $("pstats").innerHTML=st(all.length,"Pháp nhân")+st(money(sum("vdl")),"Tổng vốn điều lệ đăng ký (đồng)")+st(money(sum("vtg")),"Tổng vốn thực góp đã nhập (đồng)")+st(miss,"Hồ sơ còn thiếu MSDN, vốn hoặc trụ sở",miss?"late":"");
+  $("pstats").innerHTML=st(all.length,"Pháp nhân")+st(money(sum("vdl")),"Tổng vốn điều lệ đăng ký (đồng)")+st(money(sum("vtg")),"Tổng vốn thực góp đã nhập (đồng)")+st(miss,"Hồ sơ còn thiếu MSDN, vốn hoặc trụ sở",miss?"late":"")+st(all.filter(x=>x.dk==="Đang thực hiện đăng ký").length,"Đang thực hiện đăng ký thay đổi");
   if(!r.length){$("plist").innerHTML=empty();return}
   r=[...r].sort((a,b)=>ci(a.code)-ci(b.code)||a.code.localeCompare(b.code));
   $("plist").innerHTML=`<table class="m"><thead><tr><th>Mã</th><th>Doanh nghiệp</th><th>MSDN</th><th>Vốn điều lệ</th><th>Vốn thực góp</th><th>NĐDPL hiện hành</th></tr></thead><tbody>`+
   r.map(x=>{const lack=x.vtg!==""&&x.vtg!=null&&x.vdl&&+x.vtg<+x.vdl;
-    return `<tr data-id="${x.id}"><td>${chip(x.code)}</td><td class="t">${esc(x.name)}<small>${esc(x.addr)}</small></td><td>${esc(x.msdn)}<small class="s">${[x.lan?"Lần "+x.lan:"",x.ngay?fmt(x.ngay):""].filter(Boolean).join(" - ")}</small></td><td class="num">${money(x.vdl)}</td><td class="num">${x.vtg===""||x.vtg==null?"":money(x.vtg)}${lack?`<small class="s bad">Thấp hơn vốn điều lệ ${money(+x.vdl-+x.vtg)}</small>`:""}</td><td>${rep(x.code)}</td></tr>`}).join("")+"</tbody></table>";
+    return `<tr data-id="${x.id}"><td>${chip(x.code)}</td><td class="t">${esc(x.name)}<small>${esc(x.addr)}</small></td><td>${esc(x.msdn)}<small class="s">${[x.lan?"Lần "+x.lan:"",x.ngay?fmt(x.ngay):""].filter(Boolean).join(" - ")}</small>${x.dk&&x.dk!=="Không áp dụng"?`<small class="s">${dkTag(x)}${x.dknd?": "+esc(x.dknd):""}</small>`:""}</td><td class="num">${money(x.vdl)}</td><td class="num">${x.vtg===""||x.vtg==null?"":money(x.vtg)}${lack?`<small class="s bad">Thấp hơn vốn điều lệ ${money(+x.vdl-+x.vtg)}</small>`:""}</td><td>${rep(x.code)}</td></tr>`}).join("")+"</tbody></table>";
 }
 function rPpl(r,all){
   const t0=today(),P=PD().pos,isN=p=>/nddpl|daidienphapluat/.test(norm(p.role));
   const posOf=n=>P.filter(p=>same(p.name,n)).sort((a,b)=>ci(a.co)-ci(b.co)||(activeP(b,t0)-activeP(a,t0))||String(b.from||"").localeCompare(String(a.from||"")));
   const nm=all.filter(x=>P.some(p=>same(p.name,x.name)&&activeP(p,t0))).length,nd=new Set(P.filter(p=>isN(p)&&activeP(p,t0)).map(p=>norm(p.name))).size;
   const miss=all.filter(x=>!x.cccd).length,unreg=P.filter(p=>p.dk==="Chưa đăng ký").length;
-  $("pstats").innerHTML=st(all.length,"Nhân sự trong hồ sơ")+st(nm,"Đang giữ chức vụ")+st(nd,"Là NĐDPL hiện hành")+st(unreg,"Chức vụ chưa đăng ký thay đổi",unreg?"late":"")+st(miss,"Chưa có số CCCD",miss?"late":"");
+  $("pstats").innerHTML=st(all.length,"Nhân sự trong hồ sơ")+st(nm,"Đang giữ chức vụ")+st(nd,"Là NĐDPL hiện hành")+st(unreg,"Chức vụ chưa đăng ký thay đổi",unreg?"late":"")+st(P.filter(p=>p.dk==="Đang thực hiện đăng ký").length,"Chức vụ đang thực hiện đăng ký")+st(miss,"Chưa có số CCCD",miss?"late":"");
   if(!r.length){$("plist").innerHTML=empty();return}
   const key=x=>{const a=posOf(x.name).filter(p=>activeP(p,t0));return a.length?Math.min(...a.map(p=>ci(p.co))):9999};
   r=[...r].sort((a,b)=>key(a)-key(b)||String(a.name).localeCompare(String(b.name),"vi"));
@@ -983,12 +994,12 @@ function rPpl(r,all){
   r.map(x=>{
     const idl=[x.cccdngay||x.cccdnoi?"Cấp "+[x.cccdngay?fmt(x.cccdngay):"",x.cccdnoi].filter(Boolean).join(" - "):"",x.addr?"Thường trú: "+x.addr:""].filter(Boolean);
     const pl=posOf(x.name).map(p=>{const on=activeP(p,t0),ended=p.to&&p.to<t0;
-      return `<div data-pid="${p.id}" style="padding:3px 0;cursor:pointer;${on?"":"opacity:.6"}">${chip(p.co)} <b>${esc(p.role)}</b>${p.title?" - "+esc(p.title):""}<span style="display:block;color:var(--mute);font-size:12px">${p.from?fmt(p.from):"…"} đến ${p.to?fmt(p.to):"nay"}${p.uq?" | "+esc(p.uq):""}${p.dk==="Chưa đăng ký"?' | <span class="bad">Chưa đăng ký thay đổi</span>':p.dk==="Đã đăng ký"?" | Đã đăng ký":""}${ended?' | <span class="bad">Hết hiệu lực</span>':""}</span></div>`}).join("");
+      return `<div data-pid="${p.id}" style="padding:3px 0;cursor:pointer;${on?"":"opacity:.6"}">${chip(p.co)} <b>${esc(p.role)}</b>${p.title?" - "+esc(p.title):""}<span style="display:block;color:var(--mute);font-size:12px">${p.from?fmt(p.from):"…"} đến ${p.to?fmt(p.to):"nay"}${p.uq?" | "+esc(p.uq):""}${p.dk&&p.dk!=="Không áp dụng"?" | "+dkTag(p):""}${ended?' | <span class="bad">Hết hiệu lực</span>':""}</span></div>`}).join("");
     return `<tr data-id="${x.id}"><td class="t"><b>${esc(x.name)}</b><span style="display:block">${x.cccd?esc(x.cccd):'<span class="bad">Chưa có CCCD</span>'}</span>${x.note?`<small>${esc(x.note)}</small>`:""}</td><td>${idl.map(l=>`<div style="color:var(--mute);font-size:12px">${esc(l)}</div>`).join("")}</td><td>${pl}<a data-addpos="${esc(x.name)}" style="color:var(--brand);cursor:pointer;font-size:12px">+ Thêm chức vụ</a></td></tr>`}).join("")+"</tbody></table>";
 }
 function rPos(r,all){
   const t0=today();
-  $("pstats").innerHTML=st(all.length,"Chức vụ")+st(all.filter(x=>activeP(x,t0)).length,"Đang hiệu lực")+st(all.filter(x=>x.dk==="Chưa đăng ký").length,"Chưa đăng ký thay đổi",all.some(x=>x.dk==="Chưa đăng ký")?"late":"")+st(all.filter(x=>x.to&&x.to<t0).length,"Đã hết hiệu lực");
+  $("pstats").innerHTML=st(all.length,"Chức vụ")+st(all.filter(x=>activeP(x,t0)).length,"Đang hiệu lực")+st(all.filter(x=>x.dk==="Chưa đăng ký").length,"Chưa đăng ký thay đổi",all.some(x=>x.dk==="Chưa đăng ký")?"late":"")+st(all.filter(x=>x.dk==="Đang thực hiện đăng ký").length,"Đang thực hiện đăng ký")+st(all.filter(x=>x.to&&x.to<t0).length,"Đã hết hiệu lực");
   if(!r.length){$("plist").innerHTML=empty();return}
   r=[...r].sort((a,b)=>ci(a.co)-ci(b.co)||String(a.co).localeCompare(String(b.co))||(activeP(b,t0)-activeP(a,t0))||String(a.name).localeCompare(String(b.name),"vi"));
   let h=`<table class="m" style="min-width:760px;table-layout:fixed"><colgroup><col style="width:22%"><col style="width:22%"><col style="width:15%"><col style="width:29%"><col style="width:12%"></colgroup><thead><tr><th>Họ và tên</th><th>Vai trò, chức danh</th><th>Hiệu lực</th><th>Bổ nhiệm / ủy quyền</th><th>Đăng ký</th></tr></thead><tbody>`,cur=null;
@@ -996,7 +1007,7 @@ function rPos(r,all){
     const gk=norm(x.co),cl=posClosed.has(gk);
     if(cur!==gk){cur=gk;const rs=r.filter(y=>same(y.co,x.co)),na=rs.filter(y=>activeP(y,t0)).length;h+=`<tr class="tot g ${cx(x.co)}${cl?" col":""}" data-pg="${esc(gk)}"><td colspan="5">${chip(x.co)} <small style="font-weight:400;color:var(--mute)">${rs.length} chức vụ, ${na} đang hiệu lực</small></td></tr>`}
     const on=activeP(x,t0);
-    h+=`<tr data-id="${x.id}" data-gk="${esc(gk)}"${cl?" hidden":""}${on?"":' style="opacity:.6"'}><td class="t"><b>${esc(x.name)}</b>${x.note?`<small>${esc(x.note)}</small>`:""}</td><td>${esc(x.role)}<small class="s">${esc(x.title)}</small></td><td>${x.from?fmt(x.from):"…"} đến ${x.to?fmt(x.to):"nay"}${x.to&&x.to<t0?'<small class="s bad">Hết hiệu lực</small>':""}</td><td>${esc(x.uq)}</td><td${x.dk==="Chưa đăng ký"?' class="bad"':""}>${x.dk==="Không áp dụng"?"":esc(x.dk)}</td></tr>`});
+    h+=`<tr data-id="${x.id}" data-gk="${esc(gk)}"${cl?" hidden":""}${on?"":' style="opacity:.6"'}><td class="t"><b>${esc(x.name)}</b>${x.note?`<small>${esc(x.note)}</small>`:""}</td><td>${esc(x.role)}<small class="s">${esc(x.title)}</small></td><td>${x.from?fmt(x.from):"…"} đến ${x.to?fmt(x.to):"nay"}${x.to&&x.to<t0?'<small class="s bad">Hết hiệu lực</small>':""}</td><td>${esc(x.uq)}</td><td>${dkTag(x)}</td></tr>`});
   $("plist").innerHTML=h+"</tbody></table>";
 }
 function rOwn(r,all){
@@ -1012,10 +1023,10 @@ function rOwn(r,all){
 }
 function rPrj(r,all){
   const op=x=>tasks.filter(t=>t.st!=="Hoàn thành"&&same(t.proj,x.name)).length,sum=k=>all.reduce((s,x)=>s+(+x[k]||0),0);
-  $("pstats").innerHTML=st(all.length,"Dự án")+st(money(sum("tvdt")),"Tổng vốn đầu tư (đồng)")+st(nf(sum("dt")),"Tổng diện tích đất (m²)")+st(all.reduce((s,x)=>s+op(x),0),"Việc đang xử lý gắn với dự án");
+  $("pstats").innerHTML=st(all.length,"Dự án")+st(money(sum("tvdt")),"Tổng vốn đầu tư (đồng)")+st(nf(sum("dt")),"Tổng diện tích đất (m²)")+st(all.reduce((s,x)=>s+op(x),0),"Việc đang xử lý gắn với dự án")+st(all.filter(x=>x.dk==="Đang thực hiện đăng ký").length,"Đang thực hiện đăng ký điều chỉnh");
   if(!r.length){$("plist").innerHTML=empty();return}
   $("plist").innerHTML=`<table class="m"><thead><tr><th>Dự án</th><th>Chủ đầu tư, NĐDPL</th><th>Địa điểm</th><th>Diện tích đất / kho xưởng (m²)</th><th>Tổng vốn đầu tư</th><th>Việc đang xử lý</th></tr></thead><tbody>`+
-  r.map(x=>`<tr data-id="${x.id}"><td class="t"><b>${esc(x.name)}</b><small>${esc(x.code?"Mã dự án: "+x.code:"")}</small>${x.note?`<small>${esc(x.note)}</small>`:""}</td><td>${esc(x.owner)}<small class="s">${esc(x.nddpl)}</small></td><td>${esc(x.addr)}</td><td class="num">${nf(x.dt)}${x.dtxd!==""&&x.dtxd!=null?" / "+nf(x.dtxd):""}</td><td class="num">${money(x.tvdt)}</td><td class="num">${op(x)}</td></tr>`).join("")+"</tbody></table>";
+  r.map(x=>`<tr data-id="${x.id}"><td class="t"><b>${esc(x.name)}</b><small>${esc(x.code?"Mã dự án: "+x.code:"")}</small>${x.dk&&x.dk!=="Không áp dụng"?`<small>Đăng ký điều chỉnh GCNĐKĐT: ${dkTag(x)}${x.dknd?" - "+esc(x.dknd):""}</small>`:""}${x.note?`<small>${esc(x.note)}</small>`:""}</td><td>${esc(x.owner)}<small class="s">${esc(x.nddpl)}</small></td><td>${esc(x.addr)}</td><td class="num">${nf(x.dt)}${x.dtxd!==""&&x.dtxd!=null?" / "+nf(x.dtxd):""}</td><td class="num">${money(x.tvdt)}</td><td class="num">${op(x)}</td></tr>`).join("")+"</tbody></table>";
 }
 $("plist").onclick=e=>{const pg=e.target.closest("[data-pg]");if(pg){const k=pg.dataset.pg;if(posClosed.has(k))posClosed.delete(k);else posClosed.add(k);pg.classList.toggle("col");$("plist").querySelectorAll("tr[data-gk]").forEach(tr=>{if(tr.dataset.gk===k)tr.hidden=posClosed.has(k)});return}const og=e.target.closest("[data-og]");if(og){const b=og.closest(".ow"),k=og.dataset.og;if(ownClosed.has(k))ownClosed.delete(k);else ownClosed.add(k);b.classList.toggle("col");return}const a=e.target.closest("[data-addpos]");if(a){openD(null,"pos",{name:a.dataset.addpos});return}const pp=e.target.closest("[data-pid]");if(pp){openD(pp.dataset.pid,"pos");return}const tr=e.target.closest("tr[data-id]");if(tr)openD(tr.dataset.id)};
 
