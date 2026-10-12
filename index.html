@@ -1054,6 +1054,9 @@ function rDash(){
   const pD=`<div class="panel full"><h3>Đăng ký thay đổi với cơ quan nhà nước (${DKI.length})</h3>${DKI.length?DKI.map(i=>`<div class="act" style="cursor:default"><span class="d">${i.co?chip(i.c):`<b>${esc(i.c)}</b>`}</span><span>${esc(i.t)}</span><span style="margin-left:auto;white-space:nowrap">${dkTag(i)}</span></div>`).join(""):'<small style="color:var(--mute)">Không có hồ sơ nào đang chờ hoặc đang thực hiện đăng ký.</small>'}</div>`;
   d.ppl.forEach(x=>{if(!x.cccd&&act.some(p=>same(p.name,x.name)))W.push([x.name,"thiếu số CCCD"])});
   d.prj.forEach(x=>{if(!x.owner)W.push([x.name,"thiếu chủ đầu tư"]);if(!x.nddpl)W.push([x.name,"thiếu NĐDPL / người điều hành dự án"])});
+  const BOM=boModel().out;BOM.forEach(o=>o.warn.forEach(w=>{if(w.k==="miss")W.push([o.c,"CSHHL "+w.b.name+" ("+nf(w.b.t)+"%) đạt ngưỡng 25% nhưng chưa ghi nhận kê khai"])}));
+  const nBO=new Set(BOM.flatMap(o=>o.bo.map(b=>b.key))).size;
+  const pB=`<div class="panel full"><h3>Chủ sở hữu hưởng lợi theo doanh nghiệp (ngưỡng 25%)</h3>${BOM.length?BOM.map(o=>`<div class="act" style="cursor:default;align-items:flex-start"><span class="d">${chip(o.c)}</span><span style="flex:1">${o.bo.length?o.bo.map(b=>`<b>${esc(b.name)}</b> ${nf(b.t)}%${b.d>0&&b.i>0.005?` <small style="color:var(--mute)">(TT ${nf(b.d)}% + GT ${nf(b.i)}%)</small>`:""} ${(()=>{const s=boStat(o,b);return s==="Đã đăng ký"?'<small style="color:var(--ok)">đã kê khai</small>':s==="Đang thực hiện đăng ký"?'<span class="dkp">đang kê khai</span>':s==="Chưa đăng ký"?'<span class="bad">chưa kê khai</span>':s==="Chưa ghi nhận"?'<span class="bad">chưa ghi nhận</span>':""})()}`).join("<br>"):'<small style="color:var(--warn)">Chưa có cá nhân đạt 25%: xét tiêu chí kiểm soát</small>'}</span></div>`).join(""):'<small style="color:var(--mute)">Chưa có dữ liệu sở hữu vốn.</small>'}</div>`;
   const pW=`<div class="panel full"><h3>Cảnh báo cần xử lý (${W.length})</h3>${W.length?W.map(w=>`<div class="act" style="cursor:default"><span class="d">${COS().some(c=>same(c,w[0]))?chip(w[0]):`<b class="late-d">${esc(w[0])}</b>`}</span><span>${esc(w[1])}</span></div>`).join(""):'<small style="color:var(--mute)">Hồ sơ đã đủ, không có cảnh báo.</small>'}</div>`;
   /* bảng pháp nhân */
   const tb=cos.length?`<div style="overflow-x:auto"><table class="m"><thead><tr><th>Mã</th><th>Doanh nghiệp</th><th>MSDN</th><th>Vốn điều lệ</th><th>Vốn thực góp</th><th>NĐDPL hiện hành</th><th>Số cổ đông</th><th>Đối chiếu vốn</th></tr></thead><tbody>`+cos.map(x=>{const g=latest[norm(x.code)];return `<tr><td>${chip(x.code)}</td><td class="t">${esc(x.name)}</td><td>${esc(x.msdn)}</td><td class="num">${money(x.vdl)}</td><td class="num">${x.vtg===""||x.vtg==null?"":money(x.vtg)}</td><td>${rep(x.code)}</td><td class="num">${g?g.rows.length:""}</td><td class="${g&&g.ok===true?"ok":g&&g.ok===false?"bad":""}">${g?esc(g.msg):""}</td></tr>`}).join("")+"</tbody></table></div>":'<div class="empty">Chưa có pháp nhân nào. Vào mục Pháp nhân để thêm hoặc nhập CSV.</div>';
@@ -1075,8 +1078,8 @@ function rDash(){
   const pP=`<div class="panel"><h3>Chức vụ đang hiệu lực (${act.length}/${d.pos.length})</h3>${Object.keys(rc).length?ROLES.filter(r=>rc[r]).map(r=>`<div class="row" style="grid-template-columns:150px 1fr 30px"><span>${esc(r)}</span><div class="track"><i style="width:${rc[r]/mxR*100}%;background:var(--brand)"></i></div><span class="n">${rc[r]}</span></div>`).join(""):'<small style="color:var(--mute)">Chưa có hồ sơ nhân sự đang hiệu lực.</small>'}</div>`;
   /* dự án */
   const pJ=`<div class="panel"><h3>Dự án (${d.prj.length})</h3>${d.prj.length?d.prj.map(x=>`<div style="padding:6px 0;border-bottom:1px solid var(--line)"><b>${esc(x.name)}</b><br><small style="color:var(--mute)">${[x.owner?"CĐT: "+esc(x.owner):"",x.dt!==""&&x.dt!=null?"đất "+nf(x.dt)+" m²":"",x.tvdt?"vốn đầu tư "+bil(x.tvdt):"","việc đang xử lý: "+op(x)].filter(Boolean).join(" | ")}</small></div>`).join(""):'<small style="color:var(--mute)">Chưa có dự án.</small>'}</div>`;
-  const K=`<div class="panel full"><div class="kpis">${kpi(cos.length,"Pháp nhân")}${kpi(bil(sum(d.co,"vdl")),"Tổng vốn điều lệ")}${kpi(bil(sum(d.co,"vtg")),"Tổng vốn thực góp")}${kpi(new Set(act.map(x=>norm(x.name))).size,"Nhân sự đang giữ chức vụ")}${kpi(d.prj.length,"Dự án")}${kpi(bil(sum(d.prj,"tvdt")),"Tổng vốn đầu tư dự án")}${kpi(DKI.filter(i=>i.dk===IP).length,"Đang đăng ký với CQNN")}${kpi(W.length,"Cảnh báo",W.length?"late":"")}</div></div>`;
-  $("plist").innerHTML=`<div class="dash" style="padding:12px 0 0">${K}${pW}${pD}${pCo}${pV}${pO}${pP}${pJ}</div>`;
+  const K=`<div class="panel full"><div class="kpis">${kpi(cos.length,"Pháp nhân")}${kpi(bil(sum(d.co,"vdl")),"Tổng vốn điều lệ")}${kpi(bil(sum(d.co,"vtg")),"Tổng vốn thực góp")}${kpi(new Set(act.map(x=>norm(x.name))).size,"Nhân sự đang giữ chức vụ")}${kpi(nBO,"Chủ sở hữu hưởng lợi (cá nhân)")}${kpi(d.prj.length,"Dự án")}${kpi(bil(sum(d.prj,"tvdt")),"Tổng vốn đầu tư dự án")}${kpi(DKI.filter(i=>i.dk===IP).length,"Đang đăng ký với CQNN")}${kpi(W.length,"Cảnh báo",W.length?"late":"")}</div></div>`;
+  $("plist").innerHTML=`<div class="dash" style="padding:12px 0 0">${K}${pW}${pD}${pCo}${pV}${pO}${pB}${pP}${pJ}</div>`;
 }
 function rCo(r,all){
   const sum=k=>all.reduce((s,x)=>s+(+x[k]||0),0),miss=all.filter(x=>!x.msdn||!x.vdl||!x.addr).length;
@@ -1227,6 +1230,27 @@ function boModel(){
   });
   return{out,M};
 }
+
+function boStat(o,b){const x=o.decl.find(z=>pn(z.name)===b.key);return !x?"Chưa ghi nhận":(x.dk||"Không áp dụng")}
+const BOCOL={"Đã đăng ký":"var(--ok)","Đang thực hiện đăng ký":"var(--warn)","Chưa đăng ký":"var(--seal)","Chưa ghi nhận":"var(--c9)","Không áp dụng":"#cfd2d9"};
+function boDash(out){
+  const pairs=[];out.forEach(o=>o.bo.forEach(b=>pairs.push({o,b,s:boStat(o,b)})));
+  const ppl=new Set(pairs.map(x=>x.b.key)),cnt={};pairs.forEach(x=>cnt[x.s]=(cnt[x.s]||0)+1);
+  const K=`<div class="panel full" style="grid-column:1/-1"><div class="kpis"><div class="kpi"><b>${ppl.size}</b><span>Cá nhân là CSHHL (theo tiêu chí 25%)</span></div><div class="kpi"><b>${pairs.length}</b><span>Lượt CSHHL tại các doanh nghiệp</span></div><div class="kpi"><b>${out.filter(o=>o.bo.length).length}/${out.length}</b><span>Doanh nghiệp đã xác định được CSHHL</span></div><div class="kpi ${cnt["Chưa ghi nhận"]?"late":""}"><b>${cnt["Chưa ghi nhận"]||0}</b><span>Chưa ghi nhận kê khai</span></div><div class="kpi"><b>${cnt["Đã đăng ký"]||0}</b><span>Đã kê khai, thông báo</span></div><div class="kpi"><b>${(cnt["Đang thực hiện đăng ký"]||0)}</b><span>Đang thực hiện kê khai</span></div></div></div>`;
+  /* thanh tỷ lệ top 3 */
+  const bars=out.map(o=>{const top=o.list.filter(x=>!x.ent).slice(0,3);
+    return `<div style="margin:0 0 10px">${chip(o.c)}${top.map(x=>{const hit=o.bo.some(b=>b.key===x.key);return `<div class="row" style="grid-template-columns:130px 1fr 52px;margin:4px 0"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(x.name)}">${esc(x.name)}</span><div class="bo-bar"><i class="${hit?"hit":""}" style="width:${Math.min(100,x.t)}%"></i><u></u></div><span class="n">${nf(x.t)}%</span></div>`}).join("")||'<small style="color:var(--mute)"> Chưa có dữ liệu</small>'}</div>`}).join("");
+  const chartA=`<div class="opn nt"><h4>Cổ đông cá nhân lớn nhất theo doanh nghiệp (vạch đứt: ngưỡng 25%)</h4>${bars}</div>`;
+  /* donut trạng thái */
+  const order=["Đã đăng ký","Đang thực hiện đăng ký","Chưa đăng ký","Chưa ghi nhận","Không áp dụng"],tot=pairs.length||1;
+  const segs=order.filter(k=>cnt[k]).map(k=>({p:cnt[k]/tot*100,name:k,color:BOCOL[k],n:cnt[k]}));
+  const chartB=`<div class="opn nt"><h4>Tình trạng kê khai CSHHL với cơ quan đăng ký</h4>${pairs.length?`<div class="dn">${donut(segs,String(pairs.length),"var(--ink)")}<div class="lgd">${segs.map(s=>`<div><i style="background:${s.color}"></i><span>${esc(s.name)}</span><b>${s.n}</b></div>`).join("")}</div></div>`:'<small style="color:var(--mute)">Chưa có CSHHL nào đạt ngưỡng.</small>'}</div>`;
+  /* ma trận */
+  const agg={};out.forEach(o=>o.list.forEach(x=>{if(x.ent)return;const a=agg[x.key]=agg[x.key]||{name:x.name,max:0,by:{}};a.by[o.c]=x;a.max=Math.max(a.max,x.t)}));
+  const rows=Object.values(agg).filter(a=>a.max>=10).sort((a,b)=>b.max-a.max);
+  const mt=`<div class="opn nt full" style="grid-column:1/-1"><h4>Ma trận cá nhân và doanh nghiệp (từ 10% trở lên; ô đậm: đạt 25%, là CSHHL)</h4><div style="overflow-x:auto"><table class="m ox" style="min-width:520px"><thead><tr><th>Cá nhân</th>${out.map(o=>`<th class="${cx(o.c)}" style="text-align:right">${esc(o.c)}</th>`).join("")}</tr></thead><tbody>${rows.map(a=>`<tr><td class="t"><b>${esc(a.name)}</b></td>${out.map(o=>{const x=a.by[o.c];if(!x||x.t<=0)return'<td class="hc" style="color:var(--mute)">-</td>';const hit=o.bo.some(b=>b.key===x.key);return `<td class="hc ${cx(o.c)}"><i style="width:${Math.min(100,x.t)}%"></i><span style="${hit?"font-weight:700":"color:var(--mute)"}">${nf(x.t)}%</span>${hit?"<small>CSHHL</small>":""}</td>`}).join("")}</tr>`).join("")}</tbody></table></div></div>`;
+  return `<details class="oad" open><summary>Dashboard CSHHL</summary><div class="od">${K}${chartA}${chartB}${mt}</div></details>`;
+}
 function rBo(r,all){
   const{out}=boModel(),d=PD();
   const nMiss=out.reduce((s,o)=>s+o.warn.filter(w=>w.k==="miss").length,0),nTc1=out.filter(o=>o.bo.length).length,nNo=out.filter(o=>!o.bo.length).length;
@@ -1255,7 +1279,7 @@ function rBo(r,all){
   if(!r.length)reg=`<div class="empty">Chưa ghi nhận danh sách CSHHL đã kê khai. Bấm "Ghi nhận kê khai" ở bảng phân tích trên hoặc "Thêm chủ sở hữu hưởng lợi".</div>`;
   else{r=[...r].sort((a,b)=>ci(a.co)-ci(b.co)||String(a.name).localeCompare(String(b.name),"vi"));
     reg=`<table class="m"><thead><tr><th>Doanh nghiệp</th><th>Cá nhân là CSHHL</th><th>Tiêu chí</th><th>Tỷ lệ kê khai</th><th>Ngày kê khai</th><th>Kê khai, thông báo</th></tr></thead><tbody>`+r.map(x=>`<tr data-id="${x.id}"><td>${chip(x.co)}</td><td class="t"><b>${esc(x.name)}</b>${x.note?`<small>${esc(x.note)}</small>`:""}</td><td>${esc(x.tc)}</td><td class="num">${x.tl!==""&&x.tl!=null?nf(x.tl)+"%":""}</td><td>${x.ngay?fmt(x.ngay):""}</td><td>${dkTag(x)}${x.dknd?`<small class="s">${esc(x.dknd)}</small>`:""}</td></tr>`).join("")+`</tbody></table>`}
-  $("plist").innerHTML=law+cards+`<h3 style="margin:14px 0 6px;font-size:14px">Danh sách CSHHL đã ghi nhận kê khai</h3>`+reg;
+  $("plist").innerHTML=boDash(out)+law+cards+`<h3 style="margin:14px 0 6px;font-size:14px">Danh sách CSHHL đã ghi nhận kê khai</h3>`+reg;
 }
 function rOwn(r,all){
   const ga=grp(all);
