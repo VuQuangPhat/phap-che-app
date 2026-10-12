@@ -238,6 +238,8 @@ table.rt th{background:#2f4a73;color:#fff}
 .mm-b.c0{--bc:#475569}.mm-b.c1{--bc:#2563eb}.mm-b.c2{--bc:#0891b2}.mm-b.c3{--bc:#16a34a}.mm-b.c4{--bc:#d97706}.mm-b.c5{--bc:#9333ea}.mm-b.c6{--bc:#db2777}
 .mm-ol{list-style:none;counter-reset:st;padding-left:0!important}.mm-ol li{counter-increment:st;position:relative;padding-left:30px;margin:6px 0!important}.mm-ol li::before{content:var(--n,"") counter(st);position:absolute;left:0;top:0;min-width:22px;height:22px;border-radius:50%;background:var(--bc);color:#fff;font-size:11px;font-weight:700;text-align:center;line-height:22px}
 .mm-m{display:inline-block;margin:4px 0;padding:2px 8px;border-radius:999px;background:var(--bc);color:#fff;font-size:11px}.mm-b.c7{--bc:#0f766e}
+.mchk{display:grid;grid-template-columns:1fr;gap:2px;max-height:190px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:6px 8px;margin-top:4px}
+.mck{display:flex!important;flex-direction:row!important;align-items:flex-start;gap:8px;font-weight:400!important;font-size:13px;padding:3px 4px;border-radius:6px;cursor:pointer}.mck input{width:auto!important;margin-top:3px}.mck.sg{background:rgba(37,99,235,.10)}.mck.gn{opacity:.6}.mck i{font-style:normal;font-size:11px;padding:0 6px;border-radius:999px}.mck i.nw{background:#dbeafe;color:#1d4ed8}.mck i.gn{background:#e5e7eb;color:#6b7280}
 </style>
 </head>
 <body>
@@ -927,7 +929,10 @@ const SEC={
        {k:"gt",l:"Giới tính",t:"sel",o:["","Nam","Nữ"]},
        {k:"qt",l:"Quốc tịch",ph:"Việt Nam"},
        {k:"nhom",l:"Nhóm có quan hệ gia đình / hợp đồng (cùng tên nhóm để cộng gộp tỷ lệ)",ph:"VD: Gia đình Ngô"},
-       {k:"addr",l:"Địa chỉ thường trú / liên lạc",full:1},
+       {k:"addr",l:"Địa chỉ liên lạc (số nhà, đường, phường/xã, tỉnh/thành phố)",full:1},
+       {k:"ttru",l:"Nơi thường trú (nếu khác địa chỉ liên lạc)",full:1},
+       {k:"sdt",l:"Điện thoại"},{k:"email",l:"Thư điện tử"},{k:"dt",l:"Dân tộc"},
+       {k:"hc",l:"Số hộ chiếu (nếu chưa có số định danh)"},{k:"hcngay",l:"Ngày cấp hộ chiếu",t:"date"},{k:"hcnoi",l:"Nơi cấp hộ chiếu"},
        {k:"note",l:"Ghi chú",t:"area",full:1}]},
   pos:{lab:"Chức vụ",one:"chức vụ",req:["name","co"],
     key:o=>[o.name,o.co,o.role,o.from].map(norm).join("|"),
@@ -1452,7 +1457,7 @@ const blank="……………………";
 function coRec(c){return PD().co.find(x=>same(x.code,c))||{code:c,name:c}}
 function persOf(name){const k=pn(name);return PD().ppl.find(x=>pn(x.name)===k)||{name}}
 function sigBlock(c){const t0=today(),n=PD().pos.filter(p=>same(p.co,c)&&/nddpl|daidienphapluat/.test(norm(p.role))&&activeP(p,t0))[0];
-  return `<div class="fsig"><div>……………, ngày ……… tháng ……… năm ………</div><b>NGƯỜI ĐẠI DIỆN THEO PHÁP LUẬT CỦA DOANH NGHIỆP</b><i>(Ký, ghi rõ họ tên, đóng dấu nếu có)</i><div style="height:70px"></div><b>${n?esc(n.name):""}</b></div>`}
+  return `<div class="fsig"><div>……………, ngày ……… tháng ……… năm ………</div><b>NGƯỜI ĐẠI DIỆN THEO PHÁP LUẬT CỦA DOANH NGHIỆP</b><br><i>(Ký, ghi rõ họ tên, đóng dấu nếu có)</i><div style="height:70px"></div><b>${n?esc(n.name):""}</b></div>`}
 function fhead(title,sub,c){const r=coRec(c);
   return `<div class="fh"><div class="fq"><b>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><br><b>Độc lập - Tự do - Hạnh phúc</b></div><h2>${title}</h2>${sub?`<div class="fs">${sub}</div>`:""}</div>
 <table class="fm kv"><tr><td style="width:24%">Tên doanh nghiệp</td><td><b>${esc((r.name||r.code).toUpperCase())}</b></td></tr><tr><td>Mã số doanh nghiệp</td><td>${esc(r.msdn||blank)}</td></tr><tr><td>Địa chỉ trụ sở chính</td><td>${esc(r.addr||blank)}</td></tr></table>`}
@@ -1463,19 +1468,45 @@ function formM10(c){
   const rows=o.bo.map((b,i)=>personRows(b,i)+`<td>${nf(b.d)}%</td><td>${b.i>0.005?nf(b.i)+"%":"-"}</td><td><b>${nf(b.t)}%</b></td><td>${nf(b.t)}%</td><td class="l">${b.how==="nhóm"?"Nhóm: "+esc(b.grp||""):"Sở hữu"}</td><td></td></tr>`).join("")||`<tr><td colspan="13" style="height:40px">Chưa có cá nhân đạt ngưỡng 25%: bổ sung theo tiêu chí kiểm soát hoặc người quản lý có quyền hạn cao nhất.</td></tr>`;
   return `<div class="fpage">${fhead("DANH SÁCH CHỦ SỞ HỮU HƯỞNG LỢI CỦA DOANH NGHIỆP","(Mẫu số 10 Thông tư 68/2025/TT-BTC được thay thế theo Thông tư 121/2026/TT-BTC; bản điền sẵn dữ liệu, bố cục tham khảo)",c)}
 <table class="fm"><thead><tr><th>STT</th><th>Họ và tên</th><th>Ngày sinh</th><th>Giới tính</th><th>Quốc tịch</th><th>Giấy tờ pháp lý của cá nhân</th><th>Địa chỉ liên lạc / thường trú</th><th>Sở hữu trực tiếp</th><th>Sở hữu gián tiếp</th><th>Tổng tỷ lệ sở hữu</th><th>Tỷ lệ quyền biểu quyết</th><th>Quan hệ gia đình / hợp đồng</th><th>Quyền kiểm soát khác</th></tr></thead><tbody>${rows}</tbody></table>${sigBlock(c)}</div>`}
+function m13People(c){const t0=today(),isN=p=>/nddpl|daidienphapluat/.test(norm(p.role)),L=PD().pos.filter(p=>same(p.co,c)&&isN(p));
+  const nw=L.filter(p=>p.dk==="Đang thực hiện đăng ký"||p.dk==="Chưa đăng ký");
+  return{nw:nw.length?nw:L.filter(p=>activeP(p,t0)),pending:nw.length>0}}
+function m13Missing(c){const o=[],{nw,pending}=m13People(c);
+  if(!nw.length)return["Chưa có NĐDPL nào ở tab Chức vụ"];
+  if(!pending)o.push("chưa có NĐDPL mới đánh dấu 'Chưa đăng ký / Đang thực hiện đăng ký' ở tab Chức vụ (đang lấy NĐDPL hiện hành)");
+  const r=coRec(c);if(!r.msdn)o.push("thiếu mã số doanh nghiệp (tab Pháp nhân)");
+  nw.forEach(x=>{const p=persOf(x.name),m=[];if(!p.dob)m.push("ngày sinh");if(!p.gt)m.push("giới tính");if(!p.cccd&&!p.hc)m.push("số định danh hoặc hộ chiếu");if(!p.addr)m.push("địa chỉ liên lạc");if(!(x.title||x.role))m.push("chức danh");if(m.length)o.push(x.name+": thiếu "+m.join(", ")+" (tab Nhân sự / Chức vụ)")});
+  if(!chairOf(c))o.push("chưa có Chủ tịch HĐQT ở tab Chức vụ (người ký)");
+  return o}
 function formM13(c){
-  const t0=today(),L=PD().pos.filter(p=>same(p.co,c)&&/nddpl|daidienphapluat/.test(norm(p.role))&&activeP(p,t0));
-  const blocks=(L.length?L:[{name:"",title:"",from:"",uq:""}]).map((x,i)=>{const p=persOf(x.name);
-    return `<table class="fm kv"><tr><td colspan="2" style="background:#eee"><b>Người đại diện theo pháp luật ${L.length>1?(i+1):"mới"}</b></td></tr>
-<tr><td style="width:30%">Họ và tên</td><td><b>${esc(x.name||blank)}</b></td></tr><tr><td>Chức danh</td><td>${esc(x.title||x.role||blank)}</td></tr>
-<tr><td>Ngày sinh / Giới tính / Quốc tịch</td><td>${[vnd(p.dob)||blank,esc(p.gt||"")||blank,esc(p.qt||"Việt Nam")].join(" / ")}</td></tr>
-<tr><td>Giấy tờ pháp lý của cá nhân</td><td>${p.cccd?esc(p.cccd):blank}${p.cccdngay?", cấp ngày "+fmt(p.cccdngay):""}${p.cccdnoi?", "+esc(p.cccdnoi):""}</td></tr>
-<tr><td>Địa chỉ thường trú</td><td>${esc(p.addr||blank)}</td></tr>
-<tr><td>Hiệu lực từ ngày</td><td>${x.from?fmt(x.from):blank}</td></tr><tr><td>Văn bản bổ nhiệm / ủy quyền</td><td>${esc(x.uq||blank)}</td></tr></table>`}).join("");
-  return `<div class="fpage">${fhead("GIẤY ĐỀ NGHỊ ĐĂNG KÝ THAY ĐỔI NGƯỜI ĐẠI DIỆN THEO PHÁP LUẬT","(Mẫu số 13 Thông tư 68/2025/TT-BTC, không thay đổi theo Thông tư 121/2026/TT-BTC; bản điền sẵn dữ liệu)",c)}${blocks}<p class="fp">Tôi cam kết chịu trách nhiệm trước pháp luật về tính hợp pháp, chính xác và trung thực của nội dung đăng ký.</p>${sigBlock(c)}</div>`}
+  const r=coRec(c),{nw}=m13People(c),ch=chairOf(c),multi=nw.length>1;
+  const f=(v)=>v?esc(v):blank;
+  const blocks=(nw.length?nw:[{name:"",title:""}]).map((x,i)=>{const p=persOf(x.name);
+    return `<table class="fm kv"><tr><td colspan="2" style="background:#eee"><b>Thông tin người đại diện theo pháp luật sau khi thay đổi${multi?" (người thứ "+(i+1)+")":""}</b></td></tr>
+<tr><td style="width:34%">Họ, chữ đệm và tên (in hoa)</td><td><b>${esc((x.name||"").toUpperCase())||blank}</b></td></tr>
+<tr><td>Ngày, tháng, năm sinh</td><td>${p.dob?fmt(p.dob):blank}</td></tr>
+<tr><td>Giới tính</td><td>${f(p.gt)}</td></tr>
+<tr><td>Số định danh cá nhân</td><td>${f(p.cccd)}</td></tr>
+<tr><td>Chức danh</td><td>${f(x.title||x.role)}</td></tr>
+<tr><td>Địa chỉ liên lạc</td><td>${f(p.addr)}</td></tr>
+<tr><td>Điện thoại, thư điện tử (không bắt buộc)</td><td>${[p.sdt,p.email].filter(Boolean).map(esc).join(" / ")}</td></tr>
+<tr><td colspan="2" style="background:#f6f6f6"><i>Thông tin bổ sung, kê khai nếu người đại diện chưa có số định danh cá nhân hoặc dữ liệu bị gián đoạn</i></td></tr>
+<tr><td>Dân tộc / Quốc tịch</td><td>${[p.dt,p.qt||"Việt Nam"].filter(Boolean).map(esc).join(" / ")}</td></tr>
+<tr><td>Số hộ chiếu (hoặc giấy tờ thay thế)</td><td>${p.cccd?"":f(p.hc)}</td></tr>
+<tr><td>Ngày cấp / Nơi cấp</td><td>${p.cccd?"":[p.hcngay?fmt(p.hcngay):"",p.hcnoi||""].filter(Boolean).map(esc).join(" / ")}</td></tr>
+<tr><td>Nơi thường trú</td><td>${p.cccd?"":f(p.ttru||p.addr)}</td></tr></table>`}).join("");
+  return `<div class="fpage"><div class="fh" style="display:flex;justify-content:space-between;gap:20px;text-align:center"><div style="width:45%"><b>${esc((r.name||r.code).toUpperCase())}</b><br>Số: ……………</div><div class="fq" style="width:55%"><b>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><br><b>Độc lập - Tự do - Hạnh phúc</b><br><i>……………, ngày ……… tháng ……… năm ………</i></div></div>
+<div class="fh"><h2 style="margin-top:14px">GIẤY ĐỀ NGHỊ ĐĂNG KÝ THAY ĐỔI NGƯỜI ĐẠI DIỆN THEO PHÁP LUẬT</h2></div>
+<p><b>Kính gửi:</b> Cơ quan đăng ký kinh doanh ……………………………</p>
+<table class="fm kv"><tr><td style="width:34%">Tên doanh nghiệp (in hoa)</td><td><b>${esc((r.name||r.code).toUpperCase())}</b></td></tr><tr><td>Mã số doanh nghiệp / mã số thuế</td><td>${f(r.msdn)}</td></tr><tr><td>Số định danh cá nhân của Chủ tịch HĐQT (chỉ kê khai khi ủy quyền thực hiện thủ tục)</td><td></td></tr></table>
+<p>Đăng ký thay đổi người đại diện theo pháp luật của doanh nghiệp với nội dung sau:</p>${blocks}
+<p class="fp">Đề nghị Cơ quan đăng ký kinh doanh công bố nội dung đăng ký doanh nghiệp trên Cổng thông tin quốc gia về đăng ký doanh nghiệp nếu hồ sơ hợp lệ.</p>
+<p class="fp">Doanh nghiệp cam kết hoàn toàn chịu trách nhiệm trước pháp luật về tính hợp pháp, chính xác và trung thực của nội dung Giấy đề nghị này.</p>
+<div class="fsig"><b>CHỦ TỊCH HỘI ĐỒNG QUẢN TRỊ</b><br><i>(Hoặc người được ủy quyền; ký, ghi rõ họ tên)</i><div style="height:70px"></div><b>${ch?esc(ch.name):""}</b></div></div>`}
 const FORMS={m10:{t:"Danh sách CSHHL (Mẫu 10)",f:formM10},m13:{t:"Thay đổi NĐDPL (Mẫu 13)",f:formM13}};
 function printForm(key,co){
   const F=FORMS[key];if(!F)return;const prev=sec,t0=document.title,cos=co==="*"?COS().filter(c=>boModel().out.some(o=>same(o.c,c))||key==="m13"):[co];
+  if(key==="m13"){const ms=cos.flatMap(c=>m13Missing(c).map(x=>c+": "+x));if(ms.length&&!confirm("Dữ liệu chưa đủ để điền hết Mẫu 13:\n\n"+ms.join("\n")+"\n\nBổ sung ở tab Hồ sơ công ty (Nhân sự, Chức vụ, Pháp nhân) rồi in lại, hoặc bấm OK để in luôn và điền tay phần còn trống.")){return}}
   const html=cos.map(c=>F.f(c)).join("");
   $("plist").innerHTML=html;$("pprint").innerHTML="";$("pstats").hidden=true;
   const pg=document.createElement("style");pg.textContent=`@page{size:A4 ${key==="m13"?"portrait":"landscape"};margin:12mm}`;document.head.appendChild(pg);
@@ -1495,7 +1526,7 @@ function rHs(r,all){
   const mb=n=>`<span class="hsm${MREP.includes(n)?" nw":MGONE.includes(n)?" gn":""}" title="${esc((MAU[n]||"")+(MREP.includes(n)?" | mẫu mới theo TT 121/2026/TT-BTC":MGONE.includes(n)?" | đã bị bãi bỏ":""))}">Mẫu ${n}${MREP.includes(n)?" ●":""}</span>`;
   const mrow=n=>`<tr><td class="num"><b>${n}</b></td><td class="t">${esc(MAU[n]||"")}</td><td>${MREP.includes(n)?'<span class="hsm nw">Mẫu mới theo TT 121/2026/TT-BTC</span>':MGONE.includes(n)?'<span class="hsm gn">Đã bãi bỏ từ 21/08/2026</span>':'<span style="color:var(--mute)">Không thay đổi</span>'}</td></tr>`;
   const printBtns=g=>{const b=[];if(g.id==="dd")b.push("m13");if(g.id==="bo")b.push("m10");if(!b.length)return"";
-    return `<div class="hsp"><b>In tờ khai điền sẵn:</b> ${b.map(k=>`<span class="hspg">${FORMS[k].t}: <select data-pfco="${k}">${cos.map(c=>`<option>${esc(c)}</option>`).join("")}<option value="*">Tất cả</option></select> <button data-pf="${k}">In / PDF</button></span>`).join("")}<small style="display:block;color:var(--mute);margin-top:4px">Bản điền sẵn từ dữ liệu trong app theo bố cục tham khảo. Cột còn trống (ngày sinh, giới tính, giấy tờ) lấy từ tab Nhân sự. Mẫu 10 đã được thay mới từ 21/08/2026: bố cục cột chính thức cần đối chiếu với phụ lục Thông tư 121/2026/TT-BTC trước khi nộp.</small></div>`};
+    return `<div class="hsp"><b>In tờ khai điền sẵn:</b> ${b.map(k=>`<span class="hspg">${FORMS[k].t}: <select data-pfco="${k}">${cos.map(c=>`<option>${esc(c)}</option>`).join("")}<option value="*">Tất cả</option></select> <button data-pf="${k}">In / PDF</button></span>`).join("")}<small style="display:block;color:var(--mute);margin-top:4px">Mẫu 13 dựng theo cấu trúc Mẫu 13 Thông tư 68/2025/TT-BTC (đối chiếu từ bản đăng trên luatvietnam.vn, chưa so với file mẫu chính thức): người đại diện MỚI là người ở tab Chức vụ có vai trò NĐDPL và trạng thái đăng ký "Chưa đăng ký" hoặc "Đang thực hiện đăng ký"; thông tin cá nhân lấy từ tab Nhân sự. Nếu thiếu dữ liệu app sẽ liệt kê trước khi in. Mẫu 10 đã được thay mới từ 21/08/2026: bố cục cột chính thức cần đối chiếu với phụ lục Thông tư 121/2026/TT-BTC trước khi nộp.</small></div>`};
   let body;
   if(hsTab==="all"){
     const rows=cos.map(c=>{const mine=all.filter(x=>same(x.co,c));const last=[...mine].sort((a,b)=>String(b.ngay||"").localeCompare(String(a.ngay||"")))[0];
@@ -1741,10 +1772,18 @@ function openD(id,s,pre){
   dsec=s||sec;editId=id||null;const S=SEC[dsec],x=PD()[dsec].find(v=>v.id===id)||pre||{};
   $("hsdt").textContent=(id?"Sửa ":"Thêm ")+S.one;$("hsdel").style.display=id?"":"none";
   $("hsform").innerHTML=S.f.map(f=>{const v=x[f.k]==null?"":x[f.k],a=`id="h_${f.k}"`;let inp;
-    if(f.t==="area")inp=`<textarea ${a} rows="3">${esc(v)}</textarea>`;
+    if(dsec==="hs"&&f.k==="mau"){const cur=(String(v).match(/\d+/g)||[]).map(Number);
+      inp=`<input ${a} type="hidden" value="${esc(v)}"><div class="mchk" id="h_mauL">${Object.keys(MAU).map(Number).sort((p,q)=>p-q).map(n=>`<label class="mck${MGONE.includes(n)?" gn":""}" data-n="${n}"><input type="checkbox" value="${n}"${cur.includes(n)?" checked":""}><span><b>Mẫu ${n}</b>${MREP.includes(n)?' <i class="nw">mới</i>':""}${MGONE.includes(n)?' <i class="gn">đã bãi bỏ</i>':""} ${esc(MAU[n])}</span></label>`).join("")}</div><small style="display:block;color:var(--mute);margin-top:4px">Tích chọn các mẫu dùng cho hồ sơ này. Chọn Thủ tục ở trên thì app tự gợi ý mẫu tương ứng (đổi lại được).</small>`}
+    else if(f.t==="area")inp=`<textarea ${a} rows="3">${esc(v)}</textarea>`;
     else if(f.t==="sel")inp=`<select ${a}>${f.o.map(o=>`<option${o===v?" selected":""}>${esc(o)}</option>`).join("")}</select>`;
     else inp=`<input ${a} type="${f.t==="date"?"date":"text"}"${f.t==="int"||f.t==="dec"?' inputmode="decimal"':""}${f.list?` list="${f.list}"`:""}${f.max?` maxlength="${f.max}"`:""}${f.ph?` placeholder="${esc(f.ph)}"`:""} value="${esc(v)}">`;
-    return `<label${f.full?' class="full"':""}>${esc(f.l)}${inp}</label>`}).join("");
+    return `<label${f.full||(dsec==="hs"&&f.k==="mau")?' class="full"':""}>${esc(f.l)}${inp}</label>`}).join("");
+  if(dsec==="hs"){const L=$("h_mauL"),H=$("h_mau"),T=$("h_tt");
+    const sync=()=>{H.value=[...L.querySelectorAll("input:checked")].map(c=>"Mẫu "+c.value).join(", ")};
+    const sug=()=>{const it=HSI.find(i=>i.t===T.value);if(!it)return;L.querySelectorAll("label").forEach(l=>{const n=+l.dataset.n,on=(it.m||[]).includes(n);l.querySelector("input").checked=on;l.classList.toggle("sg",on)});sync()};
+    L.addEventListener("change",sync);
+    T.addEventListener("change",sug);
+    if(!H.value)sug();else{const it=HSI.find(i=>i.t===T.value);if(it)L.querySelectorAll("label").forEach(l=>l.classList.toggle("sg",(it.m||[]).includes(+l.dataset.n)))}}
   dlg.showModal();
 }
 $("pcol").onclick=()=>{if(sec==="pos")PD().pos.forEach(x=>posClosed.add(norm(x.co)));else grp(PD().own).forEach(g=>ownClosed.add(g.co+"|"+g.asof));renderProf()};$("pexpd").onclick=()=>{(sec==="pos"?posClosed:ownClosed).clear();renderProf()};
