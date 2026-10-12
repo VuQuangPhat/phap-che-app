@@ -89,76 +89,152 @@ table.rt tr.sec td{background:#f1f1ec;font-weight:700;text-align:center}
 #scnt{min-width:60px;text-align:center}
 .sl{position:relative;width:1280px;height:720px;overflow:hidden;background:#fbfbfd;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:#1d1d1f;box-sizing:border-box;padding:46px 64px 58px;-webkit-font-smoothing:antialiased}
 .slh{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px}
-.eye{font-size:14px;font-weight:600;letter-spacing:1.6px;color:#a38249;text-transform:uppercase}
+.sl .eye{font-size:14px;font-weight:600;letter-spacing:1.6px;color:#a38249;text-transform:uppercase}
 .slh h1{margin:8px 0 0;font-size:40px;line-height:1.1;font-weight:700;letter-spacing:-.9px;color:#1d1d1f;max-width:960px}
 .sllogo{height:46px;width:auto}
 .slft{position:absolute;left:64px;right:64px;bottom:22px;display:flex;justify-content:space-between;font-size:13px;color:#86868b}
-.card{background:#fff;border-radius:22px;box-shadow:0 1px 2px rgba(0,0,0,.04),0 10px 28px rgba(0,0,0,.06)}
-.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:18px}
-.kpi{padding:18px 22px 16px}.kpi span{display:block;font-size:15px;color:#6e6e73;font-weight:500}
-.kpi b{display:block;font-size:50px;line-height:1.1;margin:6px 0 4px;letter-spacing:-1.5px;color:#0a2a43;font-weight:700}
-.kpi b.ok{color:#1f8a4c}.kpi b.bad{color:#d70015}.kpi em{font-style:normal;font-size:14px;color:#86868b}
-.rows{padding:4px 28px}
-.row{display:flex;align-items:center;gap:20px;padding:13px 0;border-bottom:1px solid #f0f0f2}.row:last-child{border-bottom:0}
-.rc{width:124px;flex:none}.rt{flex:1;min-width:0}
-.rt b{display:block;font-size:21px;font-weight:600;letter-spacing:-.2px;line-height:1.25}.rt b u{text-decoration:none;font-size:14px;font-weight:600;color:#a38249;background:#f6efe0;border-radius:6px;padding:2px 8px;margin-left:6px;vertical-align:2px}
-.rt span{display:block;font-size:16px;color:#6e6e73;margin-top:3px;line-height:1.3}
-.rr{display:flex;align-items:center;gap:14px;white-space:nowrap;flex:none}.rr em{font-style:normal;font-size:15px;color:#6e6e73}.rr strong{font-size:21px;font-weight:600;letter-spacing:-.3px}
-.row.mute .rt span{color:#86868b;font-size:17px}
-.gh{display:flex;align-items:center;gap:16px;padding:16px 0 8px;border-bottom:1px solid #f0f0f2}.gh b{font-size:19px;font-weight:700;letter-spacing:-.2px}.gh span{font-size:14px;color:#6e6e73}
-.gh .bar{flex:1;height:6px;background:#f0f0f2;border-radius:3px;overflow:hidden}.gh .bar i{display:block;height:100%;background:#1f8a4c;border-radius:3px}
-.chip{display:inline-flex;align-items:center;gap:7px;padding:5px 13px 5px 10px;border-radius:999px;font-size:15px;font-weight:600;color:var(--k);background:color-mix(in srgb,var(--k) 12%,#fff);white-space:nowrap}
-.chip i{width:8px;height:8px;border-radius:50%;background:var(--k)}
-.pill{display:inline-block;padding:5px 14px;border-radius:999px;font-size:14px;font-weight:600;white-space:nowrap}
-.pill.ok{background:#e6f4ec;color:#1f8a4c}.pill.wip{background:#e6edf3;color:#0a2a43}.pill.wait{background:#fdf1dc;color:#a8620a}.pill.off{background:#f0f0f2;color:#6e6e73}.pill.late{background:#fde8ea;color:#d70015}.pill.gold{background:#f6efe0;color:#8a6a2e}
-.ncir{display:inline-flex;width:34px;height:34px;border-radius:50%;background:#f6efe0;color:#8a6a2e;font-weight:700;align-items:center;justify-content:center}
-table.slx{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04),0 10px 28px rgba(0,0,0,.06);font-size:19px}
-table.slx.mt{margin-top:18px}
-table.slx th{padding:16px 20px;font-size:13px;font-weight:600;color:#86868b;text-transform:uppercase;letter-spacing:1px;text-align:left;border-bottom:1px solid #f0f0f2}
-table.slx td{padding:15px 20px;border-bottom:1px solid #f5f5f7;vertical-align:middle;text-align:left}
-table.slx tr:last-child td{border-bottom:0}
-table.slx.ctr td:not(.l),table.slx.ctr th:not(:first-child){text-align:center}
-table.slx.num td:not(:first-child),table.slx.num th:not(:first-child){text-align:right}
-table.slx td.sm{font-size:16px;color:#6e6e73}
-table.slx.tt tr:last-child td{font-weight:700;background:#fbfbfd}
-.toc{margin-top:30px}.toc div{display:flex;align-items:baseline;gap:26px;padding:15px 0;border-bottom:1px solid #ececf0;font-size:28px;font-weight:600;letter-spacing:-.4px}.toc b{font-size:20px;color:#a38249;width:40px}
-.sl.sect{display:flex;flex-direction:column;justify-content:center;padding:0 90px;background:linear-gradient(135deg,#0a2a43,#123a5a);color:#fff}.sect .eye{color:#d9bf86}.sect h1{margin:12px 0 0;font-size:62px;letter-spacing:-1.5px;line-height:1.08;max-width:1000px}
+.sl .card{background:#fff;border-radius:22px;box-shadow:0 1px 2px rgba(0,0,0,.04),0 10px 28px rgba(0,0,0,.06)}
+.sl .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:18px}
+.sl .kpi{padding:18px 22px 16px}
+.sl .kpi span{display:block;font-size:15px;color:#6e6e73;font-weight:500}
+.sl .kpi b{display:block;font-size:50px;line-height:1.1;margin:6px 0 4px;letter-spacing:-1.5px;color:#0a2a43;font-weight:700}
+.sl .kpi b.ok{color:#1f8a4c}
+.sl .kpi b.bad{color:#d70015}
+.sl .kpi em{font-style:normal;font-size:14px;color:#86868b}
+.sl .rows{padding:4px 28px}
+.sl .row{display:flex;align-items:center;gap:20px;padding:13px 0;border-bottom:1px solid #f0f0f2}
+.sl .row:last-child{border-bottom:0}
+.sl .rc{width:124px;flex:none}
+.sl .rt{flex:1;min-width:0}
+.sl .rt b{display:block;font-size:21px;font-weight:600;letter-spacing:-.2px;line-height:1.25}
+.sl .rt b u{text-decoration:none;font-size:14px;font-weight:600;color:#a38249;background:#f6efe0;border-radius:6px;padding:2px 8px;margin-left:6px;vertical-align:2px}
+.sl .rt span{display:block;font-size:16px;color:#6e6e73;margin-top:3px;line-height:1.3}
+.sl .rr{display:flex;align-items:center;gap:14px;white-space:nowrap;flex:none}
+.sl .rr em{font-style:normal;font-size:15px;color:#6e6e73}
+.sl .rr strong{font-size:21px;font-weight:600;letter-spacing:-.3px}
+.sl .row.mute .rt span{color:#86868b;font-size:17px}
+.sl .gh{display:flex;align-items:center;gap:16px;padding:16px 0 8px;border-bottom:1px solid #f0f0f2}
+.sl .gh b{font-size:19px;font-weight:700;letter-spacing:-.2px}
+.sl .gh span{font-size:14px;color:#6e6e73}
+.sl .gh .bar{flex:1;height:6px;background:#f0f0f2;border-radius:3px;overflow:hidden}
+.sl .gh .bar i{display:block;height:100%;background:#1f8a4c;border-radius:3px}
+.sl .chip{display:inline-flex;align-items:center;gap:7px;padding:5px 13px 5px 10px;border-radius:999px;font-size:15px;font-weight:600;color:var(--k);background:color-mix(in srgb,var(--k) 12%,#fff);white-space:nowrap}
+.sl .chip i{width:8px;height:8px;border-radius:50%;background:var(--k)}
+.sl .pill{display:inline-block;padding:5px 14px;border-radius:999px;font-size:14px;font-weight:600;white-space:nowrap}
+.sl .pill.ok{background:#e6f4ec;color:#1f8a4c}
+.sl .pill.wip{background:#e6edf3;color:#0a2a43}
+.sl .pill.wait{background:#fdf1dc;color:#a8620a}
+.sl .pill.off{background:#f0f0f2;color:#6e6e73}
+.sl .pill.late{background:#fde8ea;color:#d70015}
+.sl .pill.gold{background:#f6efe0;color:#8a6a2e}
+.sl .ncir{display:inline-flex;width:34px;height:34px;border-radius:50%;background:#f6efe0;color:#8a6a2e;font-weight:700;align-items:center;justify-content:center}
+.sl table.slx{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04),0 10px 28px rgba(0,0,0,.06);font-size:19px}
+.sl table.slx.mt{margin-top:18px}
+.sl table.slx th{padding:16px 20px;font-size:13px;font-weight:600;color:#86868b;text-transform:uppercase;letter-spacing:1px;text-align:left;border-bottom:1px solid #f0f0f2}
+.sl table.slx td{padding:15px 20px;border-bottom:1px solid #f5f5f7;vertical-align:middle;text-align:left}
+.sl table.slx tr:last-child td{border-bottom:0}
+.sl table.slx.ctr td:not(.l),.sl table.slx.ctr th:not(:first-child){text-align:center}
+.sl table.slx.num td:not(:first-child),.sl table.slx.num th:not(:first-child){text-align:right}
+.sl table.slx td.sm{font-size:16px;color:#6e6e73}
+.sl table.slx.tt tr:last-child td{font-weight:700;background:#fbfbfd}
+.sl .toc{margin-top:30px}
+.sl .toc div{display:flex;align-items:baseline;gap:26px;padding:15px 0;border-bottom:1px solid #ececf0;font-size:28px;font-weight:600;letter-spacing:-.4px}
+.sl .toc b{font-size:20px;color:#a38249;width:40px}
+.sl.sect{display:flex;flex-direction:column;justify-content:center;padding:0 90px;background:linear-gradient(135deg,#0a2a43,#123a5a);color:#fff}
+.sl.sect .eye{color:#d9bf86}
+.sl.sect h1{margin:12px 0 0;font-size:62px;letter-spacing:-1.5px;line-height:1.08;max-width:1000px}
 .sl.cover{padding:0;background:radial-gradient(1100px 620px at 85% 10%,#f4ecda 0%,#fbfbfd 60%)}
-.cvlogo{position:absolute;left:80px;top:60px;height:96px}
-.cvb{position:absolute;left:80px;top:215px;right:80px}.cvb .eye{font-size:16px}
-.cvb h1{margin:14px 0 14px;font-size:84px;line-height:1.02;letter-spacing:-3px;font-weight:700;color:#1d1d1f}.cvb p{margin:0;font-size:26px;color:#6e6e73;font-weight:500}
-.cvteam{position:absolute;left:80px;bottom:60px;display:flex;gap:34px}.tm{display:flex;align-items:center;gap:14px}.tm b{display:block;font-size:19px}.tm span{font-size:15px;color:#6e6e73}
-.av{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#dcc48d,#a38249);color:#fff;font-weight:700;font-size:22px;display:flex;align-items:center;justify-content:center;flex:none}
-.cvmeta{position:absolute;left:80px;bottom:60px;display:flex;gap:60px}.cvmeta span{display:block;font-size:13px;letter-spacing:1.2px;text-transform:uppercase;color:#86868b}.cvmeta b{display:block;font-size:22px;margin-top:5px}.cvmeta em{font-style:normal;font-size:15px;color:#6e6e73}
+.sl .cvlogo{position:absolute;left:80px;top:60px;height:96px}
+.sl .cvb{position:absolute;left:80px;top:215px;right:80px}
+.sl .cvb .eye{font-size:16px}
+.sl .cvb h1{margin:14px 0 14px;font-size:84px;line-height:1.02;letter-spacing:-3px;font-weight:700;color:#1d1d1f}
+.sl .cvb p{margin:0;font-size:26px;color:#6e6e73;font-weight:500}
+.sl .cvteam{position:absolute;left:80px;bottom:60px;display:flex;gap:34px}
+.sl .tm{display:flex;align-items:center;gap:14px}
+.sl .tm b{display:block;font-size:19px}
+.sl .tm span{font-size:15px;color:#6e6e73}
+.sl .av{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#dcc48d,#a38249);color:#fff;font-weight:700;font-size:22px;display:flex;align-items:center;justify-content:center;flex:none}
+.sl .cvmeta{position:absolute;left:80px;bottom:60px;display:flex;gap:60px}
+.sl .cvmeta span{display:block;font-size:13px;letter-spacing:1.2px;text-transform:uppercase;color:#86868b}
+.sl .cvmeta b{display:block;font-size:22px;margin-top:5px}
+.sl .cvmeta em{font-style:normal;font-size:15px;color:#6e6e73}
 .sl.thx .cvb h1{font-size:96px}
-.sl.msg .cvb{top:170px}.sl.msg h2{margin:16px 0 0;font-size:38px;line-height:1.35;font-weight:600;letter-spacing:-.8px;max-width:1000px}
-.team{display:flex;gap:16px;margin-bottom:18px;flex-wrap:wrap}.tm2{display:flex;align-items:center;gap:14px;padding:14px 22px 14px 14px}.tm2 b{font-size:19px}.tm2 span{font-size:15px;color:#6e6e73;display:block;margin-top:-2px}.tm2 .av{grid-row:span 2}
-.tm2{display:grid;grid-template-columns:auto auto;column-gap:14px;align-items:center}.tm2 b,.tm2 span{grid-column:2}
-.duo{display:grid;grid-template-columns:1fr 1.25fr;gap:18px}
-.pane{padding:22px 28px;min-height:296px}.pane h3{margin:0 0 14px;font-size:14px;letter-spacing:1.3px;text-transform:uppercase;color:#6e6e73;font-weight:600}
-.pane.gold{background:linear-gradient(180deg,#fffdf8,#fbf5e8);box-shadow:0 1px 2px rgba(163,130,73,.15),0 10px 28px rgba(163,130,73,.14)}.pane.gold h3{color:#a38249}
-.pane .big{font-size:22px;line-height:1.5;margin:0}
-.ck{list-style:none;margin:0;padding:0}.ck li{position:relative;padding:11px 0 11px 34px;font-size:20px;line-height:1.35;border-bottom:1px solid #f0f0f2;font-weight:500}.ck li:last-child{border-bottom:0}.ck li:before{content:"";position:absolute;left:0;top:17px;width:16px;height:16px;border-radius:50%;background:#1f8a4c;box-shadow:inset 0 0 0 4px #e6f4ec}
-.fc{list-style:none;margin:0;padding:0;counter-reset:f}.fc li{counter-increment:f;display:flex;align-items:flex-start;gap:16px;padding:12px 0;border-bottom:1px solid #f1e8d2}.fc li:last-child{border-bottom:0}
-.fc li b:before{content:counter(f);display:flex;width:36px;height:36px;border-radius:50%;background:#a38249;color:#fff;font-weight:700;font-size:18px;align-items:center;justify-content:center}.fc div{flex:1}.fc p{margin:6px 0 0;font-size:19px;line-height:1.35;font-weight:500}.fc em{font-style:normal;font-size:14px;font-weight:600;color:#a38249;white-space:nowrap;padding-top:4px}
-.dgrid{display:grid;grid-template-columns:1.15fr 1fr 1.1fr;gap:16px}
-.dp{padding:20px 22px;min-height:352px}.dp h4{margin:0 0 14px;font-size:17px;font-weight:700;letter-spacing:-.2px}
-.db{display:flex;align-items:center;margin:11px 0}.db .n{width:104px;font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px}.db .n i{width:9px;height:9px;border-radius:50%;flex:none}
-.db .bt{flex:1;display:flex;height:26px;background:#f5f5f7;border-radius:7px;overflow:hidden}.bt i{font-style:normal;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center}
-.cd{background:#1f8a4c}.co{background:#0a2a43}.cr{background:#d70015}.cg{background:#a38249}
-.dl{margin-top:14px;font-size:13px;color:#6e6e73}.dl i{display:inline-block;width:10px;height:10px;border-radius:3px;margin:0 6px 0 14px;vertical-align:middle}.dl i:first-child{margin-left:0}
-.dn{color:#86868b}.dcols{display:flex;gap:8px;height:250px;align-items:flex-end}.dc{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end}
-.pair{display:flex;align-items:flex-end;gap:3px;height:215px}.pair i{flex:1;min-height:2px;border-radius:5px 5px 0 0;position:relative}.pair i b{position:absolute;top:-17px;left:-4px;right:-4px;text-align:center;font-size:12px;color:#1d1d1f;font-weight:600}
-.dc label{text-align:center;font-size:13px;color:#86868b;margin-top:6px}
-.hrisks{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-.hr{padding:20px 20px 18px;border-top:5px solid #1f8a4c;display:flex;flex-direction:column;min-height:420px}.hr.vh{border-top-color:#d70015}.hr.h{border-top-color:#e0701a}.hr.m{border-top-color:#d9a21a}
-.hrt{display:flex;justify-content:space-between;align-items:center}.hr em{font-style:normal;font-size:12px;font-weight:700;letter-spacing:.8px;color:#1f8a4c;background:#e6f4ec;border-radius:999px;padding:4px 10px}.hr.vh em{color:#d70015;background:#fde8ea}.hr.h em{color:#b9560b;background:#fdebd9}.hr.m em{color:#a8620a;background:#fdf1dc}
-.hr .hrt b{font-size:26px;color:#d2d2d7;letter-spacing:-.5px}.hr h4{margin:18px 0 8px;font-size:23px;line-height:1.2;letter-spacing:-.4px}.hr p{margin:0;font-size:17px;line-height:1.45;color:#424245;flex:1}
-.hr .ha{margin-top:14px;font-size:15px;line-height:1.4;color:#1d1d1f;background:#f5f5f7;border-radius:12px;padding:12px 14px}.hr .ha strong{display:block;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#a38249;margin-bottom:4px}
-.hprio{display:grid;grid-template-columns:1fr 1fr;gap:18px}.hp{padding:22px 28px;min-height:190px}.hp b{font-size:40px;color:#a38249;letter-spacing:-1px}.hp h4{margin:6px 0 8px;font-size:25px;line-height:1.2;letter-spacing:-.4px}.hp p{margin:0;font-size:18px;color:#6e6e73;line-height:1.4}
-#teamw{display:inline-flex;align-items:center;gap:10px;background:#0d1117;border:1px solid #2a2f3a;border-radius:12px;padding:5px 14px 5px 10px;cursor:pointer;color:#e8d9b5}
-#teamw .tw-n{font-family:"Courier New",ui-monospace,monospace;font-weight:700;font-size:30px;line-height:1;color:#ffb000;text-shadow:0 0 10px #ffb00088;letter-spacing:2px}
-#teamw .tw-l{display:flex;flex-direction:column;text-align:left;line-height:1.15}#teamw b{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:#9aa4b2;font-weight:600}#teamw small{font-size:13px;color:#e8d9b5;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sl.cmsg .cvb{top:260px}
+.sl.cmsg h2{margin:16px 0 0;font-size:38px;line-height:1.35;font-weight:600;letter-spacing:-.8px;max-width:1000px}
+.sl .team{display:flex;gap:16px;margin-bottom:18px;flex-wrap:wrap}
+.sl .tm2{display:flex;align-items:center;gap:14px;padding:14px 22px 14px 14px}
+.sl .tm2 b{font-size:19px}
+.sl .tm2 span{font-size:15px;color:#6e6e73;display:block;margin-top:-2px}
+.sl .tm2 .av{grid-row:span 2}
+.sl .tm2{display:grid;grid-template-columns:auto auto;column-gap:14px;align-items:center}
+.sl .tm2 b,.sl .tm2 span{grid-column:2}
+.sl .duo{display:grid;grid-template-columns:1fr 1.25fr;gap:18px}
+.sl .pane{padding:18px 26px;min-height:0}
+.sl .pane h3{margin:0 0 14px;font-size:14px;letter-spacing:1.3px;text-transform:uppercase;color:#6e6e73;font-weight:600}
+.sl .pane.gold{background:linear-gradient(180deg,#fffdf8,#fbf5e8);box-shadow:0 1px 2px rgba(163,130,73,.15),0 10px 28px rgba(163,130,73,.14)}
+.sl .pane.gold h3{color:#a38249}
+.sl .pane .big{font-size:22px;line-height:1.5;margin:0}
+.sl .ck{list-style:none;margin:0;padding:0}
+.sl .ck li{position:relative;padding:11px 0 11px 34px;font-size:20px;line-height:1.35;border-bottom:1px solid #f0f0f2;font-weight:500}
+.sl .ck li:last-child{border-bottom:0}
+.sl .ck li:before{content:"";position:absolute;left:0;top:17px;width:16px;height:16px;border-radius:50%;background:#1f8a4c;box-shadow:inset 0 0 0 4px #e6f4ec}
+.sl .fc{list-style:none;margin:0;padding:0;counter-reset:f}
+.sl .fc li{counter-increment:f;display:flex;align-items:flex-start;gap:14px;padding:9px 0;border-bottom:1px solid #f1e8d2}
+.sl .fc li:last-child{border-bottom:0}
+.sl .fc li b:before{content:counter(f);display:flex;width:36px;height:36px;border-radius:50%;background:#a38249;color:#fff;font-weight:700;font-size:18px;align-items:center;justify-content:center}
+.sl .fc div{flex:1}
+.sl .fc p{margin:4px 0 0;font-size:18px;line-height:1.3;font-weight:500}
+.sl .fc em{font-style:normal;font-size:14px;font-weight:600;color:#a38249;white-space:nowrap;padding-top:4px}
+.sl .dgrid{display:grid;grid-template-columns:1.15fr 1fr 1.1fr;gap:16px}
+.sl .dp{padding:20px 22px;min-height:352px}
+.sl .dp h4{margin:0 0 14px;font-size:17px;font-weight:700;letter-spacing:-.2px}
+.sl .db{display:flex;align-items:center;margin:11px 0}
+.sl .db .n{width:104px;font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px}
+.sl .db .n i{width:9px;height:9px;border-radius:50%;flex:none}
+.sl .db .bt{flex:1;display:flex;height:26px;background:#f5f5f7;border-radius:7px;overflow:hidden}
+.sl .bt i{font-style:normal;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.sl .cd{background:#1f8a4c}
+.sl .co{background:#0a2a43}
+.sl .cr{background:#d70015}
+.sl .cg{background:#a38249}
+.sl .dl{margin-top:14px;font-size:13px;color:#6e6e73}
+.sl .dl i{display:inline-block;width:10px;height:10px;border-radius:3px;margin:0 6px 0 14px;vertical-align:middle}
+.sl .dl i:first-child{margin-left:0}
+.sl .dn{color:#86868b}
+.sl .dcols{display:flex;gap:8px;height:250px;align-items:flex-end}
+.sl .dc{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end}
+.sl .pair{display:flex;align-items:flex-end;gap:3px;height:215px}
+.sl .pair i{flex:1;min-height:2px;border-radius:5px 5px 0 0;position:relative}
+.sl .pair i b{position:absolute;top:-17px;left:-4px;right:-4px;text-align:center;font-size:12px;color:#1d1d1f;font-weight:600}
+.sl .dc label{text-align:center;font-size:13px;color:#86868b;margin-top:6px}
+.sl .hrisks{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.sl .hr{padding:20px 20px 18px;border-top:5px solid #1f8a4c;display:flex;flex-direction:column;min-height:420px}
+.sl .hr.vh{border-top-color:#d70015}
+.sl .hr.h{border-top-color:#e0701a}
+.sl .hr.m{border-top-color:#d9a21a}
+.sl .hrt{display:flex;justify-content:space-between;align-items:center}
+.sl .hr em{font-style:normal;font-size:12px;font-weight:700;letter-spacing:.8px;color:#1f8a4c;background:#e6f4ec;border-radius:999px;padding:4px 10px}
+.sl .hr.vh em{color:#d70015;background:#fde8ea}
+.sl .hr.h em{color:#b9560b;background:#fdebd9}
+.sl .hr.m em{color:#a8620a;background:#fdf1dc}
+.sl .hr .hrt b{font-size:26px;color:#d2d2d7;letter-spacing:-.5px}
+.sl .hr h4{margin:18px 0 8px;font-size:23px;line-height:1.2;letter-spacing:-.4px}
+.sl .hr p{margin:0;font-size:17px;line-height:1.45;color:#424245;flex:1}
+.sl .hr .ha{margin-top:14px;font-size:15px;line-height:1.4;color:#1d1d1f;background:#f5f5f7;border-radius:12px;padding:12px 14px}
+.sl .hr .ha strong{display:block;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#a38249;margin-bottom:4px}
+.sl .hprio{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.sl .hp{padding:22px 28px;min-height:190px}
+.sl .hp b{font-size:40px;color:#a38249;letter-spacing:-1px}
+.sl .hp h4{margin:6px 0 8px;font-size:25px;line-height:1.2;letter-spacing:-.4px}
+.sl .hp p{margin:0;font-size:18px;color:#6e6e73;line-height:1.4}
+#teamw{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:5px 14px 5px 7px;cursor:pointer;color:var(--ink)}
+#teamw .tw-n{font-family:"Courier New",ui-monospace,monospace;font-weight:700;font-size:26px;line-height:1;color:#8a6a2e;background:#f6efe0;border-radius:8px;padding:5px 9px;letter-spacing:2px}
+#teamw .tw-l{display:flex;flex-direction:column;text-align:left;line-height:1.2}#teamw b{font-size:10.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--mute);font-weight:600}#teamw small{font-size:13.5px;font-weight:600;color:var(--ink);max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#vprof .kpis{display:flex;flex-wrap:wrap;gap:10px 14px}#vprof .kpis .kpi{flex:1 1 150px;max-width:210px}
+.pcap{position:relative;overflow:hidden}.pcap::after{content:"";position:absolute;left:0;right:0;bottom:0;height:70px;background:linear-gradient(transparent,var(--card) 82%);pointer-events:none}
+.pmore{position:absolute;left:50%;transform:translateX(-50%);bottom:8px;z-index:2;font-size:12.5px;padding:4px 14px;border-radius:999px}
+body.pd .pcap{max-height:none!important;overflow:visible}body.pd .pcap::after,body.pd .pmore{display:none}
+#pdet{width:min(940px,96vw)}#pdb{max-height:72vh;overflow:auto}#pdet .panel{border:0;background:transparent;padding:0}#pdet .pmore{display:none}
 #sprintbox{display:none}
 @media print{body.sp>*:not(#sprintbox){display:none!important}body.sp #sprintbox{display:block}#sprintbox .sl{page-break-after:always;break-after:page;-webkit-print-color-adjust:exact;print-color-adjust:exact}body.sp{background:#fff!important}}
 
@@ -477,7 +553,7 @@ table.fm.m78{table-layout:fixed;font-size:8.5px;width:100%}table.fm.m78 th,table
 </dialog>
 <dialog id="tdlg" style="width:min(560px,95vw)">
   <h2>Nhân sự phòng Pháp chế</h2>
-  <p class="hint">Chọn từ danh sách nhân sự của tab Hồ sơ công ty hoặc gõ tên. Hiển thị cạnh tiêu đề và dùng cho báo cáo trình chiếu.</p>
+  <p class="hint">Dòng đầu là bạn, lấy từ tab Hồ sơ công ty &gt; Thông tin của tôi. Thành viên khác chọn từ danh sách Nhân sự hoặc gõ tên. Hiển thị cạnh tiêu đề và dùng cho báo cáo trình chiếu.</p>
   <div id="tbody"></div>
   <datalist id="tnames"></datalist><datalist id="troles"><option>Trưởng phòng Pháp chế</option><option>Chuyên viên pháp chế</option><option>Thư ký TGĐ</option><option>Thực tập sinh</option></datalist>
   <div class="foot"><button id="tadd" style="margin-right:auto">Thêm thành viên</button><button id="tcancel">Đóng</button><button class="primary" id="tsave">Lưu</button></div>
@@ -860,7 +936,7 @@ const kcol=c=>{let i=COS().indexOf(c);if(i<0){i=0;for(const ch of String(c||""))
 const kchip=c=>c?`<span class="chip" style="--k:${kcol(c)}"><i></i>${esc(c)}</span>`:"";
 const kpill=(t,c)=>`<span class="pill ${c}">${esc(t)}</span>`;
 const cap=s=>s?s[0].toUpperCase()+s.slice(1):s;
-const kteam=()=>CFG.team&&CFG.team.length?CFG.team:[{n:"Vũ Quang Phát",r:"Trưởng phòng Pháp chế"}];
+const kteam=()=>{const me=((CFG.prof&&CFG.prof.me)||"").trim(),old=CFG.team||[],mr=(old.find(x=>x.me)||{}).r||"Trưởng phòng Pháp chế";const t=old.filter(x=>!x.me&&x.n).map(x=>({...x}));if(me)t.unshift({n:me,r:mr,me:1});return t.length?t:[{n:"Vũ Quang Phát",r:"Trưởng phòng Pháp chế",me:1}]};
 const kini=n=>{const w=String(n||"").trim().split(/\s+/);return(w[w.length-1]||"?")[0].toUpperCase()};
 const kshort=n=>{const w=String(n||"").trim().split(/\s+/);return w.length>1?w.slice(-2).join(" "):w[0]||""};
 const kclean=(t,co)=>{let s=String(t||"");if(co&&s.startsWith(co+": "))s=s.slice(co.length+2);s=s.replace(/^Hồ sơ nộp Sở TC:\s*/,"");const i=s.indexOf(" - ");return i>0?[s.slice(0,i),s.slice(i+3)]:[s,""]};
@@ -1030,7 +1106,7 @@ function hdSlides(p,off,co){
   S.push(kqFrame("ĐỀ NGHỊ","Vấn đề đề nghị HĐQT / TGĐ chỉ đạo",`<div class="card rows">${dl.slice(0,6).map((c,i)=>`<div class="row"><div class="rc"><span class="ncir">${i+1}</span></div><div class="rt"><b>${esc(c[0]||"")}</b><span>${esc(c[1]||"")}</span></div></div>`).join("")}</div>`));
   const ul=kqLn(V("ut")).map(l=>kqSp(l));
   S.push(kqFrame("KẾ HOẠCH · "+NL.toUpperCase(),"Ưu tiên điều hành kỳ tới",`<div class="hprio">${ul.slice(0,6).map((c,i)=>`<div class="card hp"><b>${String(i+1).padStart(2,"0")}</b><h4>${esc(c[0]||"")}</h4><p>${esc(c[1]||"")}</p></div>`).join("")}</div>`));
-  S.push(`<section class="sl cover msg"><img class="cvlogo" src="${kqLogo()}"><div class="cvb"><div class="eye">Thông điệp từ Phòng ${esc(CFG.unit)}</div><h2>${br(V("td"))}</h2></div>${kqTeamStrip()}</section>`);
+  S.push(`<section class="sl cover cmsg"><img class="cvlogo" src="${kqLogo()}"><div class="cvb"><div class="eye">Thông điệp từ Phòng ${esc(CFG.unit)}</div><h2>${br(V("td"))}</h2></div>${kqTeamStrip()}</section>`);
   return{S,kk,def,ov,kind:"hd"};
 }
 let SL=[],SI=0,SCUR=null;
@@ -1082,7 +1158,7 @@ function twRender(){
 }
 let TROWS=[];
 function twForm(){
-  $("tbody").innerHTML=TROWS.map((x,i)=>`<div class="bar" style="margin:6px 0"><input data-tn="${i}" list="tnames" placeholder="Họ và tên" value="${esc(x.n)}" style="flex:1.2;min-width:150px"><input data-tr="${i}" list="troles" placeholder="Chức danh" value="${esc(x.r||"")}" style="flex:1;min-width:140px"><button data-tx="${i}">Xóa</button></div>`).join("")||'<div class="empty">Chưa có thành viên</div>';
+  $("tbody").innerHTML=TROWS.map((x,i)=>`<div class="bar" style="margin:6px 0"><input data-tn="${i}" list="tnames" placeholder="Họ và tên" value="${esc(x.n)}" ${x.me?"readonly title='Lấy từ tab Thông tin của tôi'":""} style="flex:1.2;min-width:150px"><input data-tr="${i}" list="troles" placeholder="Chức danh" value="${esc(x.r||"")}" style="flex:1;min-width:140px">${x.me?'<small style="color:var(--mute);width:48px">Tôi</small>':`<button data-tx="${i}">Xóa</button>`}</div>`).join("")||'<div class="empty">Chưa có thành viên</div>';
 }
 $("teamw").onclick=()=>{
   TROWS=kteam().map(x=>({...x}));
@@ -1092,7 +1168,7 @@ $("teamw").onclick=()=>{
 $("tbody").oninput=e=>{const i=e.target.dataset.tn,j=e.target.dataset.tr;if(i!=null)TROWS[i].n=e.target.value;if(j!=null)TROWS[j].r=e.target.value};
 $("tbody").onclick=e=>{const b=e.target.closest("[data-tx]");if(!b)return;TROWS.splice(+b.dataset.tx,1);twForm()};
 $("tadd").onclick=()=>{TROWS.push({n:"",r:"Chuyên viên pháp chế"});twForm()};
-$("tsave").onclick=()=>{CFG.team=TROWS.filter(x=>x.n.trim()).map(x=>({n:x.n.trim(),r:(x.r||"").trim()}));saveC();$("tdlg").close();twRender();if($("sdlg").open)kqGen(true)};
+$("tsave").onclick=()=>{CFG.team=TROWS.filter(x=>x.n.trim()).map(x=>x.me?{n:x.n.trim(),r:(x.r||"").trim(),me:1}:{n:x.n.trim(),r:(x.r||"").trim()});saveC();$("tdlg").close();twRender();if($("sdlg").open)kqGen(true)};
 $("tcancel").onclick=()=>$("tdlg").close();
 twRender();setInterval(twRender,3000);
 
@@ -1632,7 +1708,7 @@ function rDash(){
   /* vốn */
   const mxV=Math.max(1,...cos.map(x=>Math.max(+x.vdl||0,+x.vtg||0)));
   const vr=cos.filter(x=>x.vdl||x.vtg).map(x=>{const v=+x.vdl||0,g=+x.vtg||0,paid=Math.min(g,v||g),rest=Math.max(v-g,0);return `<div class="row" style="grid-template-columns:90px 1fr 80px"><span>${chip(x.code)}</span><div class="track"><i style="width:${paid/mxV*100}%;background:var(--ok)" title="Đã góp ${money(g)}"></i><i style="width:${rest/mxV*100}%;background:var(--warn)" title="Chưa góp ${money(rest)}"></i></div><span class="n">${bil(v)}</span></div>`}).join("");
-  const pV=`<div class="panel"><h3>Vốn điều lệ và vốn thực góp</h3>${vr||'<small style="color:var(--mute)">Chưa có số liệu vốn.</small>'}<div class="lg"><span><i style="background:var(--ok)"></i>Đã góp</span><span><i style="background:var(--warn)"></i>Chưa góp</span></div></div>`;
+  const pV=`<div class="panel"><h3>Vốn điều lệ và vốn thực góp</h3>${vr?`<div style="font-size:13px;color:var(--mute);margin:0 0 6px">Tổng ${bil(sum(d.co,"vdl"))} | đã góp ${bil(sum(d.co,"vtg"))}${sum(d.co,"vdl")?" ("+nf(sum(d.co,"vtg")/sum(d.co,"vdl")*100)+"%)":""}</div>`:""}${vr||'<small style="color:var(--mute)">Chưa có số liệu vốn.</small>'}<div class="lg"><span><i style="background:var(--ok)"></i>Đã góp</span><span><i style="background:var(--warn)"></i>Chưa góp</span></div></div>`;
   /* sở hữu */
   const ow=cos.map(x=>latest[norm(x.code)]).filter(Boolean).concat(Object.values(latest).filter(g=>!cos.some(x=>same(x.code,g.co))));
   const pctOf=(x,g)=>g.base?(+x.shares||0)*g.par/g.base*100:0;
@@ -1652,7 +1728,20 @@ function rDash(){
   const pC=`<div class="panel full"><h3>Hợp đồng review (${d.ct.length})</h3>${d.ct.length?`<small>Đã trả ý kiến: <b>${cdn.length}</b> | Chờ / đang review: <b>${cop.length}</b>${cop.some(h=>h.hen&&h.hen<t0)?` | <b class="late-d">quá hạn: ${cop.filter(h=>h.hen&&h.hen<t0).length}</b>`:""} | Rủi ro cao: <b>${d.ct.filter(h=>h.rr==="Cao").length}</b> | Sắp hết hạn (60 ngày): <b>${cex.length}</b></small>`:'<small style="color:var(--mute)">Chưa có hợp đồng nào.</small>'}</div>`;
   const K=`<div class="panel full"><div class="kpis">${kpi(cos.length,"Pháp nhân")}${kpi(bil(sum(d.co,"vdl")),"Tổng vốn điều lệ")}${kpi(bil(sum(d.co,"vtg")),"Tổng vốn thực góp")}${kpi(new Set(act.map(x=>norm(x.name))).size,"Nhân sự đang giữ chức vụ")}${kpi(nBO,"Chủ sở hữu hưởng lợi (cá nhân)")}${kpi(d.prj.length,"Dự án")}${kpi(bil(sum(d.prj,"tvdt")),"Tổng vốn đầu tư dự án")}${kpi(DKI.filter(i=>i.dk===IP).length,"Đang đăng ký với CQNN")}${kpi(W.length,"Cảnh báo",W.length?"late":"")}</div></div>`;
   $("plist").innerHTML=`<div class="dash" style="padding:12px 0 0">${K}${pW}${pD}${pCo}${pV}${pO}${pP}${pJ}${pM}${pC}${pB}</div>`;
+  requestAnimationFrame(fitPanels);setTimeout(fitPanels,300);
 }
+function fitPanels(){
+  document.querySelectorAll("#plist .dash > .panel").forEach(p=>{
+    if(p.dataset.fit||!p.offsetParent)return;
+    const cap=p.classList.contains("full")?230:300;
+    if(p.scrollHeight>cap+50){p.dataset.fit=1;p.classList.add("pcap");p.style.maxHeight=cap+"px";const b=document.createElement("button");b.className="pmore";b.textContent="Xem chi tiết ›";p.appendChild(b)}
+  });
+}
+$("plist").addEventListener("click",e=>{
+  const b=e.target.closest(".pmore");if(!b)return;
+  let d=$("pdet");if(!d){d=document.createElement("dialog");d.id="pdet";d.innerHTML='<div id="pdb"></div><div class="foot"><button class="primary" id="pdx">Đóng</button></div>';$("vprof").appendChild(d);d.querySelector("#pdx").onclick=()=>d.close()}
+  const c=b.closest(".panel").cloneNode(true);c.querySelector(".pmore").remove();c.classList.remove("pcap");c.style.maxHeight="";$("pdb").innerHTML="";$("pdb").appendChild(c);d.showModal();
+});
 function rCo(r,all){
   const sum=k=>all.reduce((s,x)=>s+(+x[k]||0),0),miss=all.filter(x=>!x.msdn||!x.vdl||!x.addr).length;
   $("pstats").innerHTML=st(all.length,"Pháp nhân")+st(money(sum("vdl")),"Tổng vốn điều lệ đăng ký (đồng)")+st(money(sum("vtg")),"Tổng vốn thực góp đã nhập (đồng)")+st(miss,"Hồ sơ còn thiếu MSDN, vốn hoặc trụ sở",miss?"late":"")+st(all.filter(x=>x.dk==="Đang thực hiện đăng ký").length,"Đang thực hiện đăng ký thay đổi");
@@ -2739,8 +2828,8 @@ function rMe(){
   const pos=d.pos.filter(x=>pn(x.name)===pn(nm)&&activeP(x,today()));
   $("plist").innerHTML=`<div class="panel full" style="max-width:760px"><h3>Thông tin của tôi</h3>
 <p style="margin:0 0 8px;color:var(--mute);font-size:13px">Dùng làm người được ủy quyền nộp hồ sơ và thư ký cuộc họp mặc định khi in bộ hồ sơ. Dữ liệu lưu cùng danh sách Nhân sự, sửa ở đây hoặc ở tab Nhân sự đều như nhau.</p>
-<table class="m" style="min-width:0"><tbody>${row("Họ và tên",p.name)}${row("Giới tính",p.gt)}${row("Ngày sinh",p.dob?fmt(p.dob):"")}${row("Số CCCD",p.cccd)}${row("Ngày cấp CCCD",p.cccdngay?fmt(p.cccdngay):"")}${row("Nơi cấp CCCD",p.cccdnoi)}${row("Địa chỉ liên hệ",p.addr)}${row("Điện thoại",p.sdt)}${row("Email",p.email)}${row("Chức vụ đang giữ",pos.map(x=>x.co+": "+[x.role,x.title].filter(Boolean).join(", ")).join("; "))}</tbody></table>
-<div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">${p.id?`<button class="primary" data-meedit="${p.id}">Sửa thông tin</button>`:""}<label style="font-size:12px;color:var(--mute)">Đổi người dùng: <select data-mesel>${d.ppl.map(x=>`<option${pn(x.name)===pn(nm)?" selected":""}>${esc(x.name)}</option>`).join("")}</select></label></div></div>`}
+<table class="m" style="min-width:0"><tbody>${row("Họ và tên",p.name)}${row("Giới tính",p.gt)}${row("Ngày sinh",p.dob?fmt(p.dob):"")}${row("Số CCCD",p.cccd)}${row("Ngày cấp CCCD",p.cccdngay?fmt(p.cccdngay):"")}${row("Nơi cấp CCCD",p.cccdnoi)}${row("Địa chỉ liên hệ",p.addr)}${row("Điện thoại",p.sdt)}${row("Email",p.email)}${row("Chức vụ đang giữ",pos.map(x=>x.co+": "+[x.role,x.title].filter(Boolean).join(", ")).join("; "))}${row("Vai trò trong phòng Pháp chế",(kteam().find(m=>m.me)||{}).r)}${row("Nhân sự phòng",kteam().map(m=>m.n+(m.r?" ("+m.r+")":"")).join("; "))}</tbody></table>
+<div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">${p.id?`<button class="primary" data-meedit="${p.id}">Sửa thông tin</button>`:""}<button onclick="document.getElementById('teamw').click()">Chọn nhân sự phòng</button><label style="font-size:12px;color:var(--mute)">Đổi người dùng: <select data-mesel>${d.ppl.map(x=>`<option${pn(x.name)===pn(nm)?" selected":""}>${esc(x.name)}</option>`).join("")}</select></label></div></div>`}
 function rOwn(r,all){
   const ga=grp(all);
   $("pstats").innerHTML=st(new Set(all.map(x=>norm(x.co))).size,"Công ty có cơ cấu sở hữu")+st(all.length,"Dòng cổ đông")+st(ga.filter(g=>g.ok===false).length,"Bảng lệch vốn điều lệ",ga.some(g=>g.ok===false)?"late":"")+st(ga.filter(g=>g.ok===null).length,"Bảng chưa đối chiếu được");
