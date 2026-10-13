@@ -598,8 +598,8 @@ function migrate(){tasks.forEach(t=>{if(t.co==="FG")t.co="FGC";if(!TYPES.include
 migrate();
 const store=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){alert("Không lưu được vào trình duyệt. Hãy dùng Sao lưu JSON.")}if(k===KEY||k===KB||k===KC)ghSchedule()};
 const save=()=>store(KEY,tasks),saveB=()=>store(KB,budget),saveC=()=>store(KC,CFG);
-(()=>{const OLD=["namha2","tando","haison","tandohaison"],n=x=>String(x).replace(/[đĐ]/g,"d").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"");
-  if(Array.isArray(CFG.proj)&&CFG.proj.length&&CFG.proj.every(p=>OLD.includes(n(p))))CFG.proj=DEF.proj.slice()})();
+(()=>{const LEG=["tando","haison","tandohaison"],n=x=>String(x).replace(/[đĐ]/g,"d").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"");
+  if(Array.isArray(CFG.proj)){const keep=CFG.proj.filter(p=>!LEG.includes(n(p)));DEF.proj.forEach(d=>{if(!keep.some(p=>n(p)===n(d)))keep.push(d)});CFG.proj=keep}})();
 const late=t=>t.st!=="Hoàn thành"&&t.due&&t.due<today();
 const hsOf=t=>{const P=CFG.prof||{};return(P.hs||[]).find(h=>h.tid===t.id)||(P.nq||[]).find(h=>h.tid===t.id)||(P.ct||[]).find(h=>h.tid===t.id)};
 const hsNote=t=>{const P=CFG.prof||{},h=(P.hs||[]).find(x=>x.tid===t.id);if(h)return "Hồ sơ nộp Sở TC: "+(h.st||"");const n=(P.nq||[]).find(x=>x.tid===t.id);if(n)return "Nghị quyết"+(n.so?" "+n.so:"")+": "+(n.st||"");const c=(P.ct||[]).find(x=>x.tid===t.id);return c?"Hợp đồng: "+(c.st||""):""};
@@ -868,12 +868,12 @@ function bm02(p,off,co){
     const body=ls.length>1?ls.map((l,i)=>`${i+1}/ ${l}`):ls;
     const op=list.filter(openAt),dn=list.length-op.length;
     const st=list.map(t=>t.recv).filter(Boolean).sort()[0]||a,en=list.map(t=>openAt(t)?(t.due||b):(t.done||b)).sort().pop();
-    return{d:head.concat(body).join("\n"),r:op.length?`Đang xử lý (${dn}/${list.length})`:"Hoàn thành",s:fmt(st),e:fmt(en)};
+    return{d:head.concat(body).join("\n"),r:op.length?`Đang xử lý (hoàn thành ${dn}/${list.length})`:`Hoàn thành ${dn}/${list.length}`,s:fmt(st),e:fmt(en)};
   };
   const block=(cs,pre)=>{const list=tasks.filter(t=>cs.includes(t.co)&&rel(t));return(list.some(t=>t.type==="Khác")?TYPES:BASE).map(ty=>({ty,...cell(list.filter(t=>t.type===ty),ty,pre)}))};
   const sec=(t,c)=>`<tr class="sec"><td colspan="8" class="${c}">${esc(t)}</td></tr>`;
   const emit=(hm,ents)=>{const tot=ents.reduce((x,e)=>x+e.rows.length,0);let first=true,o="";
-    ents.forEach(e=>e.rows.forEach((r,i)=>{o+=`<tr>${td(++n)}${first?td(hm,{rs:tot}):""}${i===0?td(e.label,{rs:e.rows.length,cls:rcl(e.label)}):""}${td(r.ty)}${td(r.d,{cls:"l"})}${td(r.r,{cls:r.r==="Hoàn thành"?"rok":"rwip"})}${td(r.s)}${td(r.e)}</tr>`;first=false}));return o};
+    ents.forEach(e=>e.rows.forEach((r,i)=>{o+=`<tr>${td(++n)}${first?td(hm,{rs:tot}):""}${i===0?td(e.label,{rs:e.rows.length,cls:rcl(e.label)}):""}${td(r.ty)}${td(r.d,{cls:"l"})}${td(r.r,{cls:/^Hoàn thành/.test(r.r)?"rok":"rwip"})}${td(r.s)}${td(r.e)}</tr>`;first=false}));return o};
   const g3sel=co&&g3.includes(co)?[co]:g3;
   if(g1.length&&(!co||g1.includes(co))){s+=sec("XỬ LÝ HỒ SƠ NỘI BỘ CỦA "+CFG.org,"rs1");s+=emit("Đối với "+g1.join(", "),[{label:g1.join(", "),rows:block(g1,false)}])}
   const ents=g2.filter(c=>!co||c===co).map(c=>({label:c,rows:block([c],false)}));
@@ -3007,11 +3007,17 @@ function rOwn(r,all){
     `<tr class="tot"><td>Tổng cộng</td><td class="num">${nf(g.sh)}</td><td class="num">${money(g.val)}</td><td class="num">${nf(pctSum)}%</td><td class="${g.ok===true?"ok":g.ok===false?"bad":""}">${esc(g.msg)}</td></tr></tbody></table></div></div>`}).join("");
 }
 function rPrj(r,all){
-  const op=x=>tasks.filter(t=>t.st!=="Hoàn thành"&&(norm(t.proj)===norm(x.name)||norm(t.proj).startsWith(norm(x.name)+"gd"))).length,sum=k=>all.reduce((s,x)=>s+(+x[k]||0),0);
-  $("pstats").innerHTML=st(all.length,"Dự án")+st(money(sum("tvdt")),"Tổng vốn đầu tư (đồng)")+st(nf(sum("dt")),"Tổng diện tích đất (m²)")+st(all.reduce((s,x)=>s+op(x),0),"Việc đang xử lý gắn với dự án")+st(all.filter(x=>x.dk==="Đang thực hiện đăng ký").length,"Đang thực hiện đăng ký điều chỉnh");
+  const nx=x=>norm(x.name),inP=(p,x)=>norm(p)===nx(x)||norm(p).startsWith(nx(x)+"gd");
+  const opAll=x=>tasks.filter(t=>t.st!=="Hoàn thành"&&inP(t.proj,x)).length,ctAll=x=>PD().ct.filter(c=>inP(c.proj,x)).length;
+  const opG=(x,i)=>tasks.filter(t=>t.st!=="Hoàn thành"&&norm(t.proj)===nx(x)+"gd"+i).length,ctG=(x,i)=>PD().ct.filter(c=>norm(c.proj)===nx(x)+"gd"+i).length;
+  const sum=k=>all.reduce((s,x)=>s+(+x[k]||0),0);
+  $("pstats").innerHTML=st(all.length,"Dự án")+st(money(sum("tvdt")),"Tổng vốn đầu tư (đồng)")+st(nf(sum("dt")),"Tổng diện tích đất (m²)")+st(all.reduce((s,x)=>s+opAll(x),0),"Việc đang xử lý gắn với dự án")+st(all.reduce((s,x)=>s+ctAll(x),0),"Hợp đồng gắn với dự án");
   if(!r.length){$("plist").innerHTML=empty();return}
-  $("plist").innerHTML=`<table class="m"><thead><tr><th>Dự án</th><th>Chủ đầu tư, NĐDPL</th><th>Địa điểm</th><th>Diện tích đất / kho xưởng (m²)</th><th>Tổng vốn đầu tư</th><th>Việc đang xử lý</th><th>Hợp đồng liên quan</th></tr></thead><tbody>`+
-  r.map(x=>`<tr data-id="${x.id}"><td class="t"><b>${esc(x.name)}</b><small>${esc(x.code?"Mã dự án: "+x.code:"")}</small>${projPh(x.name,x)?`<small>${projPh(x.name,x)} giai đoạn: ${Array.from({length:projPh(x.name,x)},(_,i)=>"GĐ"+(i+1)).join(", ")}</small>`:""}${x.dk&&x.dk!=="Không áp dụng"?`<small>Đăng ký điều chỉnh GCNĐKĐT: ${dkTag(x)}${x.dknd?" - "+esc(x.dknd):""}</small>`:""}${x.note?`<small>${esc(x.note)}</small>`:""}</td><td>${esc(x.owner)}<small class="s">${esc(x.nddpl)}</small></td><td>${esc(x.addr)}</td><td class="num">${nf(x.dt)}${x.dtxd!==""&&x.dtxd!=null?" / "+nf(x.dtxd):""}</td><td class="num">${money(x.tvdt)}</td><td class="num">${op(x)}</td><td class="num">${PD().ct.filter(c=>norm(c.proj)===norm(x.name)||norm(c.proj).startsWith(norm(x.name)+"gd")).length}</td></tr>`).join("")+"</tbody></table>";
+  $("plist").innerHTML=`<table class="m prjt"><thead><tr><th>Dự án</th><th>Chủ đầu tư / NĐDPL</th><th>Địa điểm</th><th>Đất / xưởng (m²)</th><th>Tổng vốn đầu tư</th><th>GCNĐKĐT</th><th>Việc đang xử lý</th><th>Hợp đồng</th></tr></thead><tbody>`+
+  r.map(x=>{const g=projPh(x.name,x);
+    const main=`<tr data-id="${x.id}" class="pm"><td class="t"><b>${esc(x.name)}</b>${x.code?`<small>Mã dự án ${esc(x.code)}</small>`:""}${g?`<small>${g} giai đoạn</small>`:""}</td><td>${esc(x.owner)}<small class="s">${esc(x.nddpl)}</small></td><td><span class="clamp" title="${esc(x.addr)}">${esc(x.addr)}</span></td><td class="num">${nf(x.dt)}${x.dtxd!==""&&x.dtxd!=null?" / "+nf(x.dtxd):""}</td><td class="num">${money(x.tvdt)}</td><td>${x.dk&&x.dk!=="Không áp dụng"?dkTag(x):""}${x.dknd?`<small class="clamp" title="${esc(x.dknd)}">${esc(x.dknd)}</small>`:""}${x.note?`<small class="clamp s" title="${esc(x.note)}">${esc(x.note)}</small>`:""}</td><td class="num">${opAll(x)}</td><td class="num">${ctAll(x)}</td></tr>`;
+    const subs=g?Array.from({length:g},(_,i)=>`<tr data-id="${x.id}" class="sub"><td class="t">Giai đoạn ${i+1}<small>${esc(x.name)} - GĐ${i+1}</small></td><td></td><td></td><td></td><td></td><td></td><td class="num">${opG(x,i+1)}</td><td class="num">${ctG(x,i+1)}</td></tr>`).join(""):"";
+    return main+subs}).join("")+"</tbody></table>";
 }
 $("plist").onclick=e=>{const cd=e.target.closest("[data-cpdone]");if(cd){e.stopPropagation();cpDone(cd.dataset.cpdone);return}const sd=e.target.closest("[data-cpseed]");if(sd){e.stopPropagation();const d=PD();COS().filter(c=>d.co.some(x=>same(x.code,c))&&!d.cp.some(x=>same(x.co,c)&&x.loai==="Hồ sơ nội bộ cần lưu giữ, cập nhật")).forEach(c=>CPSEED.forEach(a=>d.cp.push({id:uid(),co:c,ten:a[0],loai:"Hồ sơ nội bộ cần lưu giữ, cập nhật",cq:"",ky:"Khác",han:"",lan:"",nt:"",st:"Đang theo dõi",cb:a[1],note:""})));saveC();renderProf();return}const gn=e.target.closest("[data-gtnext]");if(gn){e.stopPropagation();const h=PD().hs.find(x=>x.id===gn.dataset.gtnext);if(h){const n=Math.min(3,gtN(h)+1);h.buoc=GTB[n];syncHsTask(h);saveC();renderProf()}return}const pg=e.target.closest("[data-pg]");if(pg){const k=pg.dataset.pg;if(posClosed.has(k))posClosed.delete(k);else posClosed.add(k);pg.classList.toggle("col");$("plist").querySelectorAll("tr[data-gk]").forEach(tr=>{if(tr.dataset.gk===k)tr.hidden=posClosed.has(k)});return}const og=e.target.closest("[data-og]");if(og){const b=og.closest(".ow"),k=og.dataset.og;if(ownClosed.has(k))ownClosed.delete(k);else ownClosed.add(k);b.classList.toggle("col");return}const mb=e.target.closest("[data-meedit]");if(mb){openD(mb.dataset.meedit,"ppl");return}if(e.target.closest("[data-mesel]"))return;if(e.target.closest("[data-ctsync]")){const L=PD().ct;L.forEach(syncCtTask);saveC();alert("Đã đồng bộ "+L.length+" hợp đồng sang tab Công việc.");renderProf();return}if(e.target.closest("[data-nqsync]")){const L=PD().nq;L.forEach(syncNqTask);saveC();alert("Đã đồng bộ "+L.length+" nghị quyết sang tab Công việc.");renderProf();return}const mtb=e.target.closest("[data-mtt]");if(mtb){mtTab=mtb.dataset.mtt;sec=mtTab==="nq"?"nq":"mt";renderProf();return}if(e.target.closest("[data-mtsel]"))return;const pmb=e.target.closest("[data-pm]");if(pmb){const sl=pmb.parentNode.querySelector("select");if(sl)printMt(pmb.dataset.pm,sl.value);return}if(e.target.closest("[data-addnq]")){openD(null,"nq");return}if(e.target.closest("[data-hssync]")){const L=PD().hs;L.forEach(syncHsTask);alert("Đã đồng bộ "+L.length+" hồ sơ nộp sang tab Công việc.");renderProf();return}const hb=e.target.closest("[data-hst]");if(hb){hsTab=hb.dataset.hst;renderProf();return}const pfb=e.target.closest("[data-pf]");if(pfb){const k=pfb.dataset.pf,sel=pfb.parentNode.querySelector("select");printForm(k,sel?sel.value||sel.options[sel.selectedIndex].text:"*");return}if(e.target.closest("[data-pset]")){const pb=e.target.closest("[data-pset]"),bx=e.target.closest("[data-setbox]"),R=readSetBox(bx);if(pb.dataset.pset==="ds")R.o.only="ds";printSet(R.c,R.o);return}if(e.target.closest("[data-m12go]")){const gb=e.target.closest("[data-m12go]");printM12(m12Read(gb.closest("[data-m12box]")),gb.dataset.m12go);return}
   if(e.target.closest("[data-dgo]")){const gb=e.target.closest("[data-dgo]"),bx=gb.closest("[data-docbox]"),q=k=>bx.querySelector('[data-dk="'+k+'"]').value,it=HSI.find(x=>x.t===q("it"));if(!it)return;const oo={};bx.querySelectorAll("[data-dk]").forEach(e=>{oo[e.dataset.dk]=e.type==="checkbox"?e.checked:e.value});oo.so=q("so").trim();oo.only=gb.dataset.dgo==="chk"?"chk":"";oo.step=/^s[123]$/.test(gb.dataset.dgo)?gb.dataset.dgo[1]:"";const R=buildBo(it,q("co"),oo);showSheet(R.html,{title:it.t+" - "+q("co")});return}if(e.target.closest("[data-pfco]"))return;const ah=e.target.closest("[data-addhs]");if(ah){const it=HSI.find(i=>i.t===ah.dataset.addhs)||{};openD(null,"hs",{tt:ah.dataset.addhs,mau:(it.m||[]).map(n=>"Mẫu "+n).join(", "),st:"Đang soạn"});return}const ab=e.target.closest("[data-addbo]");if(ab){const q=ab.dataset.addbo.split("|");openD(null,"bo",{co:q[0],name:q[1],tc:q[3]==="g"?BOTC[1]:BOTC[0],tl:q[2],dk:"Đã đăng ký"});return}const a=e.target.closest("[data-addpos]");if(a){openD(null,"pos",{name:a.dataset.addpos});return}const pp=e.target.closest("[data-pid]");if(pp){openD(pp.dataset.pid,"pos");return}const tr=e.target.closest("tr[data-id]");if(tr)openD(tr.dataset.id,tr.dataset.nsec||undefined)};
@@ -3044,8 +3050,8 @@ function pplCheck(){
 const PHDEF={namha2:3};
 function projPh(n,rec){const g=rec&&rec.gd!==undefined&&rec.gd!==""?+rec.gd:(PHDEF[norm(n)]||0);return g>0?g:0}
 function projList(){const L=[],add=n=>{if(n&&!L.some(p=>norm(p)===norm(n)))L.push(n)};
-  const names=[...(CFG.proj||[]),...PD().prj.map(p=>p.name)];
-  names.forEach(n=>{if(!n)return;const rec=PD().prj.find(p=>norm(p.name)===norm(n)),g=projPh(n,rec);if(g)for(let i=1;i<=g;i++)add(n+" - GĐ"+i);else add(n)});return L}
+  const recs=PD().prj,names=recs.length?recs.map(p=>p.name):(CFG.proj||[]);
+  names.forEach(n=>{if(!n)return;const rec=recs.find(p=>norm(p.name)===norm(n)),g=projPh(n,rec);if(g)for(let i=1;i<=g;i++)add(n+" - GĐ"+i);else add(n)});return L}
 function openD(id,s,pre){
   dsec=s||sec;editId=id||null;const S=SEC[dsec],x=PD()[dsec].find(v=>v.id===id)||pre||{};
   $("hsdt").textContent=(id?"Sửa ":"Thêm ")+S.one;$("hsdel").style.display=id?"":"none";
@@ -3173,6 +3179,13 @@ $("ppdfall").onclick=()=>printProf(true);
 };
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",bootHoSoCongTy);else bootHoSoCongTy();
 </script>
+<style>
+#vprof table.prjt tr.pm td{border-top:2px solid var(--line)}
+#vprof table.prjt tr.sub td{padding-top:5px;padding-bottom:5px;background:color-mix(in srgb,var(--brand) 4%,var(--card));font-size:13px}
+#vprof table.prjt tr.sub td.t{padding-left:28px;border-left:3px solid var(--c1,var(--brand))}
+#vprof table.prjt td small{display:block;color:var(--mute);font-weight:400}
+#vprof .clamp,#vprof table.prjt td small.clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:360px}
+</style>
 <!-- ===== MODULE TRANH CHẤP LAO ĐỘNG ===== -->
 <style>
 #vtc{padding-bottom:48px}
