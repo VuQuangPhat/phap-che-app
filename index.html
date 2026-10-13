@@ -1507,7 +1507,7 @@ const SEC={
        {k:"ten",l:"Tên / số hợp đồng",full:1},
        {k:"party",l:"Đối tác"},
        {k:"loai",l:"Loại hợp đồng",t:"sel",o:CTL},
-       {k:"proj",l:"Dự án (nếu có)"},
+       {k:"proj",l:"Dự án (nếu có)",t:"prj"},
        {k:"gt",l:"Giá trị hợp đồng (đồng)",t:"int"},
        {k:"who",l:"Người yêu cầu review"},
        {k:"ngay",l:"Ngày nhận review",t:"date"},
@@ -1524,6 +1524,7 @@ const SEC={
     key:o=>norm(o.name),
     f:[{k:"name",l:"Tên dự án",list:"projs"},
        {k:"code",l:"Mã dự án"},
+       {k:"gd",l:"Số giai đoạn (để trống: Nam Hà 2 mặc định 3; dự án khác không chia)",t:"int"},
        {k:"owner",l:"Chủ đầu tư"},
        {k:"nddpl",l:"NĐDPL / người điều hành dự án"},
        {k:"addr",l:"Địa điểm thực hiện",full:1},
@@ -1701,7 +1702,7 @@ function rDash(){
   const cos=[...d.co].sort((a,b)=>ci(a.code)-ci(b.code)||String(a.code).localeCompare(String(b.code)));
   const act=d.pos.filter(x=>activeP(x,t0)),latest={};
   grp(d.own).forEach(g=>{const k=norm(g.co);if(!latest[k])latest[k]=g});
-  const op=x=>tasks.filter(t=>t.st!=="Hoàn thành"&&same(t.proj,x.name)).length;
+  const op=x=>tasks.filter(t=>t.st!=="Hoàn thành"&&(norm(t.proj)===norm(x.name)||norm(t.proj).startsWith(norm(x.name)+"gd"))).length;
   /* cảnh báo */
   const W=[];
   cos.forEach(x=>{
@@ -3004,7 +3005,7 @@ function rOwn(r,all){
     `<tr class="tot"><td>Tổng cộng</td><td class="num">${nf(g.sh)}</td><td class="num">${money(g.val)}</td><td class="num">${nf(pctSum)}%</td><td class="${g.ok===true?"ok":g.ok===false?"bad":""}">${esc(g.msg)}</td></tr></tbody></table></div></div>`}).join("");
 }
 function rPrj(r,all){
-  const op=x=>tasks.filter(t=>t.st!=="Hoàn thành"&&same(t.proj,x.name)).length,sum=k=>all.reduce((s,x)=>s+(+x[k]||0),0);
+  const op=x=>tasks.filter(t=>t.st!=="Hoàn thành"&&(norm(t.proj)===norm(x.name)||norm(t.proj).startsWith(norm(x.name)+"gd"))).length,sum=k=>all.reduce((s,x)=>s+(+x[k]||0),0);
   $("pstats").innerHTML=st(all.length,"Dự án")+st(money(sum("tvdt")),"Tổng vốn đầu tư (đồng)")+st(nf(sum("dt")),"Tổng diện tích đất (m²)")+st(all.reduce((s,x)=>s+op(x),0),"Việc đang xử lý gắn với dự án")+st(all.filter(x=>x.dk==="Đang thực hiện đăng ký").length,"Đang thực hiện đăng ký điều chỉnh");
   if(!r.length){$("plist").innerHTML=empty();return}
   $("plist").innerHTML=`<table class="m"><thead><tr><th>Dự án</th><th>Chủ đầu tư, NĐDPL</th><th>Địa điểm</th><th>Diện tích đất / kho xưởng (m²)</th><th>Tổng vốn đầu tư</th><th>Việc đang xử lý</th></tr></thead><tbody>`+
@@ -3038,6 +3039,11 @@ function pplCheck(){
   W.style.display=w.length?"block":"none";
   W.innerHTML="<b>Cần kiểm tra lại:</b><ul style='margin:4px 0 0 18px;padding:0'>"+w.map(x=>"<li>"+esc(x)+"</li>").join("")+"</ul><div style='margin-top:4px;opacity:.75'>Chỉ là cảnh báo, vẫn có thể lưu.</div>";
 }
+const PHDEF={namha2:3};
+function projPh(n,rec){const g=rec&&rec.gd!==undefined&&rec.gd!==""?+rec.gd:(PHDEF[norm(n)]||0);return g>0?g:0}
+function projList(){const L=[],add=n=>{if(n&&!L.some(p=>norm(p)===norm(n)))L.push(n)};
+  const names=[...(CFG.proj||[]),...PD().prj.map(p=>p.name)];
+  names.forEach(n=>{if(!n)return;const rec=PD().prj.find(p=>norm(p.name)===norm(n)),g=projPh(n,rec);if(g)for(let i=1;i<=g;i++)add(n+" - GĐ"+i);else add(n)});return L}
 function openD(id,s,pre){
   dsec=s||sec;editId=id||null;const S=SEC[dsec],x=PD()[dsec].find(v=>v.id===id)||pre||{};
   $("hsdt").textContent=(id?"Sửa ":"Thêm ")+S.one;$("hsdel").style.display=id?"":"none";
@@ -3045,6 +3051,8 @@ function openD(id,s,pre){
     if(dsec==="hs"&&f.k==="mau"){const cur=(String(v).match(/\d+/g)||[]).map(Number);
       inp=`<input ${a} type="hidden" value="${esc(v)}"><div class="mchk" id="h_mauL">${Object.keys(MAU).map(Number).sort((p,q)=>p-q).map(n=>`<label class="mck${MGONE.includes(n)?" gn":""}" data-n="${n}"><input type="checkbox" value="${n}"${cur.includes(n)?" checked":""}><span><b>Mẫu ${n}</b>${MREP.includes(n)?' <i class="nw">mới</i>':""}${MGONE.includes(n)?' <i class="gn">đã bãi bỏ</i>':""} ${esc(MAU[n])}</span></label>`).join("")}</div><small style="display:block;color:var(--mute);margin-top:4px">Tích chọn các mẫu dùng cho hồ sơ này. Chọn Thủ tục ở trên thì app tự gợi ý mẫu tương ứng (đổi lại được).</small>`}
     else if(f.t==="area")inp=`<textarea ${a} rows="3">${esc(v)}</textarea>`;
+    else if(f.t==="prj"){const L=projList();if(v&&!L.some(p=>norm(p)===norm(v)))L.push(v);
+      inp=`<select ${a}><option value="">— Không thuộc dự án —</option>${L.map(o=>`<option${norm(o)===norm(v)?" selected":""}>${esc(o)}</option>`).join("")}</select>`}
     else if(f.t==="sel")inp=`<select ${a}>${f.o.map(o=>`<option${o===v?" selected":""}>${esc(o)}</option>`).join("")}</select>`;
     else inp=`<input ${a} type="${f.t==="date"?"date":"text"}"${f.t==="int"||f.t==="dec"?' inputmode="decimal"':""}${f.list?` list="${f.list}"`:""}${f.max?` maxlength="${f.max}"`:""}${f.ph?` placeholder="${esc(f.ph)}"`:""} value="${esc(v)}">`;
     return `<label${f.full||(dsec==="hs"&&f.k==="mau")?' class="full"':""}>${esc(f.l)}${inp}</label>`}).join("");
