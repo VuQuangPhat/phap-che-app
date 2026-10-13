@@ -1553,9 +1553,9 @@ const PD=()=>{const p=CFG.prof=CFG.prof||{};
 function seedProf(p){
   const up=(name,o,over)=>{let r=p.ppl.find(x=>norm(x.name)===norm(name));if(!r){r={id:uid(),name,cccd:"",cccdngay:"",cccdnoi:"",addr:"",note:""};p.ppl.push(r)}
     Object.keys(o).forEach(k=>{if(over||r[k]===undefined||r[k]===""||r[k]==null)r[k]=o[k]});return r};
-  up("Vũ Quang Phát",{cccd:"075090000018",cccdngay:"2025-11-28",cccdnoi:"Bộ Công an",dob:"1990-01-22",gt:"Nam",qt:"Việt Nam",dt:"Kinh",addr:"619 Đỗ Xuân Hợp, Phường Phước Long, TP. Hồ Chí Minh",sdt:"0901396678",email:"phatvu@fgroup.com.vn"},true);
+  up("Vũ Quang Phát",{gt:"Nam",qt:"Việt Nam",dt:"Kinh"},false);
   p.me="Vũ Quang Phát";
-  up("Lê Việt Tùng",{dob:"1974-06-01",gt:"Nam",dt:"Kinh",qt:"Việt Nam",cccd:"044074050707",cccdngay:"2022-08-25",cccdnoi:"Cục Cảnh sát Quản lý hành chính về trật tự xã hội",addr:"32 Đường N2, Khu phố 3, Phường Cát Lái, TP. Hồ Chí Minh"},false);
+  up("Lê Việt Tùng",{gt:"Nam",dt:"Kinh",qt:"Việt Nam"},false);
   p.pos.forEach(x=>{if(norm(x.co)==="hlm"&&/nddpl/.test(norm(x.role))){if(/tung$/.test(norm(x.name))&&x.dk==="Chưa đăng ký")x.title="Chủ tịch Hội đồng quản trị";if(/xuan$/.test(norm(x.name)))x.title="Giám đốc điều hành"}});
 }
 function ensurePersons(){const d=PD();d.pos.forEach(p=>{if(p.name&&!d.ppl.some(x=>same(x.name,p.name)))d.ppl.push({id:uid(),name:p.name,cccd:"",cccdngay:"",cccdnoi:"",addr:"",note:""})})}
