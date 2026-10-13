@@ -1362,7 +1362,7 @@ const HSG=[
  {id:"kh",lab:"Thủ tục khác",ds:"Cấp lại, cấp đổi, cập nhật thông tin, công bố, cam kết xã hội.",items:[{t:"Cấp lại giấy chứng nhận / giấy xác nhận ĐKDN",m:[26]},{t:"Cấp đổi, bổ sung, cập nhật thông tin ĐKDN",m:[21,22,24]},{t:"Công bố nội dung đăng ký doanh nghiệp",m:[32]},{t:"Phản hồi kết quả rà soát thông tin ĐKDN",m:[20]},{t:"Dừng thực hiện thủ tục đăng ký doanh nghiệp",m:[33]},{t:"Cam kết mục tiêu xã hội, môi trường",m:[34,35,36]}]}];
 const HSI=HSG.flatMap(g=>g.items.map(i=>({...i,g:g.id})));
 const MREP=[1,2,3,4,5,10,12,27,30],MGONE=[11];
-const HIDE=["hs","mt","nq","ct","cp"];
+const HIDE=["hs","mt","nq","ct","cp","mau"];
 const CTL=["Thuê / cho thuê","Mua bán / cung cấp","Dịch vụ","Xây dựng / thi công","Lao động","Hợp tác / đầu tư","Vay / tín dụng","Bảo mật (NDA)","Khác"],CTS=["Chờ review","Đang review","Đã trả ý kiến","Đã ký"],CTR=["Chưa đánh giá","Thấp","Trung bình","Cao"];
 const MTL=["Họp HĐQT định kỳ","Họp HĐQT bất thường","Lấy ý kiến HĐQT bằng văn bản","ĐHĐCĐ thường niên","ĐHĐCĐ bất thường","Lấy ý kiến cổ đông bằng văn bản"];
 const MTS=["Dự kiến","Đã gửi thông báo","Đã họp","Hoãn / hủy"],BBS=["Chưa lập","Đã lập, chờ ký","Đã ký"],NQS=["Chưa thực hiện","Đang thực hiện","Đã hoàn thành","Hủy"];
@@ -1373,6 +1373,7 @@ const GTB=["","Bước 1/3 - Công bố","Bước 2/3 - Thanh lý, chốt nghĩa
 const gtN=x=>{const m=String(x&&x.buoc||"").match(/(\d)\/3/);return m?+m[1]:(x&&/Giải thể doanh nghiệp/.test(x.tt)?1:0)};
 const GTL=["Công bố","Thanh lý, chốt nghĩa vụ","Nộp hồ sơ"];
 const gtStep=x=>{if(!/Giải thể doanh nghiệp/.test(x.tt||""))return"";const n=gtN(x);return `<span class="gts">${GTL.map((l,i)=>`<i class="${i+1<n?"dn":i+1===n?"cur":""}">${i+1}. ${l}</i>`).join("")}${n<3&&x.st!=="Đã có kết quả"?`<button class="gtn" data-gtnext="${x.id}" title="Chuyển sang bước ${n+1}/3">Sang bước ${n+1}</button>`:""}</span>`};
+const MAS=["Nháp","Đang dùng","Chờ cập nhật","Hết hiệu lực"];
 const CPL=["Giấy phép / điều kiện kinh doanh","Báo cáo định kỳ với cơ quan nhà nước","Hồ sơ nội bộ cần lưu giữ, cập nhật","Đăng ký, gia hạn khác"],CPK=["Một lần","Hàng tháng","Hàng quý","6 tháng","Hàng năm","Khác"],CPS=["Đang theo dõi","Đang thực hiện","Đã hoàn thành","Ngừng áp dụng"];
 const SEC={
   co:{lab:"Pháp nhân",one:"pháp nhân",req:["code"],
@@ -1510,6 +1511,8 @@ const SEC={
        {k:"party",l:"Đối tác"},
        {k:"loai",l:"Loại hợp đồng",t:"sel",o:CTL},
        {k:"proj",l:"Dự án (nếu có)",t:"prj"},
+       {k:"tm",l:"Dựa trên hợp đồng mẫu (tab HĐ mẫu)",t:"mau"},
+       {k:"lech",l:"Mức lệch so với mẫu",t:"sel",o:["","Giữ nguyên mẫu","Sửa nhỏ","Sửa lớn","Không dùng mẫu"]},
        {k:"gt",l:"Giá trị hợp đồng (đồng)",t:"int"},
        {k:"who",l:"Người yêu cầu review"},
        {k:"ngay",l:"Ngày nhận review",t:"date"},
@@ -1535,9 +1538,28 @@ const SEC={
        {k:"tvdt",l:"Tổng vốn đầu tư (đồng)",t:"int"},
        {k:"dk",l:"Đăng ký điều chỉnh GCNĐKĐT với cơ quan đăng ký",t:"sel",o:DKS},
        {k:"dknd",l:"Nội dung đăng ký điều chỉnh (VD: điều chỉnh tiến độ, vốn đầu tư)",full:1},
-       {k:"note",l:"Ghi chú, vấn đề pháp lý đang theo dõi",t:"area",full:1}]}
+       {k:"note",l:"Ghi chú, vấn đề pháp lý đang theo dõi",t:"area",full:1}]},
+  mau:{lab:"HĐ mẫu",one:"hợp đồng mẫu",req:["ten"],
+    key:o=>[o.co,o.ma||o.ten,o.ver].map(norm).join("|"),
+    f:[{k:"co",l:"Pháp nhân áp dụng (để trống = dùng chung)",list:"p_codes"},
+       {k:"ma",l:"Mã mẫu"},
+       {k:"ten",l:"Tên hợp đồng mẫu",full:1},
+       {k:"loai",l:"Loại hợp đồng",t:"sel",o:CTL},
+       {k:"proj",l:"Dự án áp dụng (nếu có)",t:"prj"},
+       {k:"ver",l:"Phiên bản"},
+       {k:"ban",l:"Ngày ban hành",t:"date"},
+       {k:"soan",l:"Người soạn"},
+       {k:"duyet",l:"Người / cấp phê duyệt mẫu"},
+       {k:"st",l:"Tình trạng",t:"sel",o:MAS},
+       {k:"rs",l:"Ngày rà soát gần nhất",t:"date"},
+       {k:"rsn",l:"Ngày rà soát tiếp theo",t:"date"},
+       {k:"cb",l:"Căn cứ pháp lý của mẫu (BLDS, Luật Đất đai, Luật KDBĐS, BLLĐ…)",full:1},
+       {k:"bb",l:"Điều khoản bắt buộc giữ nguyên",t:"area",full:1},
+       {k:"tl",l:"Điều khoản được phép thương lượng (phạt vi phạm, thanh toán, bảo hành, giải quyết tranh chấp…)",t:"area",full:1},
+       {k:"lk",l:"Nơi lưu file gốc / đường dẫn",full:1},
+       {k:"note",l:"Ghi chú, lý do cập nhật",t:"area",full:1}]}
 };
-const ORDER=["co","ppl","pos","own","bo","hs","mt","nq","ct","cp","prj"];
+const ORDER=["co","ppl","pos","own","bo","hs","mt","nq","ct","cp","prj","mau"];
 let sec="dash",dsec="co",editId=null,seq=0;const ownClosed=new Set(),posClosed=new Set();
 
 /* ---------- Tiện ích ---------- */
@@ -1600,6 +1622,7 @@ const th2=document.createElement("button");th2.id="tphs";th2.textContent="Hồ s
 const th3=document.createElement("button");th3.id="tphop";th3.textContent="Họp HĐQT / ĐHĐCĐ";nav.appendChild(th3);
 const th4=document.createElement("button");th4.id="tpct";th4.textContent="Hợp đồng";nav.appendChild(th4);
 const th5=document.createElement("button");th5.id="tpcp";th5.textContent="Tuân thủ";nav.appendChild(th5);
+const th6=document.createElement("button");th6.id="tpmau";th6.textContent="HĐ mẫu";nav.appendChild(th6);
 const vp=document.createElement("div");vp.id="vprof";vp.hidden=true;
 vp.innerHTML=`<nav class="tabs" id="psub">${["dash",...ORDER.filter(k=>!HIDE.includes(k))].map(k=>`<button data-s="${k}">${k==="dash"?"Tổng quan":SEC[k].lab}</button>`).join("")}<button data-s="me">Thông tin của tôi</button><span style="margin-left:auto;display:flex;gap:6px;align-items:center;padding-left:12px"><button id="ppdf" class="primary">Xuất PDF mục này</button><button id="ppdfall">Xuất PDF toàn bộ</button></span></nav>
 <div id="pprint"></div>
@@ -1630,26 +1653,30 @@ document.body.appendChild(dlg);
 function showProf(){
   if(HIDE.includes(sec))sec="dash";
   view="prof";["vlist","vbud","vdash"].forEach(i=>$(i).hidden=true);vp.hidden=false;
-  ["tl","tb","td"].forEach(i=>$(i).classList.remove("on"));th2.classList.remove("on");th3.classList.remove("on");th4.classList.remove("on");th5.classList.remove("on");tp.classList.add("on");renderProf();
+  ["tl","tb","td"].forEach(i=>$(i).classList.remove("on"));th2.classList.remove("on");th3.classList.remove("on");th4.classList.remove("on");th5.classList.remove("on");th6.classList.remove("on");tp.classList.add("on");renderProf();
 }
 function showCt(){
   sec="ct";view="prof";["vlist","vbud","vdash"].forEach(i=>$(i).hidden=true);vp.hidden=false;
-  ["tl","tb","td"].forEach(i=>$(i).classList.remove("on"));tp.classList.remove("on");th2.classList.remove("on");th3.classList.remove("on");th4.classList.add("on");th5.classList.remove("on");$("pq").value="";$("pfc").value="";renderProf();
+  ["tl","tb","td"].forEach(i=>$(i).classList.remove("on"));tp.classList.remove("on");th2.classList.remove("on");th3.classList.remove("on");th4.classList.add("on");th5.classList.remove("on");th6.classList.remove("on");$("pq").value="";$("pfc").value="";renderProf();
 }
 function showCp(){
   sec="cp";view="prof";["vlist","vbud","vdash"].forEach(i=>$(i).hidden=true);vp.hidden=false;
-  ["tl","tb","td"].forEach(i=>$(i).classList.remove("on"));tp.classList.remove("on");th2.classList.remove("on");th3.classList.remove("on");th4.classList.remove("on");th5.classList.add("on");$("pq").value="";$("pfc").value="";renderProf();
+  ["tl","tb","td"].forEach(i=>$(i).classList.remove("on"));tp.classList.remove("on");th2.classList.remove("on");th3.classList.remove("on");th4.classList.remove("on");th6.classList.remove("on");th5.classList.add("on");$("pq").value="";$("pfc").value="";renderProf();
+}
+function showMau(){
+  sec="mau";view="prof";["vlist","vbud","vdash"].forEach(i=>$(i).hidden=true);vp.hidden=false;
+  ["tl","tb","td"].forEach(i=>$(i).classList.remove("on"));[tp,th2,th3,th4,th5].forEach(b=>b.classList.remove("on"));th6.classList.add("on");$("pq").value="";$("pfc").value="";renderProf();
 }
 function showHop(){
   sec=mtTab==="nq"?"nq":"mt";view="prof";["vlist","vbud","vdash"].forEach(i=>$(i).hidden=true);vp.hidden=false;
-  ["tl","tb","td"].forEach(i=>$(i).classList.remove("on"));tp.classList.remove("on");th2.classList.remove("on");th3.classList.add("on");th4.classList.remove("on");th5.classList.remove("on");$("pq").value="";$("pfc").value="";renderProf();
+  ["tl","tb","td"].forEach(i=>$(i).classList.remove("on"));tp.classList.remove("on");th2.classList.remove("on");th3.classList.add("on");th4.classList.remove("on");th5.classList.remove("on");th6.classList.remove("on");$("pq").value="";$("pfc").value="";renderProf();
 }
 function showHs(){
   sec="hs";view="prof";["vlist","vbud","vdash"].forEach(i=>$(i).hidden=true);vp.hidden=false;
-  ["tl","tb","td"].forEach(i=>$(i).classList.remove("on"));tp.classList.remove("on");th3.classList.remove("on");th4.classList.remove("on");th5.classList.remove("on");th2.classList.add("on");$("pq").value="";$("pfc").value="";renderProf();
+  ["tl","tb","td"].forEach(i=>$(i).classList.remove("on"));tp.classList.remove("on");th3.classList.remove("on");th4.classList.remove("on");th5.classList.remove("on");th6.classList.remove("on");th2.classList.add("on");$("pq").value="";$("pfc").value="";renderProf();
 }
-tp.onclick=showProf;th2.onclick=showHs;th3.onclick=showHop;th4.onclick=showCt;th5.onclick=showCp;
-["tl","tb","td"].forEach(i=>$(i).addEventListener("click",()=>{vp.hidden=true;tp.classList.remove("on");th2.classList.remove("on");th3.classList.remove("on");th4.classList.remove("on");th5.classList.remove("on")}));
+tp.onclick=showProf;th2.onclick=showHs;th3.onclick=showHop;th4.onclick=showCt;th5.onclick=showCp;th6.onclick=showMau;
+["tl","tb","td"].forEach(i=>$(i).addEventListener("click",()=>{vp.hidden=true;tp.classList.remove("on");th2.classList.remove("on");th3.classList.remove("on");th4.classList.remove("on");th5.classList.remove("on");th6.classList.remove("on")}));
 const _render=render;
 render=function(){if(view==="prof")renderProf();else _render()};
 const _csv=$("csv").onclick;
@@ -1695,7 +1722,7 @@ function renderProf(){
   const fk=sec==="co"?"code":"co";
   const posOf=n=>PD().pos.filter(p=>same(p.name,n));
   const r=all.filter(x=>(!c||sec==="prj"||(sec==="ppl"?posOf(x.name).some(p=>same(p.co,c)):same(x[fk],c)))&&(!q||(Object.values(x).join(" ")+(sec==="ppl"?" "+posOf(x.name).map(p=>Object.values(p).join(" ")).join(" "):"")).toLowerCase().includes(q)));
-  ({co:rCo,ppl:rPpl,pos:rPos,own:rOwn,bo:rBo,hs:rHs,mt:rMt,nq:rNq,ct:rCt,cp:rCp,prj:rPrj})[sec](r,all);
+  ({co:rCo,ppl:rPpl,pos:rPos,own:rOwn,bo:rBo,hs:rHs,mt:rMt,nq:rNq,ct:rCt,cp:rCp,prj:rPrj,mau:rMau})[sec](r,all);
 }
 function rDash(){
   const d=PD(),t0=today(),sum=(a,k)=>a.reduce((s,x)=>s+(+x[k]||0),0);
@@ -1729,7 +1756,7 @@ function rDash(){
   d.prj.forEach(x=>{if(!x.owner)W.push([x.name,"thiếu chủ đầu tư"]);if(!x.nddpl)W.push([x.name,"thiếu NĐDPL / người điều hành dự án"])});
   const BOM=boModel().out;BOM.forEach(o=>o.warn.forEach(w=>{if(w.k==="miss")W.push([o.c,"CSHHL "+w.b.name+" ("+nf(w.b.t)+"%) đạt ngưỡng 25% nhưng chưa ghi nhận kê khai"])}));
   hsGaps().filter(g=>!g.soft).forEach(g=>W.push([g.c,g.t]));govGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));cpGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));intGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));
-  const MG=mtGaps();MG.filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));ctGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));
+  const MG=mtGaps();MG.filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));ctGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));mauGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));
   const nBO=new Set(BOM.flatMap(o=>o.bo.map(b=>b.key))).size;
   const pB=`<div class="panel full"><h3>Chủ sở hữu hưởng lợi theo doanh nghiệp (ngưỡng 25%)</h3>${BOM.length?BOM.map(o=>`<div class="act" style="cursor:default;align-items:flex-start"><span class="d">${chip(o.c)}</span><span style="flex:1">${o.bo.length?o.bo.map(b=>`<b>${esc(b.name)}</b> ${nf(b.t)}%${b.d>0&&b.i>0.005?` <small style="color:var(--mute)">(TT ${nf(b.d)}% + GT ${nf(b.i)}%)</small>`:""} ${(()=>{const s=boStat(o,b);return s==="Đã đăng ký"?'<small style="color:var(--ok)">đã kê khai</small>':s==="Đang thực hiện đăng ký"?'<span class="dkp">đang kê khai</span>':s==="Chưa đăng ký"?'<span class="wn1">⚠ chưa kê khai</span>':s==="Chưa ghi nhận"?'<span class="wn1">⚠ chưa ghi nhận kê khai</span>':""})()}`).join("<br>"):'<small style="color:var(--warn)">Chưa có cá nhân đạt 25%: xét tiêu chí kiểm soát</small>'}</span></div>`).join(""):'<small style="color:var(--mute)">Chưa có dữ liệu sở hữu vốn.</small>'}</div>`;
   const pW=`<div class="panel full${W.length?" warnp":""}"><h3>${W.length?"⚠ ":""}Cảnh báo cần xử lý (${W.length})</h3>${W.length?W.map(w=>`<div class="act wnrow" style="cursor:default"><span class="d">${COS().some(c=>same(c,w[0]))?chip(w[0]):`<b class="late-d">${esc(w[0])}</b>`}</span><span>${esc(w[1])}</span></div>`).join(""):'<small style="color:var(--mute)">Hồ sơ đã đủ, không có cảnh báo.</small>'}</div>`;
@@ -3006,6 +3033,26 @@ function rOwn(r,all){
     g.rows.map(x=>`<tr data-id="${x.id}"><td>${esc(x.holder)}</td><td class="num">${nf(x.shares)}</td><td class="num">${money((+x.shares||0)*g.par)}</td><td class="num">${g.base?nf((+x.shares||0)*g.par/g.base*100)+"%":""}</td><td>${esc(x.note)}</td></tr>`).join("")+
     `<tr class="tot"><td>Tổng cộng</td><td class="num">${nf(g.sh)}</td><td class="num">${money(g.val)}</td><td class="num">${nf(pctSum)}%</td><td class="${g.ok===true?"ok":g.ok===false?"bad":""}">${esc(g.msg)}</td></tr></tbody></table></div></div>`}).join("");
 }
+const mauLab=m=>(m.ma?m.ma+" - ":"")+m.ten+(m.ver?" ("+m.ver+")":"");
+function mauGaps(){const t0=today(),out=[];
+  PD().mau.forEach(m=>{if(m.st==="Hết hiệu lực"||m.st==="Nháp")return;const nm="HĐ mẫu "+mauLab(m),c=m.co||"";
+    if(m.rsn){const n=dDiff(t0,m.rsn);if(n<0)out.push({c,h:1,t:nm+": quá hạn rà soát từ "+fmt(m.rsn)});else if(n<=30)out.push({c,h:0,t:nm+": đến hạn rà soát trong "+n+" ngày ("+fmt(m.rsn)+")"})}
+    else if(m.st==="Đang dùng")out.push({c,h:0,soft:1,t:nm+": chưa đặt ngày rà soát tiếp theo"});
+    if(m.st==="Chờ cập nhật")out.push({c,h:0,t:nm+": đang chờ cập nhật, cân nhắc ngừng dùng bản cũ cho đến khi ban hành bản mới"});
+    const used=PD().ct.filter(h=>norm(h.tm)===norm(mauLab(m))),big=used.filter(h=>h.lech==="Sửa lớn").length;
+    if(used.length>=3&&big/used.length>=0.5)out.push({c,h:0,t:nm+": "+big+"/"+used.length+" hợp đồng phải sửa lớn so với mẫu, nên xem lại điều khoản trong mẫu"})});
+  return out}
+function rMau(r,all){
+  const t0=today(),act=m=>m.st==="Đang dùng",usedBy=m=>PD().ct.filter(h=>norm(h.tm)===norm(mauLab(m))),gaps=mauGaps(),hard=gaps.filter(g=>g.h);
+  const late=all.filter(m=>m.st!=="Hết hiệu lực"&&m.st!=="Nháp"&&m.rsn&&m.rsn<t0);
+  $("pstats").innerHTML=st(all.length,"Hợp đồng mẫu")+st(all.filter(act).length,"Đang dùng")+st(late.length,"Quá hạn rà soát",late.length?"late":"")+st(all.filter(m=>m.st==="Chờ cập nhật").length,"Chờ cập nhật")+st(all.reduce((s,m)=>s+usedBy(m).length,0),"Hợp đồng đã dựa trên mẫu");
+  const rsT=m=>{if(!m.rsn)return"";const n=dDiff(t0,m.rsn);return fmt(m.rsn)+(m.st==="Hết hiệu lực"||m.st==="Nháp"?"":n<0?' <span class="wn1">quá hạn '+(-n)+" ngày</span>":n<=30?' <span class="dkp">còn '+n+" ngày</span>":"")};
+  const stT=m=>m.st==="Đang dùng"?'<span style="color:var(--ok);font-weight:600">Đang dùng</span>':m.st==="Chờ cập nhật"?'<span class="dkp">Chờ cập nhật</span>':m.st==="Hết hiệu lực"?'<span style="color:var(--mute)">Hết hiệu lực</span>':esc(m.st||"Nháp");
+  const gp=gaps.length?`<div class="panel full${hard.length?" warnp":""}" style="margin:0 0 12px"><h3>${hard.length?"⚠ ":""}Rà soát hợp đồng mẫu (${gaps.length})</h3>${gaps.map(g=>`<div class="act${g.h?" wnrow":""}" style="cursor:default"><span class="d">${chip(g.c)}</span><span>${esc(g.t)}</span></div>`).join("")}</div>`:"";
+  if(!r.length){$("plist").innerHTML=gp+empty();return}
+  const rows=[...r].sort((a,b)=>(act(b)-act(a))||String(a.rsn||"9999").localeCompare(String(b.rsn||"9999")));
+  $("plist").innerHTML=gp+`<table class="m"><thead><tr><th>Hợp đồng mẫu</th><th>Pháp nhân / dự án</th><th>Loại</th><th>Phiên bản, ban hành</th><th>Tình trạng</th><th>Rà soát tiếp theo</th><th>Đã dùng làm căn cứ</th></tr></thead><tbody>${rows.map(m=>{const u=usedBy(m),c=k=>u.filter(h=>h.lech===k).length;
+    return `<tr data-id="${m.id}"${m.st==="Hết hiệu lực"?' style="opacity:.6"':""}><td class="t"><b>${esc(m.ten)}</b>${m.ma?`<small>Mã ${esc(m.ma)}</small>`:""}${m.lk?`<small class="clamp" title="${esc(m.lk)}">${esc(m.lk)}</small>`:""}</td><td>${m.co?chip(m.co):'<span style="color:var(--mute)">Dùng chung</span>'}${m.proj?`<small>${esc(m.proj)}</small>`:""}</td><td>${esc(m.loai)}</td><td>${esc(m.ver)}${m.ban?`<small>${fmt(m.ban)}</small>`:""}</td><td>${stT(m)}</td><td>${rsT(m)}</td><td class="num">${u.length}${u.length?`<small>${c("Giữ nguyên mẫu")} giữ nguyên, ${c("Sửa nhỏ")} sửa nhỏ, ${c("Sửa lớn")} sửa lớn</small>`:""}</td></tr>`}).join("")}</tbody></table>`}
 function rPrj(r,all){
   const nx=x=>norm(x.name),inP=(p,x)=>norm(p)===nx(x)||norm(p).startsWith(nx(x)+"gd");
   const opAll=x=>tasks.filter(t=>t.st!=="Hoàn thành"&&inP(t.proj,x)).length,ctAll=x=>PD().ct.filter(c=>inP(c.proj,x)).length;
@@ -3061,6 +3108,8 @@ function openD(id,s,pre){
     else if(f.t==="area")inp=`<textarea ${a} rows="3">${esc(v)}</textarea>`;
     else if(f.t==="prj"){const L=projList();if(v&&!L.some(p=>norm(p)===norm(v)))L.push(v);
       inp=`<select ${a}><option value="">— Không thuộc dự án —</option>${L.map(o=>`<option${norm(o)===norm(v)?" selected":""}>${esc(o)}</option>`).join("")}</select>`}
+    else if(f.t==="mau"){const L=PD().mau.filter(m=>m.st!=="Hết hiệu lực").map(mauLab);if(v&&!L.some(p=>norm(p)===norm(v)))L.push(v);
+      inp=`<select ${a}><option value="">— Không dựa trên mẫu —</option>${L.map(o=>`<option${norm(o)===norm(v)?" selected":""}>${esc(o)}</option>`).join("")}</select>`}
     else if(f.t==="sel")inp=`<select ${a}>${f.o.map(o=>`<option${o===v?" selected":""}>${esc(o)}</option>`).join("")}</select>`;
     else inp=`<input ${a} type="${f.t==="date"?"date":"text"}"${f.t==="int"||f.t==="dec"?' inputmode="decimal"':""}${f.list?` list="${f.list}"`:""}${f.max?` maxlength="${f.max}"`:""}${f.ph?` placeholder="${esc(f.ph)}"`:""} value="${esc(v)}">`;
     return `<label${f.full||(dsec==="hs"&&f.k==="mau")?' class="full"':""}>${esc(f.l)}${inp}</label>`}).join("");
@@ -3157,7 +3206,7 @@ body.pp #vprof .sechead{margin:0 0 8px;padding:5px 10px;font-size:14px;color:var
 body.pp #vprof .sechead.first{break-before:auto}
 }`;
 document.head.appendChild(pcss);
-const RN={co:rCo,ppl:rPpl,pos:rPos,own:rOwn,bo:rBo,hs:rHs,mt:rMt,nq:rNq,ct:rCt,cp:rCp,prj:rPrj};
+const RN={co:rCo,ppl:rPpl,pos:rPos,own:rOwn,bo:rBo,hs:rHs,mt:rMt,nq:rNq,ct:rCt,cp:rCp,prj:rPrj,mau:rMau};
 function printProf(all){
   const prev=sec,t0=document.title,cc={dash:0,co:0,ppl:1,pos:4,own:2,bo:5,hs:3,prj:3};
   let html="",label;
@@ -3606,25 +3655,37 @@ const olist=a=>a&&a.length?`<ol>${a.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>`
 const LEGEND=`<p class="tcnote">Dấu * ở cuối căn cứ: chưa đối chiếu được nguyên văn, cần kiểm tra lại trước khi dùng chính thức.</p>`;
 
 /* ---------- Khung ---------- */
-const tab=document.createElement("button");tab.id="tptc";tab.textContent="Tranh chấp lao động";nav.appendChild(tab);
+const tab=document.createElement("button");tab.id="tptc";tab.textContent="Người lao động";nav.appendChild(tab);
 const vtc=document.createElement("div");vtc.id="vtc";vtc.hidden=true;
-vtc.innerHTML=`<section class="stats" id="tcstats"></section>
+vtc.innerHTML=`<nav class="tcsub" id="nldsub"><button data-m="lao">Lao động</button><button data-m="cd">Công đoàn</button><button data-m="tc">Tranh chấp lao động</button></nav>
+<div id="nldwrap"><section class="stats" id="ldstats"></section><div id="ldbody"></div></div>
+<div id="cdwrap" hidden><section class="stats" id="cdstats"></section><div id="cdbody"></div></div>
+<div id="tcwrap"><section class="stats" id="tcstats"></section>
 <nav class="tcsub" id="tcsub"><button data-t="map">Sơ đồ tư duy</button><button data-t="an">Phân tích tình huống</button><button data-t="log">Sổ vụ việc</button><button data-t="law">Căn cứ pháp lý</button></nav>
 <div id="tcmapw" class="tcgrid"><div class="tcmapbox"><div class="tcbar"><button id="tcopen">Mở tất cả</button><button id="tcshut">Thu gọn tất cả</button></div><div id="tcmap"></div></div><aside id="tcdet" class="tcdet"></aside></div>
-<div id="tcan" hidden></div><div id="tclog" hidden></div><div id="tclaw" hidden></div>`;
+<div id="tcan" hidden></div><div id="tclog" hidden></div><div id="tclaw" hidden></div></div>`;
 vp.after(vtc);
+const sty=document.createElement("style");sty.textContent="#vtc #nldsub{border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:2px}#vtc #nldsub button{font-weight:600}#vtc #ldbody,#vtc #cdbody{padding:0 24px}#vtc #cdbody .tcbtn,#vtc #ldbody .tcbtn{margin:0 0 10px;align-items:center}#vtc #cdbody table.m td small,#vtc #ldbody table.m td small{display:block;color:var(--mute)}#vtc .ldal{margin:2px 0;font-size:12.5px;line-height:1.5}#vtc .ldal.h{color:var(--seal);font-weight:600}#vtc .ldal.s{color:var(--mute)}@media(max-width:700px){#vtc #ldbody,#vtc #cdbody{padding:0 12px}}";document.head.appendChild(sty);
 const dlg=document.createElement("dialog");dlg.id="tcdlg";
 dlg.innerHTML=`<h2 id="tcdt">Vụ việc tranh chấp lao động</h2><div class="grid" id="tcform"></div><div class="foot"><button id="tcdel" style="margin-right:auto;color:var(--seal)">Xóa</button><button id="tccancel">Đóng</button><button class="primary" id="tcok">Lưu</button></div>`;
 document.body.appendChild(dlg);
+const ldlg=document.createElement("dialog");ldlg.id="ldlg";
+ldlg.innerHTML=`<h2 id="lddt">Hồ sơ lao động</h2><div class="grid" id="ldform"></div><div class="foot"><button id="lddel" style="margin-right:auto;color:var(--seal)">Xóa</button><button id="ldcancel">Đóng</button><button class="primary" id="ldok">Lưu</button></div>`;
+document.body.appendChild(ldlg);
 
-const OTHER=["tl","tb","td","tp","tphs","tphop","tpct","tpcp"];
+const cdlg=document.createElement("dialog");cdlg.id="cdlg";
+cdlg.innerHTML=`<h2 id="cddt">Công đoàn cơ sở</h2><div class="grid" id="cdform"></div><div class="foot"><button id="cddel" style="margin-right:auto;color:var(--seal)">Xóa</button><button id="cdcancel">Đóng</button><button class="primary" id="cdok">Lưu</button></div>`;
+document.body.appendChild(cdlg);
+
+const OTHER=["tl","tb","td","tp","tphs","tphop","tpct","tpcp","tpmau"];
 const hideTc=()=>{vtc.hidden=true;tab.classList.remove("on")};
 OTHER.forEach(i=>{const b=document.getElementById(i);if(b)b.addEventListener("click",hideTc)});
 tab.onclick=()=>{["vlist","vbud","vdash","vprof"].forEach(i=>{const e=document.getElementById(i);if(e)e.hidden=true});
   OTHER.forEach(i=>{const b=document.getElementById(i);if(b)b.classList.remove("on")});
   vtc.hidden=false;tab.classList.add("on");render()};
 
-let cur="map",curNode=null;const closed=new Set();
+let cur="map",curNode=null,mode="lao";const closed=new Set();
+$("nldsub").onclick=e=>{const b=e.target.closest("[data-m]");if(b){mode=b.dataset.m;render()}};
 $("tcsub").onclick=e=>{const b=e.target.closest("[data-t]");if(b){cur=b.dataset.t;render()}};
 
 /* ---------- Sơ đồ tư duy ---------- */
@@ -3799,7 +3860,145 @@ function rLaw(){
   <ul class="tcc"><li><a href="https://hethongphapluat.com/bo-luat-lao-dong-2019/chuong-14" target="_blank" rel="noopener">BLLĐ 2019, Chương XIV (Điều 179–211)</a></li><li><a href="https://hethongphapluat.com/bo-luat-lao-dong-2019/chuong-8" target="_blank" rel="noopener">BLLĐ 2019, Chương VIII (Điều 117–131)</a></li><li><a href="https://thuvienphapluat.vn/van-ban/Lao-dong-Tien-luong/Bo-Luat-lao-dong-2019-333670.aspx" target="_blank" rel="noopener">BLLĐ 2019, Điều 34–74</a></li><li><a href="https://thuvienphapluat.vn/van-ban/Bao-hiem/Decree-283-2026-ND-CP-penalties-for-administrative-violations-against-regulations-on-labour-719911.aspx" target="_blank" rel="noopener">NĐ 283/2026/NĐ-CP (bản tóm tắt)</a></li><li><a href="https://thuvienphapluat.vn/chinh-sach-phap-luat-moi/vn/ho-tro-phap-luat/tu-van-phap-luat/33549/tong-hop-van-ban-huong-dan-bo-luat-lao-dong-2019" target="_blank" rel="noopener">Tổng hợp văn bản hướng dẫn BLLĐ 2019</a></li></ul>`;
 }
 
+/* ---------- Tab con Lao động: sổ hợp đồng lao động ---------- */
+const LDD=()=>{const p=CFG.prof=CFG.prof||{};if(!Array.isArray(p.nld))p.nld=[];return p.nld};
+const LD_GRP=[["qldn","Người quản lý doanh nghiệp (tối đa 180 ngày)",180],["dh","Chức danh cần trình độ chuyên môn kỹ thuật từ cao đẳng trở lên (tối đa 60 ngày)",60],["tc","Chức danh cần trình độ trung cấp, công nhân kỹ thuật, nhân viên nghiệp vụ (tối đa 30 ngày)",30],["khac","Công việc khác (tối đa 6 ngày làm việc)",6]];
+const LD_LOAI=["Chỉ thử việc","Xác định thời hạn","Không xác định thời hạn"],LD_ST=["Đang làm việc","Đã nghỉ việc"];
+const ldMax=r=>(LD_GRP.find(g=>g[0]===r.grp)||[0,0,0])[2];
+function ldTvEnd(r){const n=parseInt(r.tvn,10);if(!r.tv1||!n)return"";return r.grp==="khac"?addWk(r.tv1,n-1):addD(r.tv1,n-1)}
+function ldAlerts(r){const t0=today(),o=[],push=(h,t)=>o.push({h,t});
+  if(r.st==="Đã nghỉ việc")return o;
+  const tvE=ldTvEnd(r),mx=ldMax(r),n=parseInt(r.tvn,10)||0;
+  if(mx&&n>mx)push(1,"Thời gian thử việc "+n+" ngày vượt mức tối đa "+mx+(r.grp==="khac"?" ngày làm việc":" ngày")+" (BLLĐ 2019, Điều 25*)");
+  if(tvE&&r.loai==="Chỉ thử việc"){const d=dd(t0,tvE);
+    if(d<0)push(1,"Đã hết thời gian thử việc từ "+fmt(tvE)+": cần có thông báo kết quả thử việc và giao kết HĐLĐ hoặc chấm dứt (Điều 27*)");
+    else if(d<=7)push(1,"Còn "+d+" ngày hết thử việc ("+fmt(tvE)+"): chuẩn bị thông báo kết quả và HĐLĐ chính thức");}
+  if(r.loai!=="Chỉ thử việc"){
+    if(!r.hdfrom)push(0,"Chưa ghi ngày bắt đầu HĐLĐ");
+    if(r.loai==="Xác định thời hạn"){
+      if(!r.hdto)push(0,"HĐ xác định thời hạn nhưng chưa ghi ngày hết hạn");
+      else{const m=r.hdfrom?monthsBetween(r.hdfrom,r.hdto):0,d=dd(t0,r.hdto),lim=addD(r.hdto,30);
+        if(m>36)push(1,"HĐ xác định thời hạn dài "+m+" tháng, vượt mức tối đa 36 tháng (Điều 20*)");
+        if(d<0){const left=dd(t0,lim);push(1,"HĐ đã hết hạn từ "+fmt(r.hdto)+(left>=0?": nếu NLĐ vẫn làm việc, phải ký HĐLĐ mới trước "+fmt(lim)+" (còn "+left+" ngày), nếu không HĐ cũ chuyển thành HĐ không xác định thời hạn":": quá 30 ngày kể từ khi hết hạn, nếu NLĐ vẫn làm việc mà chưa ký HĐ mới thì HĐ đã chuyển thành không xác định thời hạn")+" (Điều 20*)")}
+        else if(d<=45)push((r.lan||"1")==="2"?1:0,"HĐ hết hạn trong "+d+" ngày ("+fmt(r.hdto)+"): "+((r.lan||"1")==="2"?"đã ký xác định thời hạn lần 2, nếu tiếp tục sử dụng phải ký HĐ không xác định thời hạn (trừ trường hợp luật cho phép ngoại lệ)*":"quyết định gia hạn bằng HĐ mới (chỉ được ký thêm 1 lần xác định thời hạn) hoặc chấm dứt*"))}}}
+  if(r.loai!=="Chỉ thử việc"&&!r.bhxh)o.push({h:0,s:1,t:"Chưa ghi ngày bắt đầu đóng BHXH (Luật BHXH 2024*)"});
+  return o}
+const LD_RULES=[
+ ["Thử việc","Chỉ thử việc 1 lần cho 1 công việc. Mức tối đa: 180 ngày (người quản lý doanh nghiệp), 60 ngày (từ cao đẳng trở lên), 30 ngày (trung cấp, công nhân kỹ thuật, nhân viên nghiệp vụ), 6 ngày làm việc (công việc khác). Lương thử việc ít nhất 85% lương công việc. Không áp dụng thử việc với HĐLĐ dưới 1 tháng.","BLLĐ 2019, Điều 24 đến 27*"],
+ ["Loại HĐLĐ","Chỉ có hai loại: xác định thời hạn (tối đa 36 tháng) và không xác định thời hạn. Hết hạn mà NLĐ vẫn làm việc: trong 30 ngày phải ký HĐ mới, quá 30 ngày thì HĐ cũ thành không xác định thời hạn. Chỉ được ký thêm 1 lần xác định thời hạn, sau đó phải ký không xác định thời hạn (có ngoại lệ cho một số đối tượng).","BLLĐ 2019, Điều 20*"],
+ ["Báo trước khi NLĐ đơn phương chấm dứt","45 ngày (HĐ không xác định thời hạn), 30 ngày (HĐ xác định thời hạn 12 đến 36 tháng), 3 ngày làm việc (HĐ dưới 12 tháng); một số trường hợp không cần báo trước hoặc báo trước theo luật quy định.","BLLĐ 2019, Điều 35*"],
+ ["Báo trước khi người sử dụng lao động đơn phương chấm dứt","Phải có căn cứ theo luật và báo trước theo loại HĐ (thường 45/30/3 ngày làm việc; một số trường hợp 120/90/60 ngày). Chấm dứt trái luật phát sinh nghĩa vụ bồi thường, nhận lại NLĐ (xem tab con Tranh chấp lao động).","BLLĐ 2019, Điều 36, 41, 42*"],
+ ["Hình thức HĐLĐ điện tử","HĐLĐ có thể giao kết bằng phương tiện điện tử theo điều kiện luật định.","BLLĐ 2019 Điều 14; NĐ 337/2025/NĐ-CP (chưa đọc nội dung)*"]
+];
+function ldList(){const q=($("ld_q")||{value:""}).value.toLowerCase().trim(),f=($("ld_co")||{value:""}).value,L=LDD().filter(r=>(!f||r.co===f)&&(!q||Object.values(r).join(" ").toLowerCase().includes(q)));
+  const act=r=>r.st!=="Đã nghỉ việc";
+  return[...L].sort((a,b)=>(act(b)-act(a))||(ldAlerts(b).filter(x=>x.h).length-ldAlerts(a).filter(x=>x.h).length)||String(a.name).localeCompare(String(b.name),"vi"))}
+function rLaoStats(){const L=LDD(),A=L.filter(r=>r.st!=="Đã nghỉ việc"),t0=today();
+  const tv=A.filter(r=>{const e=ldTvEnd(r);return e&&e>=t0&&(r.loai==="Chỉ thử việc")}).length;
+  const soon=A.filter(r=>r.loai==="Xác định thời hạn"&&r.hdto&&dd(t0,r.hdto)>=0&&dd(t0,r.hdto)<=45).length;
+  const hard=A.filter(r=>ldAlerts(r).some(x=>x.h)).length;
+  $("ldstats").innerHTML=st(A.length,"Đang làm việc")+st(tv,"Đang thử việc")+st(soon,"HĐ hết hạn trong 45 ngày")+st(hard,"Hồ sơ cần xử lý")+st(L.length-A.length,"Đã nghỉ việc")}
+function rLao(){
+  rLaoStats();const cos=[...new Set([...COS(),...LDD().map(r=>r.co).filter(Boolean)])],old=$("ld_co")?$("ld_co").value:"",oq=$("ld_q")?$("ld_q").value:"";
+  $("ldbody").innerHTML=`<p class="tcnote">Sổ theo dõi hợp đồng lao động để cảnh báo thử việc, hết hạn HĐ, ký tiếp. Dữ liệu lưu cùng dữ liệu app; không nhập số CCCD, lương hay thông tin cá nhân nhạy cảm vào đây nếu kho đồng bộ GitHub của bạn là công khai.</p>
+  <div class="tcbtn"><button class="primary" id="ld_add">Thêm hồ sơ lao động</button><input id="ld_q" type="search" placeholder="Tìm theo tên, chức danh…" value="${esc(oq)}"><select id="ld_co"><option value="">Mọi pháp nhân</option>${cos.map(c=>`<option${c===old?" selected":""}>${esc(c)}</option>`).join("")}</select><button id="ld_exp">Xuất CSV</button></div><div id="ld_tbl"></div>
+  <h3 style="margin:18px 0 6px">Quy tắc cần nhớ khi quản lý HĐLĐ</h3><div class="tcw" style="margin:0"><table class="m" style="min-width:760px"><thead><tr><th>Nội dung</th><th>Quy định</th><th>Căn cứ</th></tr></thead><tbody>${LD_RULES.map(x=>`<tr><td class="t"><b>${esc(x[0])}</b></td><td>${esc(x[1])}</td><td>${esc(x[2])}</td></tr>`).join("")}</tbody></table></div>${LEGEND}`;
+  ldTable();$("ld_add").onclick=()=>openLd(null);$("ld_q").oninput=ldTable;$("ld_co").onchange=ldTable;$("ld_exp").onclick=ldExport}
+function ldTable(){const rows=ldList();
+  $("ld_tbl").innerHTML=rows.length?`<div class="tcw" style="margin:0"><table class="m"><thead><tr><th>Người lao động</th><th>Pháp nhân</th><th>Hợp đồng</th><th>Thử việc</th><th>Cảnh báo</th></tr></thead><tbody>${rows.map(r=>{const al=ldAlerts(r),tvE=ldTvEnd(r);
+    return `<tr data-id="${r.id}"${r.st==="Đã nghỉ việc"?' class="cl"':""}><td class="t"><b>${esc(r.name)}</b>${r.pos?`<small>${esc(r.pos)}</small>`:""}${r.st==="Đã nghỉ việc"?"<small>Đã nghỉ việc</small>":""}</td><td>${chip(r.co)}</td><td>${esc(r.loai==="Chỉ thử việc"?"Chưa ký HĐLĐ chính thức":r.loai)}${r.so?`<small>Số ${esc(r.so)}</small>`:""}${r.hdfrom?`<small>${fmt(r.hdfrom)}${r.hdto?" đến "+fmt(r.hdto):""}${r.loai==="Xác định thời hạn"?" (lần "+(r.lan||"1")+")":""}</small>`:""}</td><td>${r.tv1?fmt(r.tv1)+(tvE?" đến "+fmt(tvE):"")+(r.tvn?`<small>${esc(r.tvn)} ngày</small>`:""):""}</td><td>${al.length?al.map(a=>`<div class="ldal${a.h?" h":a.s?" s":""}">${a.h?"⚠ ":""}${esc(a.t)}</div>`).join(""):'<span style="color:var(--ok)">Chưa có cảnh báo</span>'}</td></tr>`}).join("")}</tbody></table></div>`:'<div class="empty">Chưa có hồ sơ lao động. Chọn “Thêm hồ sơ lao động” để nhập.</div>'}
+$("ldbody").onclick=e=>{const tr=e.target.closest("tr[data-id]");if(tr&&tr.closest("#ld_tbl"))openLd(tr.dataset.id)};
+let ldEdit=null;
+function openLd(id){ldEdit=id;const r=LDD().find(x=>x.id===id)||{co:COS()[0]||"",grp:"dh",loai:"Xác định thời hạn",lan:"1",st:LD_ST[0]};
+  $("lddt").textContent=(id?"Sửa":"Thêm")+" hồ sơ lao động";$("lddel").style.display=id?"":"none";
+  const cos=[...new Set(COS())];if(r.co&&cos.indexOf(r.co)<0)cos.push(r.co);
+  const s=(k,l,o,v)=>`<label>${l}<select id="l_${k}">${o.map(x=>`<option value="${esc(x[0])}"${x[0]===v?" selected":""}>${esc(x[1])}</option>`).join("")}</select></label>`;
+  const i=(k,l,t,full)=>`<label${full?' class="full"':""}>${l}<input id="l_${k}" type="${t||"text"}" value="${esc(r[k]||"")}"></label>`;
+  $("ldform").innerHTML=s("co","Pháp nhân sử dụng lao động",cos.map(c=>[c,c]),r.co)+i("name","Họ tên người lao động")+i("pos","Chức danh")+s("st","Tình trạng",LD_ST.map(x=>[x,x]),r.st)
+   +s("grp","Nhóm công việc (xác định mức thử việc tối đa)",LD_GRP.map(g=>[g[0],g[1]]),r.grp)+i("tv1","Ngày bắt đầu thử việc","date")+i("tvn","Số ngày thử việc (để trống nếu không thử việc)")
+   +s("loai","Loại hợp đồng",LD_LOAI.map(x=>[x,x]),r.loai)+i("so","Số hợp đồng")+i("hdfrom","HĐLĐ có hiệu lực từ","date")+i("hdto","HĐLĐ hết hạn (nếu xác định thời hạn)","date")
+   +s("lan","Lần ký HĐ xác định thời hạn liên tiếp",[["1","Lần 1"],["2","Lần 2"]],r.lan||"1")+i("bhxh","Ngày bắt đầu đóng BHXH","date")
+   +`<label class="full">Ghi chú<textarea id="l_note" rows="3">${esc(r.note||"")}</textarea></label>`;
+  ldlg.showModal()}
+$("ldcancel").onclick=()=>ldlg.close();
+$("lddel").onclick=()=>{if(!ldEdit||!confirm("Xóa hồ sơ lao động này?"))return;const L=LDD();L.splice(L.findIndex(x=>x.id===ldEdit),1);saveC();ldlg.close();render()};
+$("ldok").onclick=()=>{const g=k=>$("l_"+k).value.trim(),o={co:g("co"),name:g("name"),pos:g("pos"),st:g("st"),grp:g("grp"),tv1:g("tv1"),tvn:g("tvn").replace(/[^\d]/g,""),loai:g("loai"),so:g("so"),hdfrom:g("hdfrom"),hdto:g("hdto"),lan:g("lan"),bhxh:g("bhxh"),note:g("note")};
+  if(!o.name){$("l_name").focus();return}
+  if(o.hdfrom&&o.hdto&&o.hdto<o.hdfrom){alert("Ngày hết hạn không thể trước ngày có hiệu lực.");return}
+  const L=LDD();if(ldEdit)Object.assign(L.find(x=>x.id===ldEdit),o);else L.push({id:"ld"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),...o});saveC();ldlg.close();render()};
+function ldExport(){const H=[["name","Họ tên"],["pos","Chức danh"],["co","Pháp nhân"],["st","Tình trạng"],["loai","Loại HĐ"],["so","Số HĐ"],["hdfrom","Từ"],["hdto","Đến"],["lan","Lần ký"],["tv1","Bắt đầu thử việc"],["tvn","Số ngày thử việc"],["bhxh","Bắt đầu đóng BHXH"],["note","Ghi chú"]];
+  const c=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"',txt="﻿"+[H.map(h=>c(h[1])).join(","),...LDD().map(r=>H.map(h=>c(r[h[0]])).join(","))].join("\r\n");
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([txt],{type:"text/csv"}));a.download="lao_dong_"+today()+".csv";document.body.appendChild(a);a.click();a.remove()}
+
+/* ---------- Tab con Công đoàn ---------- */
+const CDD=()=>{const p=CFG.prof=CFG.prof||{};if(!Array.isArray(p.cd))p.cd=[];return p.cd};
+const CD_ST=["Đã thành lập công đoàn cơ sở","Đang thành lập","Chưa có công đoàn cơ sở"],CD_TU=["Chưa có","Đang thương lượng","Đang có hiệu lực"];
+const mIdx=m=>{const a=String(m||"").split("-").map(Number);return a[0]*12+(a[1]||1)};
+const mLab=m=>m?m.slice(5)+"/"+m.slice(0,4):"";
+const kpDue=r=>Math.round((+r.qluong||0)*0.02);
+function cdAlerts(r){const t0=today(),o=[],push=(h,t)=>o.push({h,t}),cm=mIdx(t0.slice(0,7)),n=+r.nld||0;
+  if(r.st==="Chưa có công đoàn cơ sở")push(0,"Chưa có công đoàn cơ sở: doanh nghiệp vẫn phải đóng kinh phí công đoàn 2% quỹ lương đóng BHXH (Luật Công đoàn 2024, Điều 29)");
+  if(r.st==="Đang thành lập")push(0,"Đang thành lập công đoàn cơ sở: theo dõi quyết định công nhận và trách nhiệm của người sử dụng lao động hỗ trợ điều kiện hoạt động*");
+  if(r.dv&&n&&+r.dv>n)push(1,"Số đoàn viên ("+r.dv+") lớn hơn tổng số lao động ("+n+"), kiểm tra lại số liệu");
+  if(!+r.qluong)push(0,"Chưa nhập quỹ tiền lương làm căn cứ đóng BHXH nên chưa tính được kinh phí công đoàn phải đóng");
+  else{const due=kpDue(r);
+    if(!r.kpk)push(0,"Chưa ghi kỳ đóng kinh phí công đoàn gần nhất");
+    else{if(mIdx(r.kpk)<cm-2)push(1,"Kỳ đóng kinh phí gần nhất là "+mLab(r.kpk)+": có thể đã chậm đóng các kỳ sau (hạn đóng là cuối tháng kế tiếp, cùng kỳ đóng BHXH, NĐ 105/2026/NĐ-CP, Điều 4*)");
+      if(+r.kp&&+r.kp<due*0.995)push(1,"Kinh phí đã đóng ("+money(+r.kp)+" đồng) thấp hơn 2% quỹ lương ("+money(due)+" đồng): kiểm tra đóng thiếu*")}}
+  if(n>=10&&!r.nqdk)push(0,"Chưa ghi ngày đăng ký nội quy lao động (từ 10 lao động phải có nội quy bằng văn bản và đăng ký, BLLĐ 2019, Điều 118, 119*)");
+  if(n>0&&!r.dt)push(0,"Chưa ghi ngày đối thoại tại nơi làm việc gần nhất (ít nhất 1 lần mỗi năm, BLLĐ 2019, Điều 63*)");
+  else if(r.dt&&dd(r.dt,t0)>365)push(1,"Lần đối thoại gần nhất ("+fmt(r.dt)+") đã quá 12 tháng (BLLĐ 2019, Điều 63*)");
+  if(r.tu==="Đang có hiệu lực"&&r.tuden){const d=dd(t0,r.tuden);if(d<0)push(1,"Thỏa ước lao động tập thể đã hết hiệu lực từ "+fmt(r.tuden));else if(d<=60)push(0,"Thỏa ước lao động tập thể hết hiệu lực trong "+d+" ngày ("+fmt(r.tuden)+"): chuẩn bị thương lượng gia hạn hoặc ký mới")}
+  return o}
+const CD_RULES=[
+ ["Kinh phí công đoàn","Do người sử dụng lao động đóng, bằng 2% quỹ tiền lương làm căn cứ đóng BHXH bắt buộc, kể cả khi doanh nghiệp chưa thành lập công đoàn cơ sở. Đóng mỗi tháng một lần cùng kỳ đóng BHXH, hạn chót ngày cuối cùng của tháng kế tiếp.","Luật Công đoàn 2024, Điều 29 (nguồn thứ cấp); NĐ 105/2026/NĐ-CP, Điều 4*"],
+ ["Xử phạt không đóng, đóng chậm","Có mức phạt theo tỷ lệ trên số tiền phải đóng và nghĩa vụ nộp đủ cộng lãi. Nguồn tra được dẫn NĐ 12/2022/NĐ-CP; theo ghi chú ở tab Tranh chấp lao động, NĐ 283/2026/NĐ-CP (hiệu lực 10/9/2026) thay thế nên phải tra lại mức phạt hiện hành.","NĐ 12/2022/NĐ-CP, khoản 1 Điều 6 và Điều 38; NĐ 283/2026/NĐ-CP*"],
+ ["Đoàn phí","Do người lao động là đoàn viên tự đóng, không phải chi phí của doanh nghiệp. Nguồn tra được ghi mức 0,5% tiền lương làm căn cứ đóng BHXH.","Hướng dẫn của Tổng Liên đoàn (Quyết định 61/QĐ-TLĐ năm 2025)*"],
+ ["Đối thoại tại nơi làm việc","Người sử dụng lao động phải tổ chức đối thoại định kỳ ít nhất 1 lần mỗi năm và khi có yêu cầu của một bên hoặc khi có sự việc theo luật.","BLLĐ 2019, Điều 63*"],
+ ["Nội quy lao động","Từ 10 lao động trở lên phải có nội quy bằng văn bản; khi ban hành phải tham khảo ý kiến tổ chức đại diện người lao động tại cơ sở và đăng ký tại cơ quan có thẩm quyền.","BLLĐ 2019, Điều 118, 119*"],
+ ["Thỏa ước lao động tập thể","Thương lượng giữa tổ chức đại diện người lao động và người sử dụng lao động; cần theo dõi thời hạn hiệu lực.","BLLĐ 2019, Chương V*"],
+ ["Bảo vệ cán bộ công đoàn cơ sở","Cán bộ công đoàn cơ sở không chuyên trách được bảo vệ khi chấm dứt HĐLĐ, chuyển công tác, kỷ luật sa thải: phải có ý kiến của công đoàn cấp trên theo luật (xem thêm tab Tranh chấp lao động).","BLLĐ 2019, Điều 177*; Luật Công đoàn 2024*"]
+];
+function rCdStats(){const L=CDD(),t0=today();
+  const has=L.filter(r=>r.st==="Đã thành lập công đoàn cơ sở").length,none=L.filter(r=>r.st==="Chưa có công đoàn cơ sở").length;
+  const dv=L.reduce((s,r)=>s+(+r.dv||0),0),kp=L.reduce((s,r)=>s+kpDue(r),0),act=L.filter(r=>cdAlerts(r).some(x=>x.h)).length;
+  $("cdstats").innerHTML=st(L.length,"Pháp nhân theo dõi")+st(has,"Đã có công đoàn cơ sở")+st(none,"Chưa có công đoàn cơ sở")+st(nf0(dv),"Đoàn viên")+st(money(kp),"Kinh phí công đoàn 2% mỗi tháng (đồng)")+st(act,"Cần xử lý")}
+const nf0=n=>Number(n).toLocaleString("vi-VN");
+function rCd(){rCdStats();const L=CDD();
+  $("cdbody").innerHTML=`<p class="tcnote">Theo dõi công đoàn cơ sở và các nghĩa vụ liên quan của từng pháp nhân: kinh phí công đoàn, đối thoại, nội quy, thỏa ước. Không nhập thông tin cá nhân nhạy cảm nếu kho đồng bộ GitHub là công khai.</p>
+  <div class="tcbtn"><button class="primary" id="cd_add">Thêm pháp nhân</button><button id="cd_exp">Xuất CSV</button></div><div id="cd_tbl"></div>
+  <h3 style="margin:18px 0 6px">Quy tắc cần nhớ</h3><div class="tcw" style="margin:0"><table class="m" style="min-width:760px"><thead><tr><th>Nội dung</th><th>Quy định</th><th>Căn cứ</th></tr></thead><tbody>${CD_RULES.map(x=>`<tr><td class="t"><b>${esc(x[0])}</b></td><td>${esc(x[1])}</td><td>${esc(x[2])}</td></tr>`).join("")}</tbody></table></div>${LEGEND}`;
+  $("cd_tbl").innerHTML=L.length?`<div class="tcw" style="margin:0"><table class="m"><thead><tr><th>Pháp nhân</th><th>Công đoàn cơ sở</th><th>Lao động / đoàn viên</th><th>Kinh phí công đoàn</th><th>Đối thoại, nội quy, thỏa ước</th><th>Cảnh báo</th></tr></thead><tbody>${[...L].sort((a,b)=>cdAlerts(b).filter(x=>x.h).length-cdAlerts(a).filter(x=>x.h).length||String(a.co).localeCompare(String(b.co))).map(r=>{const al=cdAlerts(r);
+   return `<tr data-id="${r.id}"><td>${chip(r.co)}</td><td class="t"><b>${esc(r.st)}</b>${r.ten?`<small>${esc(r.ten)}</small>`:""}${r.cn?`<small>Chủ tịch: ${esc(r.cn)}</small>`:""}${r.ngay?`<small>Thành lập / công nhận ${fmt(r.ngay)}${r.qd?", QĐ "+esc(r.qd):""}</small>`:""}</td><td class="num">${r.nld?nf0(r.nld):""}${r.dv?`<small>${nf0(r.dv)} đoàn viên${+r.nld?" ("+Math.round(r.dv/r.nld*100)+"%)":""}</small>`:""}</td><td class="num">${+r.qluong?money(kpDue(r))+" đồng/tháng<small>2% của "+money(+r.qluong)+"</small>":""}${r.kpk?`<small>Đã đóng kỳ ${mLab(r.kpk)}${+r.kp?": "+money(+r.kp):""}</small>`:""}</td><td>${r.dt?"Đối thoại "+fmt(r.dt):""}${r.nqdk?`<small>Đăng ký nội quy ${fmt(r.nqdk)}</small>`:""}${r.tu&&r.tu!=="Chưa có"?`<small>Thỏa ước: ${esc(r.tu)}${r.tuden?" đến "+fmt(r.tuden):""}</small>`:""}</td><td>${al.length?al.map(a=>`<div class="ldal${a.h?" h":""}">${a.h?"⚠ ":""}${esc(a.t)}</div>`).join(""):'<span style="color:var(--ok)">Chưa có cảnh báo</span>'}</td></tr>`}).join("")}</tbody></table></div>`:'<div class="empty">Chưa có dữ liệu. Chọn “Thêm pháp nhân” để nhập.</div>';
+  $("cd_add").onclick=()=>openCd(null);$("cd_exp").onclick=cdExport}
+$("cdbody").onclick=e=>{const tr=e.target.closest("#cd_tbl tr[data-id]");if(tr)openCd(tr.dataset.id)};
+let cdEdit=null;
+function openCd(id){cdEdit=id;const r=CDD().find(x=>x.id===id)||{co:COS()[0]||"",st:CD_ST[2],tu:CD_TU[0]};
+  $("cddt").textContent=(id?"Sửa":"Thêm")+" công đoàn cơ sở";$("cddel").style.display=id?"":"none";
+  const cos=[...new Set(COS())];if(r.co&&cos.indexOf(r.co)<0)cos.push(r.co);
+  const s=(k,l,o,v)=>`<label>${l}<select id="c_${k}">${o.map(x=>`<option${x===v?" selected":""}>${esc(x)}</option>`).join("")}</select></label>`;
+  const i=(k,l,t,full)=>`<label${full?' class="full"':""}>${l}<input id="c_${k}" type="${t||"text"}" value="${esc(r[k]||"")}"></label>`;
+  $("cdform").innerHTML=s("co","Pháp nhân",cos,r.co)+s("st","Tình trạng công đoàn cơ sở",CD_ST,r.st)+i("ten","Tên tổ chức công đoàn")+i("cn","Chủ tịch công đoàn")+i("ngay","Ngày thành lập / công nhận","date")+i("qd","Số quyết định công nhận")
+   +i("nld","Tổng số lao động")+i("dv","Số đoàn viên")+i("qluong","Quỹ tiền lương làm căn cứ đóng BHXH mỗi tháng (đồng)")+i("kpk","Kỳ đóng kinh phí gần nhất","month")+i("kp","Số kinh phí công đoàn đã đóng kỳ đó (đồng)")
+   +i("dt","Ngày đối thoại tại nơi làm việc gần nhất","date")+i("nqdk","Ngày đăng ký nội quy lao động","date")+s("tu","Thỏa ước lao động tập thể",CD_TU,r.tu||CD_TU[0])+i("tuden","Thỏa ước hết hiệu lực ngày","date")
+   +`<label class="full">Ghi chú<textarea id="c_note" rows="3">${esc(r.note||"")}</textarea></label>`;
+  cdlg.showModal()}
+$("cdcancel").onclick=()=>cdlg.close();
+$("cddel").onclick=()=>{if(!cdEdit||!confirm("Xóa dòng này?"))return;const L=CDD();L.splice(L.findIndex(x=>x.id===cdEdit),1);saveC();cdlg.close();render()};
+$("cdok").onclick=()=>{const g=k=>$("c_"+k).value.trim(),nn=k=>g(k).replace(/[^\d]/g,""),o={co:g("co"),st:g("st"),ten:g("ten"),cn:g("cn"),ngay:g("ngay"),qd:g("qd"),nld:nn("nld"),dv:nn("dv"),qluong:nn("qluong"),kpk:g("kpk"),kp:nn("kp"),dt:g("dt"),nqdk:g("nqdk"),tu:g("tu"),tuden:g("tuden"),note:g("note")};
+  const L=CDD();if(L.some(x=>x.id!==cdEdit&&x.co===o.co)){alert("Pháp nhân này đã có dòng theo dõi. Hãy sửa dòng đó.");return}
+  if(cdEdit)Object.assign(L.find(x=>x.id===cdEdit),o);else L.push({id:"cd"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),...o});saveC();cdlg.close();render()};
+function cdExport(){const H=[["co","Pháp nhân"],["st","Tình trạng CĐCS"],["ten","Tên công đoàn"],["cn","Chủ tịch"],["ngay","Ngày thành lập"],["qd","Số QĐ"],["nld","Tổng lao động"],["dv","Đoàn viên"],["qluong","Quỹ lương đóng BHXH"],["kpk","Kỳ đóng KPCĐ gần nhất"],["kp","KPCĐ đã đóng"],["dt","Đối thoại gần nhất"],["nqdk","Đăng ký nội quy"],["tu","Thỏa ước"],["tuden","Thỏa ước đến"],["note","Ghi chú"]];
+  const c=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"',txt="﻿"+[H.map(h=>c(h[1])).join(","),...CDD().map(r=>H.map(h=>c(r[h[0]])).join(","))].join("\r\n");
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([txt],{type:"text/csv"}));a.download="cong_doan_"+today()+".csv";document.body.appendChild(a);a.click();a.remove()}
+
 function render(){
+  document.querySelectorAll("#nldsub [data-m]").forEach(b=>b.classList.toggle("on",b.dataset.m===mode));
+  $("nldwrap").hidden=mode!=="lao";$("cdwrap").hidden=mode!=="cd";$("tcwrap").hidden=mode!=="tc";
+  if(mode==="lao"){rLao();return}
+  if(mode==="cd"){rCd();return}
+  render2()}
+function render2(){
   document.querySelectorAll("#tcsub [data-t]").forEach(b=>b.classList.toggle("on",b.dataset.t===cur));
   $("tcmapw").hidden=cur!=="map";$("tcan").hidden=cur!=="an";$("tclog").hidden=cur!=="log";$("tclaw").hidden=cur!=="law";
   rStats();
