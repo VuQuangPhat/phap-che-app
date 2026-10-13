@@ -576,7 +576,7 @@ table.fm.m78{table-layout:fixed;font-size:8.5px;width:100%}table.fm.m78 th,table
 </dialog>
 
 <script>
-const DEF={org:"CÔNG TY CỔ PHẦN ĐẦU TƯ FGROUP",unit:"Pháp chế",g1:["FGC"],g2:["HLI","HLM","Bảo An"],g3:["FGI","Tiến Phương","Kim Long","Hướng Việt","Chấn Hưng"],proj:["Nam Hà 2","Tân Đô","Hải Sơn"]};
+const DEF={org:"CÔNG TY CỔ PHẦN ĐẦU TƯ FGROUP",unit:"Pháp chế",g1:["FGC"],g2:["HLI","HLM","Bảo An"],g3:["FGI","Tiến Phương","Kim Long","Hướng Việt","Chấn Hưng"],proj:["Nam Hà 2","Hải Sơn - Lô H4, H5 (thửa 807)","Hải Sơn - Lô F15-F18 (thửa 841)"]};
 const TYPES=["Pháp lý doanh nghiệp","Pháp lý đầu tư","Pháp lý thương mại","Pháp lý lao động","Khác"],BASE=TYPES.slice(0,4);
 const TMAP={"Review hợp đồng":"Pháp lý thương mại","Rà soát pháp lý":"Pháp lý doanh nghiệp","Thủ tục hành chính":"Pháp lý doanh nghiệp"};
 const ST=["Mới","Đang xử lý","Chờ phản hồi","Tạm dừng","Hoàn thành"],DOC=["Chưa lập hồ sơ","Đang trình duyệt","Đã duyệt","Đã thu/chi xong"],VOU=["Có chứng từ","Không có chứng từ","Chờ bổ sung chứng từ"];
@@ -598,6 +598,8 @@ function migrate(){tasks.forEach(t=>{if(t.co==="FG")t.co="FGC";if(!TYPES.include
 migrate();
 const store=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){alert("Không lưu được vào trình duyệt. Hãy dùng Sao lưu JSON.")}if(k===KEY||k===KB||k===KC)ghSchedule()};
 const save=()=>store(KEY,tasks),saveB=()=>store(KB,budget),saveC=()=>store(KC,CFG);
+(()=>{const OLD=["namha2","tando","haison","tandohaison"],n=x=>String(x).replace(/[đĐ]/g,"d").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"");
+  if(Array.isArray(CFG.proj)&&CFG.proj.length&&CFG.proj.every(p=>OLD.includes(n(p))))CFG.proj=DEF.proj.slice()})();
 const late=t=>t.st!=="Hoàn thành"&&t.due&&t.due<today();
 const hsOf=t=>{const P=CFG.prof||{};return(P.hs||[]).find(h=>h.tid===t.id)||(P.nq||[]).find(h=>h.tid===t.id)||(P.ct||[]).find(h=>h.tid===t.id)};
 const hsNote=t=>{const P=CFG.prof||{},h=(P.hs||[]).find(x=>x.tid===t.id);if(h)return "Hồ sơ nộp Sở TC: "+(h.st||"");const n=(P.nq||[]).find(x=>x.tid===t.id);if(n)return "Nghị quyết"+(n.so?" "+n.so:"")+": "+(n.st||"");const c=(P.ct||[]).find(x=>x.tid===t.id);return c?"Hợp đồng: "+(c.st||""):""};
@@ -3008,8 +3010,8 @@ function rPrj(r,all){
   const op=x=>tasks.filter(t=>t.st!=="Hoàn thành"&&(norm(t.proj)===norm(x.name)||norm(t.proj).startsWith(norm(x.name)+"gd"))).length,sum=k=>all.reduce((s,x)=>s+(+x[k]||0),0);
   $("pstats").innerHTML=st(all.length,"Dự án")+st(money(sum("tvdt")),"Tổng vốn đầu tư (đồng)")+st(nf(sum("dt")),"Tổng diện tích đất (m²)")+st(all.reduce((s,x)=>s+op(x),0),"Việc đang xử lý gắn với dự án")+st(all.filter(x=>x.dk==="Đang thực hiện đăng ký").length,"Đang thực hiện đăng ký điều chỉnh");
   if(!r.length){$("plist").innerHTML=empty();return}
-  $("plist").innerHTML=`<table class="m"><thead><tr><th>Dự án</th><th>Chủ đầu tư, NĐDPL</th><th>Địa điểm</th><th>Diện tích đất / kho xưởng (m²)</th><th>Tổng vốn đầu tư</th><th>Việc đang xử lý</th></tr></thead><tbody>`+
-  r.map(x=>`<tr data-id="${x.id}"><td class="t"><b>${esc(x.name)}</b><small>${esc(x.code?"Mã dự án: "+x.code:"")}</small>${x.dk&&x.dk!=="Không áp dụng"?`<small>Đăng ký điều chỉnh GCNĐKĐT: ${dkTag(x)}${x.dknd?" - "+esc(x.dknd):""}</small>`:""}${x.note?`<small>${esc(x.note)}</small>`:""}</td><td>${esc(x.owner)}<small class="s">${esc(x.nddpl)}</small></td><td>${esc(x.addr)}</td><td class="num">${nf(x.dt)}${x.dtxd!==""&&x.dtxd!=null?" / "+nf(x.dtxd):""}</td><td class="num">${money(x.tvdt)}</td><td class="num">${op(x)}</td></tr>`).join("")+"</tbody></table>";
+  $("plist").innerHTML=`<table class="m"><thead><tr><th>Dự án</th><th>Chủ đầu tư, NĐDPL</th><th>Địa điểm</th><th>Diện tích đất / kho xưởng (m²)</th><th>Tổng vốn đầu tư</th><th>Việc đang xử lý</th><th>Hợp đồng liên quan</th></tr></thead><tbody>`+
+  r.map(x=>`<tr data-id="${x.id}"><td class="t"><b>${esc(x.name)}</b><small>${esc(x.code?"Mã dự án: "+x.code:"")}</small>${projPh(x.name,x)?`<small>${projPh(x.name,x)} giai đoạn: ${Array.from({length:projPh(x.name,x)},(_,i)=>"GĐ"+(i+1)).join(", ")}</small>`:""}${x.dk&&x.dk!=="Không áp dụng"?`<small>Đăng ký điều chỉnh GCNĐKĐT: ${dkTag(x)}${x.dknd?" - "+esc(x.dknd):""}</small>`:""}${x.note?`<small>${esc(x.note)}</small>`:""}</td><td>${esc(x.owner)}<small class="s">${esc(x.nddpl)}</small></td><td>${esc(x.addr)}</td><td class="num">${nf(x.dt)}${x.dtxd!==""&&x.dtxd!=null?" / "+nf(x.dtxd):""}</td><td class="num">${money(x.tvdt)}</td><td class="num">${op(x)}</td><td class="num">${PD().ct.filter(c=>norm(c.proj)===norm(x.name)||norm(c.proj).startsWith(norm(x.name)+"gd")).length}</td></tr>`).join("")+"</tbody></table>";
 }
 $("plist").onclick=e=>{const cd=e.target.closest("[data-cpdone]");if(cd){e.stopPropagation();cpDone(cd.dataset.cpdone);return}const sd=e.target.closest("[data-cpseed]");if(sd){e.stopPropagation();const d=PD();COS().filter(c=>d.co.some(x=>same(x.code,c))&&!d.cp.some(x=>same(x.co,c)&&x.loai==="Hồ sơ nội bộ cần lưu giữ, cập nhật")).forEach(c=>CPSEED.forEach(a=>d.cp.push({id:uid(),co:c,ten:a[0],loai:"Hồ sơ nội bộ cần lưu giữ, cập nhật",cq:"",ky:"Khác",han:"",lan:"",nt:"",st:"Đang theo dõi",cb:a[1],note:""})));saveC();renderProf();return}const gn=e.target.closest("[data-gtnext]");if(gn){e.stopPropagation();const h=PD().hs.find(x=>x.id===gn.dataset.gtnext);if(h){const n=Math.min(3,gtN(h)+1);h.buoc=GTB[n];syncHsTask(h);saveC();renderProf()}return}const pg=e.target.closest("[data-pg]");if(pg){const k=pg.dataset.pg;if(posClosed.has(k))posClosed.delete(k);else posClosed.add(k);pg.classList.toggle("col");$("plist").querySelectorAll("tr[data-gk]").forEach(tr=>{if(tr.dataset.gk===k)tr.hidden=posClosed.has(k)});return}const og=e.target.closest("[data-og]");if(og){const b=og.closest(".ow"),k=og.dataset.og;if(ownClosed.has(k))ownClosed.delete(k);else ownClosed.add(k);b.classList.toggle("col");return}const mb=e.target.closest("[data-meedit]");if(mb){openD(mb.dataset.meedit,"ppl");return}if(e.target.closest("[data-mesel]"))return;if(e.target.closest("[data-ctsync]")){const L=PD().ct;L.forEach(syncCtTask);saveC();alert("Đã đồng bộ "+L.length+" hợp đồng sang tab Công việc.");renderProf();return}if(e.target.closest("[data-nqsync]")){const L=PD().nq;L.forEach(syncNqTask);saveC();alert("Đã đồng bộ "+L.length+" nghị quyết sang tab Công việc.");renderProf();return}const mtb=e.target.closest("[data-mtt]");if(mtb){mtTab=mtb.dataset.mtt;sec=mtTab==="nq"?"nq":"mt";renderProf();return}if(e.target.closest("[data-mtsel]"))return;const pmb=e.target.closest("[data-pm]");if(pmb){const sl=pmb.parentNode.querySelector("select");if(sl)printMt(pmb.dataset.pm,sl.value);return}if(e.target.closest("[data-addnq]")){openD(null,"nq");return}if(e.target.closest("[data-hssync]")){const L=PD().hs;L.forEach(syncHsTask);alert("Đã đồng bộ "+L.length+" hồ sơ nộp sang tab Công việc.");renderProf();return}const hb=e.target.closest("[data-hst]");if(hb){hsTab=hb.dataset.hst;renderProf();return}const pfb=e.target.closest("[data-pf]");if(pfb){const k=pfb.dataset.pf,sel=pfb.parentNode.querySelector("select");printForm(k,sel?sel.value||sel.options[sel.selectedIndex].text:"*");return}if(e.target.closest("[data-pset]")){const pb=e.target.closest("[data-pset]"),bx=e.target.closest("[data-setbox]"),R=readSetBox(bx);if(pb.dataset.pset==="ds")R.o.only="ds";printSet(R.c,R.o);return}if(e.target.closest("[data-m12go]")){const gb=e.target.closest("[data-m12go]");printM12(m12Read(gb.closest("[data-m12box]")),gb.dataset.m12go);return}
   if(e.target.closest("[data-dgo]")){const gb=e.target.closest("[data-dgo]"),bx=gb.closest("[data-docbox]"),q=k=>bx.querySelector('[data-dk="'+k+'"]').value,it=HSI.find(x=>x.t===q("it"));if(!it)return;const oo={};bx.querySelectorAll("[data-dk]").forEach(e=>{oo[e.dataset.dk]=e.type==="checkbox"?e.checked:e.value});oo.so=q("so").trim();oo.only=gb.dataset.dgo==="chk"?"chk":"";oo.step=/^s[123]$/.test(gb.dataset.dgo)?gb.dataset.dgo[1]:"";const R=buildBo(it,q("co"),oo);showSheet(R.html,{title:it.t+" - "+q("co")});return}if(e.target.closest("[data-pfco]"))return;const ah=e.target.closest("[data-addhs]");if(ah){const it=HSI.find(i=>i.t===ah.dataset.addhs)||{};openD(null,"hs",{tt:ah.dataset.addhs,mau:(it.m||[]).map(n=>"Mẫu "+n).join(", "),st:"Đang soạn"});return}const ab=e.target.closest("[data-addbo]");if(ab){const q=ab.dataset.addbo.split("|");openD(null,"bo",{co:q[0],name:q[1],tc:q[3]==="g"?BOTC[1]:BOTC[0],tl:q[2],dk:"Đã đăng ký"});return}const a=e.target.closest("[data-addpos]");if(a){openD(null,"pos",{name:a.dataset.addpos});return}const pp=e.target.closest("[data-pid]");if(pp){openD(pp.dataset.pid,"pos");return}const tr=e.target.closest("tr[data-id]");if(tr)openD(tr.dataset.id,tr.dataset.nsec||undefined)};
@@ -3171,6 +3173,630 @@ $("ppdfall").onclick=()=>printProf(true);
 };
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",bootHoSoCongTy);else bootHoSoCongTy();
 </script>
+<!-- ===== MODULE TRANH CHẤP LAO ĐỘNG ===== -->
+<style>
+#vtc{padding-bottom:48px}
+#vtc .stats{padding-top:12px}
+#vtc .tcsub{display:flex;gap:6px;flex-wrap:wrap;padding:6px 24px 4px}
+#vtc .tcsub button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:6px 16px;cursor:pointer}
+#vtc .tcsub button.on{background:var(--brand);border-color:var(--brand);color:var(--bg);font-weight:600}
+#vtc .tcgrid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(300px,1fr);gap:18px;align-items:start;padding:8px 24px}
+#vtc .tcmapbox{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px;overflow-x:auto}
+#vtc .tcbar{display:flex;gap:6px;margin-bottom:8px}
+#vtc .tcbar button{font-size:12.5px;padding:3px 10px}
+#vtc .mm{display:flex;align-items:stretch;min-width:560px}
+#vtc .mm-root{align-self:center;flex:none;width:128px;text-align:center;background:var(--brand);color:var(--bg);border-radius:16px;padding:14px 10px;font-weight:700;font-size:14px;line-height:1.3;margin-right:24px;position:relative}
+#vtc .mm-root small{display:block;font-weight:500;font-size:11px;opacity:.85;margin-top:4px}
+#vtc .mm-root::after{content:"";position:absolute;left:100%;top:50%;width:24px;border-top:2px solid var(--line)}
+#vtc .mm-l1{flex:1;min-width:0;border-left:2px solid var(--line)}
+#vtc .mm-b{position:relative;padding:7px 0 7px 22px}
+#vtc .mm-b::before{content:"";position:absolute;left:0;top:26px;width:20px;border-top:2px solid var(--line)}
+#vtc .mm-n1{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:13.5px;text-align:left;border:1px solid var(--k);border-left-width:5px;border-radius:10px;background:color-mix(in srgb,var(--k) 12%,var(--card));color:var(--ink);padding:6px 10px;cursor:pointer}
+#vtc .mm-n1 i{font-style:normal;color:var(--mute);font-weight:400;width:12px;text-align:center}
+#vtc .mm-l2{display:flex;flex-wrap:wrap;gap:6px;margin:7px 0 0 6px}
+#vtc .mm-n2{font-size:12.5px;border:1px solid color-mix(in srgb,var(--k) 55%,var(--line));background:var(--card);color:var(--ink);border-radius:999px;padding:3px 11px;cursor:pointer;text-align:left}
+#vtc .mm-n2:hover{background:color-mix(in srgb,var(--k) 14%,var(--card))}
+#vtc .mm-n2.on{background:var(--k);border-color:var(--k);color:#fff;font-weight:600}
+#vtc .tcdet{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;position:sticky;top:8px;max-height:calc(100vh - 24px);overflow:auto}
+#vtc .tcdet h3,#vtc .tcr h3{margin:0 0 8px;font-size:16px}
+#vtc h4{margin:14px 0 4px;font-size:12px;letter-spacing:.03em;text-transform:uppercase;color:var(--mute)}
+#vtc .tcdet p,#vtc .tcr p{margin:4px 0;line-height:1.6}
+#vtc ul,#vtc ol{margin:4px 0;padding-left:20px;line-height:1.55}
+#vtc li{margin:3px 0}
+#vtc .crumb{font-size:12px;color:var(--mute);margin-bottom:2px}
+#vtc ul.tcc{list-style:none;padding:0;display:flex;flex-direction:column;gap:3px}
+#vtc ul.tcc li{margin:0;padding:3px 9px;border-left:3px solid var(--brand);background:color-mix(in srgb,var(--brand) 7%,var(--card));font-size:13px}
+#vtc ul.tcc li.st{border-left-color:var(--warn)}
+#vtc .tcnote{font-size:12.5px;color:var(--mute)}
+#vtc .flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0}
+#vtc .flow span{border:1px solid var(--line);border-radius:10px;padding:5px 10px;font-size:12.5px;background:color-mix(in srgb,var(--brand) 6%,var(--card));text-align:center}
+#vtc .flow small{color:var(--mute)}
+#vtc .flow b{color:var(--mute)}
+#vtc .tcform{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin:8px 24px}
+#vtc .tcft{width:100%;border-collapse:collapse}
+#vtc .tcft th{text-align:left;font-weight:500;color:var(--mute);width:42%;padding:7px 10px 7px 0;vertical-align:middle;border-bottom:1px solid var(--line);font-size:13px}
+#vtc .tcft td{padding:5px 0;border-bottom:1px solid var(--line)}
+#vtc .tcft input,#vtc .tcft select{width:100%}
+#vtc .tcbtn{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+#vtc #tcres{margin:8px 24px}
+#vtc .tcr{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px}
+#vtc .tcrh{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+#vtc .meta{color:var(--mute);font-size:12.5px}
+#vtc .tca{padding:8px 12px;border-radius:8px;margin:6px 0;font-size:13.5px;line-height:1.55;border:1px solid var(--line)}
+#vtc .tca.bad{background:color-mix(in srgb,var(--seal) 10%,var(--card));border-color:color-mix(in srgb,var(--seal) 50%,var(--card))}
+#vtc .tca.wn{background:color-mix(in srgb,var(--warn) 12%,var(--card));border-color:color-mix(in srgb,var(--warn) 50%,var(--card))}
+#vtc .tca.info{background:color-mix(in srgb,var(--brand) 7%,var(--card))}
+#vtc .tc2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+#vtc table.tcrt{width:100%;border-collapse:collapse;margin:6px 0;font-size:13.5px}
+#vtc table.tcrt th,#vtc table.tcrt td{text-align:left;padding:6px 8px;border:1px solid var(--line);vertical-align:top}
+#vtc table.tcrt th{background:var(--bg);font-size:12.5px}
+#vtc table.tcrt tr.tot td{font-weight:700;background:color-mix(in srgb,var(--ok) 9%,var(--card))}
+#vtc .num{text-align:right}
+#vtc .nw{white-space:nowrap}
+#vtc b.bad{color:var(--seal)}
+#vtc b.wn{color:var(--warn)}
+#vtc .tcw{overflow-x:auto;margin:8px 24px}
+#vtc #tclog>.tcbtn,#vtc #tclaw>.tcnote,#vtc #tclaw>ul,#vtc #tclog>.empty{margin-left:24px;margin-right:24px}
+#vtc #tclaw>ul{padding-left:0}
+#vtc table.m tr.cl td{opacity:.55}
+#vtc table.m td small{display:block;color:var(--mute)}
+#vtc .chip{display:inline-block;padding:0 9px;border-radius:99px;font-weight:600;font-size:12.5px;line-height:1.7;color:var(--ink);background:color-mix(in srgb,var(--cc,var(--c9)) 14%,var(--card));border:1px solid color-mix(in srgb,var(--cc,var(--c9)) 55%,var(--card))}
+@media(max-width:1000px){#vtc .tcgrid{grid-template-columns:1fr}#vtc .tcdet{position:static;max-height:none}}
+@media(max-width:700px){#vtc .tc2{grid-template-columns:1fr}#vtc .tcsub,#vtc .tcgrid,#vtc .tcw{padding-left:12px;padding-right:12px;margin-left:0;margin-right:0}#vtc .tcform,#vtc #tcres{margin-left:12px;margin-right:12px}#vtc .tcft th{width:46%}
+ #vtc .mm{min-width:0;flex-direction:column}#vtc .mm-root{align-self:flex-start;margin:0 0 12px 0;width:auto}#vtc .mm-root::after{display:none}#vtc .mm-l1{margin-left:12px}}
+@media print{body.tcp header,body.tcp nav.tabs,body.tcp #vlist,body.tcp #vbud,body.tcp #vdash,body.tcp #vprof,body.tcp #vtc .tcsub,body.tcp #vtc .stats,body.tcp .noprint{display:none!important}body.tcp #vtc #tcres{margin:0}body.tcp #vtc .tcr{border:0}}
+</style>
+<script>
+/* ===== Dữ liệu tri thức: tranh chấp lao động =====
+   Ký hiệu: dấu * ở cuối căn cứ = chưa đối chiếu được nguyên văn, cần kiểm tra lại trước khi dùng chính thức. */
+const TC_MAP=[
+{id:"pl",t:"Phân loại tranh chấp",k:0,kids:[
+ {id:"pl1",t:"Tranh chấp cá nhân",
+  n:"Tranh chấp giữa một người lao động (NLĐ) với người sử dụng lao động (NSDLĐ) về quyền, nghĩa vụ, lợi ích phát sinh khi xác lập, thực hiện hoặc chấm dứt quan hệ lao động. Thường gặp: sa thải, chấm dứt HĐLĐ, lương, trợ cấp, bồi thường.",
+  h:["Phải xác định đúng cơ quan giải quyết và thời hiệu ngay từ đầu. Nộp yêu cầu quá thời hiệu thì mất quyền yêu cầu tại cơ quan đó (Điều 190)."],
+  g:["Xác định vụ việc thuộc nhóm bắt buộc hay không bắt buộc hòa giải (Điều 188).","Đường đi: hòa giải viên → (tùy chọn) Hội đồng trọng tài → Tòa án."],
+  c:["Điều 179 BLLĐ 2019","Điều 187 BLLĐ 2019"]},
+ {id:"pl2",t:"Tập thể về quyền",
+  n:"Phát sinh khi hai bên hiểu và thực hiện khác nhau quy định của thỏa ước lao động tập thể, nội quy, quy chế hoặc pháp luật lao động; hoặc khi NSDLĐ phân biệt đối xử, can thiệp vào tổ chức đại diện NLĐ.",
+  h:["Không phải căn cứ để đình công. Quyền đình công chỉ phát sinh trong tranh chấp tập thể về lợi ích (Điều 199).","Nếu có vi phạm pháp luật, hòa giải viên/trọng tài chuyển hồ sơ cho cơ quan có thẩm quyền."],
+  g:["Bắt buộc hòa giải trước khi yêu cầu trọng tài hoặc Tòa án (Điều 191, 192).","Hòa giải không thành: chọn Hội đồng trọng tài (Điều 193) hoặc Tòa án."],
+  c:["Điều 179 BLLĐ 2019","Điều 191–194 BLLĐ 2019"]},
+ {id:"pl3",t:"Tập thể về lợi ích",
+  n:"Phát sinh trong quá trình thương lượng tập thể, hoặc khi một bên từ chối thương lượng, không thương lượng đúng thời hạn theo quy định.",
+  h:["Là loại tranh chấp duy nhất dẫn đến quyền đình công hợp pháp, sau khi hòa giải không thành hoặc trọng tài không giải quyết (Điều 199)."],
+  g:["Bắt buộc hòa giải trước khi yêu cầu trọng tài hoặc đình công (Điều 195, 196)."],
+  c:["Điều 179 BLLĐ 2019","Điều 195–197 BLLĐ 2019"]},
+ {id:"pl4",t:"Nguyên tắc, cấm hành động đơn phương",
+  n:"Tôn trọng thỏa thuận; ưu tiên hòa giải và trọng tài; công khai, khách quan, nhanh chóng, đúng pháp luật. Trong thời hạn giải quyết, không bên nào được đơn phương hành động chống bên kia.",
+  h:["NSDLĐ đơn phương xử lý, trù dập NLĐ đang tranh chấp có thể trở thành căn cứ để NLĐ yêu cầu bồi thường và bị xử phạt."],
+  g:["Giữ nguyên hiện trạng, trao đổi bằng văn bản, lưu toàn bộ chứng cứ trong thời gian giải quyết."],
+  c:["Điều 180 BLLĐ 2019","Điều 186 BLLĐ 2019"]}
+]},
+{id:"cn",t:"Giải quyết tranh chấp cá nhân",k:1,kids:[
+ {id:"cn1",t:"Hòa giải viên lao động",
+  n:"Hòa giải viên do Chủ tịch UBND cấp tỉnh bổ nhiệm. Cơ quan chuyên môn cấp tỉnh tiếp nhận yêu cầu và trong 05 ngày làm việc chuyển cho hòa giải viên, Hội đồng trọng tài hoặc hướng dẫn gửi Tòa án. Hòa giải kết thúc trong 05 ngày làm việc, hai bên phải có mặt (có thể ủy quyền), biên bản gửi trong 01 ngày làm việc.",
+  h:["Một bên không thực hiện thỏa thuận hòa giải thành thì bên kia được yêu cầu trọng tài hoặc Tòa án."],
+  g:["Nộp đơn yêu cầu hòa giải tại cơ quan chuyên môn về lao động cấp tỉnh.","Cử người đại diện có ủy quyền hợp lệ tham dự, chuẩn bị chứng cứ."],
+  c:["Điều 181, 184, 188 BLLĐ 2019"]},
+ {id:"cn2",t:"Trường hợp không bắt buộc hòa giải",
+  n:"Không bắt buộc qua hòa giải trước khi yêu cầu trọng tài hoặc Tòa án: (1) xử lý kỷ luật sa thải hoặc đơn phương chấm dứt HĐLĐ; (2) bồi thường thiệt hại, trợ cấp khi chấm dứt HĐLĐ; (3) giúp việc gia đình; (4) BHXH, BHYT, BH thất nghiệp, BH tai nạn lao động – bệnh nghề nghiệp; (5) bồi thường với doanh nghiệp đưa NLĐ đi làm việc ở nước ngoài; (6) NLĐ thuê lại với NSDLĐ thuê lại.",
+  h:["NLĐ có thể khởi kiện thẳng Tòa án ngay, doanh nghiệp không nên chờ giai đoạn hòa giải.","Tranh chấp lương, thưởng, phụ cấp… không thuộc danh sách này nên vẫn phải hòa giải trước."],
+  g:["Phân loại vụ việc ngay khi nhận đơn để biết có chuẩn bị bản án hay chuẩn bị hòa giải."],
+  c:["Điều 188 khoản 1 BLLĐ 2019"]},
+ {id:"cn3",t:"Hội đồng trọng tài lao động",
+  n:"Chủ tịch UBND cấp tỉnh thành lập, nhiệm kỳ 05 năm, tối thiểu 15 trọng tài viên. Chỉ giải quyết khi hai bên đồng thuận. Ban trọng tài thành lập trong 07 ngày làm việc, ra quyết định trong 30 ngày kể từ khi thành lập.",
+  h:["Đang yêu cầu trọng tài thì không được đồng thời kiện Tòa án về cùng tranh chấp.","Quá hạn không thành lập Ban, không ra quyết định, hoặc một bên không thi hành quyết định thì được yêu cầu Tòa án."],
+  g:["Cân nhắc trọng tài khi muốn nhanh và giữ bí mật, nhưng phải có thỏa thuận của cả hai bên."],
+  c:["Điều 185, 189 BLLĐ 2019"]},
+ {id:"cn4",t:"Tòa án nhân dân",
+  n:"Từ 01/7/2025, Tòa án nhân dân khu vực thay Tòa án cấp huyện cũ và có thẩm quyền sơ thẩm tranh chấp lao động. Xác định Tòa theo nơi cư trú/trụ sở bị đơn theo BLTTDS.",
+  h:["Phán quyết của Tòa án có hiệu lực thi hành, NSDLĐ có thể bị buộc nhận NLĐ trở lại và bồi thường nếu sa thải/chấm dứt trái luật (Điều 41)."],
+  g:["Nhờ luật sư/cán bộ pháp chế tham gia từ giai đoạn đầu, rà soát trước thẩm quyền, thời hiệu, nghĩa vụ chứng minh.","Cân nhắc hòa giải, đối thoại tại Tòa án theo quy định tố tụng *."],
+  c:["Điều 187, 190 BLLĐ 2019","BLTTDS 2015, sửa đổi bởi Luật 85/2025/QH15 (hiệu lực 01/7/2025) *","Điều 32, 35, 39 BLTTDS (thẩm quyền) *"]},
+ {id:"cn5",t:"Thời hiệu yêu cầu",
+  n:"Tính từ ngày phát hiện hành vi mà mỗi bên cho là quyền, lợi ích của mình bị vi phạm: hòa giải viên 06 tháng; Hội đồng trọng tài 09 tháng; Tòa án 01 năm. Thời gian có sự kiện bất khả kháng hoặc trở ngại khách quan không tính vào thời hiệu.",
+  h:["Quá thời hiệu: mất quyền yêu cầu cơ quan đó giải quyết (trừ khi chứng minh được bất khả kháng hoặc trở ngại khách quan)."],
+  g:["Ghi rõ mốc phát hiện hành vi trong hồ sơ vụ việc, đặt nhắc hạn trong Sổ vụ việc của tab này."],
+  c:["Điều 190 BLLĐ 2019"]}
+]},
+{id:"tq",t:"Tập thể về quyền",k:2,kids:[
+ {id:"tq1",t:"Trình tự giải quyết",
+  n:"Hòa giải bắt buộc (thủ tục như Điều 188). Nếu có vi phạm pháp luật thì hòa giải viên lập biên bản, chuyển cơ quan có thẩm quyền. Hòa giải không thành: các bên chọn Hội đồng trọng tài hoặc Tòa án. Ban trọng tài: 07 ngày làm việc lập, 30 ngày ra quyết định.",
+  h:["Đang giải quyết tại trọng tài thì không được kiện Tòa song song.","Không được đình công để giải quyết tranh chấp về quyền (Điều 199)."],
+  g:["Lập hồ sơ chứng minh việc thực hiện thỏa ước, nội quy, pháp luật; mời tổ chức đại diện NLĐ làm việc trực tiếp để tránh leo thang."],
+  c:["Điều 191, 192, 193 BLLĐ 2019"]},
+ {id:"tq2",t:"Thời hiệu",
+  n:"Hòa giải: 06 tháng; trọng tài: 09 tháng; Tòa án: 01 năm, tính từ ngày phát hiện vi phạm.",
+  h:["Quá thời hiệu thì mất quyền yêu cầu."],g:["Theo dõi trong Sổ vụ việc."],c:["Điều 194 BLLĐ 2019"]}
+]},
+{id:"tl",t:"Tập thể về lợi ích và đình công",k:3,kids:[
+ {id:"tl1",t:"Trình tự giải quyết",
+  n:"Bắt buộc hòa giải. Biên bản hòa giải thành có giá trị như thỏa ước lao động tập thể doanh nghiệp. Không thành: chọn Hội đồng trọng tài (07 ngày thành lập, 30 ngày ra quyết định) hoặc tiến hành đình công theo Điều 200–202. Trong thời gian trọng tài giải quyết, không được đình công.",
+  h:["Quá hạn trọng tài hoặc NSDLĐ không thi hành quyết định thì tổ chức đại diện NLĐ có thể đình công."],
+  g:["Tham gia thương lượng tập thể đầy đủ; bắt đầu thương lượng trong 30 ngày, thương lượng không quá 90 ngày (Điều 65–73) *.","Chuẩn bị phương án phản hồi các yêu sách bằng văn bản."],
+  c:["Điều 195, 196, 197 BLLĐ 2019","Điều 65–73 BLLĐ 2019 (thương lượng tập thể) *"]},
+ {id:"tl2",t:"Điều kiện đình công hợp pháp",
+  n:"Đình công là sự ngừng việc tạm thời, tự nguyện và có tổ chức, do tổ chức đại diện NLĐ có quyền thương lượng tập thể lãnh đạo. Chỉ được đình công trong tranh chấp tập thể về lợi ích khi: hòa giải không thành hoặc không được tiến hành; hoặc trọng tài không được thành lập, không ra quyết định, hoặc NSDLĐ không thi hành quyết định.",
+  h:["Đình công ngoài các trường hợp này là bất hợp pháp (Điều 204)."],
+  g:["Rà soát điều kiện ngay khi nhận thông báo đình công; so với từng điều kiện tại Điều 199 và Điều 204."],
+  c:["Điều 198, 199, 204 BLLĐ 2019"]},
+ {id:"tl3",t:"Trình tự: lấy ý kiến, quyết định, thông báo",
+  n:"Ba bước: (1) lấy ý kiến NLĐ, thông báo trước ít nhất 01 ngày và không được ảnh hưởng sản xuất; (2) ra quyết định khi có trên 50% số người được lấy ý kiến đồng ý, bằng văn bản; (3) gửi quyết định cho NSDLĐ, UBND cấp huyện và cơ quan chuyên môn cấp tỉnh ít nhất 05 ngày làm việc trước khi đình công.",
+  h:["Bỏ bước hoặc vi phạm thủ tục thì đình công bất hợp pháp."],
+  g:["Lưu thông báo nhận được, kiểm tra thời điểm, chữ ký, tỷ lệ đồng ý, người ký có đúng tổ chức đại diện hay không."],
+  c:["Điều 200, 201, 202 BLLĐ 2019"]},
+ {id:"tl4",t:"Đình công bất hợp pháp",
+  n:"Gồm: không thuộc trường hợp được đình công; không do tổ chức có thẩm quyền tổ chức và lãnh đạo; vi phạm trình tự, thủ tục; đang trong thời gian tranh chấp được cơ quan có thẩm quyền giải quyết; xảy ra tại nơi cấm đình công; hoặc đã có quyết định hoãn, ngừng của Chủ tịch UBND cấp tỉnh.",
+  h:["NSDLĐ có quyền yêu cầu Tòa án tuyên bố đình công bất hợp pháp (Điều 203).","Tổ chức, cá nhân tổ chức đình công bất hợp pháp có thể phải bồi thường thiệt hại *."],
+  g:["Lập biên bản, ghi nhận thiệt hại; thông báo cho UBND cấp huyện (họp trong 12 giờ theo Điều 211); chuẩn bị yêu cầu Tòa án."],
+  c:["Điều 203, 204, 209, 210, 211 BLLĐ 2019"]},
+ {id:"tl5",t:"Đóng cửa tạm thời, tiền lương",
+  n:"NSDLĐ có thể đóng cửa tạm thời nơi làm việc, thông báo trước ít nhất 03 ngày làm việc; cấm đóng cửa trước 12 giờ tính từ thời điểm bắt đầu đình công hoặc sau khi NLĐ đã ngừng đình công. NLĐ tham gia đình công không được trả lương (trừ khi thỏa thuận khác); NLĐ không tham gia nhưng phải ngừng việc được trả lương ngừng việc.",
+  h:["Đóng cửa trái quy định có thể bị coi là hành vi trù dập, bị xử phạt."],
+  g:["Soạn sẵn mẫu thông báo đóng cửa, danh sách người không tham gia, bảng tính lương ngừng việc."],
+  c:["Điều 205, 206, 207 BLLĐ 2019"]},
+ {id:"tl6",t:"Hành vi bị cấm, nơi cấm đình công",
+  n:"Cấm cản trở, ép buộc, lôi kéo; bạo lực, phá hoại tài sản; xâm phạm trật tự công cộng; sa thải, kỷ luật, điều chuyển, trù dập NLĐ đình công hoặc lãnh đạo đình công; lợi dụng đình công để vi phạm pháp luật. Chính phủ quy định danh mục nơi không được đình công; Chủ tịch UBND cấp tỉnh có thể hoãn, ngừng đình công.",
+  h:["NSDLĐ kỷ luật người đình công hợp pháp: vi phạm Điều 208, có thể bị xử phạt hành chính *."],
+  g:["Không xử lý người đình công trong và sau đình công khi chưa có kết luận về tính hợp pháp."],
+  c:["Điều 208, 209, 210 BLLĐ 2019","NĐ 283/2026/NĐ-CP (xử phạt) *"]}
+]},
+{id:"kl",t:"Kỷ luật lao động và sa thải",k:4,kids:[
+ {id:"kl1",t:"Nội quy lao động",
+  n:"Từ 10 NLĐ trở lên phải có nội quy bằng văn bản; có thời giờ làm việc, trật tự, an toàn lao động, phòng chống quấy rối tình dục, bảo vệ bí mật kinh doanh, hành vi vi phạm và hình thức xử lý, trách nhiệm vật chất, người có thẩm quyền xử lý. Tham khảo tổ chức đại diện NLĐ trước khi ban hành; đăng ký trong 10 ngày kể từ ngày ban hành; có hiệu lực sau 15 ngày kể từ khi cơ quan nhận đủ hồ sơ.",
+  h:["Nội quy chưa có hiệu lực hoặc thiếu hành vi vi phạm thì không có căn cứ xử lý kỷ luật (Điều 127).","Rủi ro xử phạt hành chính về nội quy (NĐ 283/2026, Điều 25) *."],
+  g:["Rà soát nội quy của từng pháp nhân: hiệu lực, đăng ký, nội dung bắt buộc, đã niêm yết, đã thông báo chưa."],
+  c:["Điều 118–121 BLLĐ 2019","NĐ 283/2026/NĐ-CP, Điều 25 *"]},
+ {id:"kl2",t:"Nguyên tắc, trình tự xử lý",
+  n:"NSDLĐ phải chứng minh được lỗi của NLĐ. Phải có sự tham gia của tổ chức đại diện NLĐ tại cơ sở. NLĐ phải có mặt, được tự bào chữa hoặc nhờ luật sư, tổ chức đại diện. Lập biên bản. Một hành vi chỉ chịu một hình thức kỷ luật. Không được xử lý khi NLĐ đang nghỉ ốm đau, điều dưỡng, nghỉ việc được NSDLĐ đồng ý; bị tạm giữ, tạm giam; chờ kết quả điều tra (Điều 125 khoản 1, 2); mang thai, nghỉ thai sản, nuôi con dưới 12 tháng; mắc bệnh mất khả năng nhận thức.",
+  h:["Vi phạm trình tự: quyết định kỷ luật, đặc biệt sa thải, bị tuyên trái luật, kéo theo nghĩa vụ tại Điều 41."],
+  g:["Lập checklist thủ tục cho từng vụ: thông báo họp, biên bản họp, mời đại diện, biên bản nhận quyết định.","Thông báo họp trước 05 ngày làm việc theo hướng dẫn tại NĐ 145/2020 *."],
+  c:["Điều 122 BLLĐ 2019","NĐ 145/2020/NĐ-CP, Điều 70 (trình tự xử lý) *"]},
+ {id:"kl3",t:"Thời hiệu xử lý kỷ luật",
+  n:"06 tháng kể từ ngày xảy ra hành vi; 12 tháng nếu hành vi liên quan trực tiếp đến tài chính, tài sản, tiết lộ bí mật công nghệ, bí mật kinh doanh. Nếu thời hiệu hết trong lúc NLĐ thuộc trường hợp chưa được xử lý, hoặc còn dưới 60 ngày, được kéo dài tối đa 60 ngày. Quyết định xử lý phải ban hành trong thời hiệu.",
+  h:["Ban hành quyết định sau thời hiệu là trái luật dù hành vi có thật."],
+  g:["Dùng tab “Phân tích tình huống” để tính ngày hết thời hiệu theo ngày xảy ra hành vi."],
+  c:["Điều 123 BLLĐ 2019"]},
+ {id:"kl4",t:"Hình thức kỷ luật và sa thải",
+  n:"Bốn hình thức: khiển trách; kéo dài thời hạn nâng lương không quá 06 tháng; cách chức; sa thải. Sa thải khi: trộm cắp, tham ô, đánh bạc, cố ý gây thương tích, dùng ma túy tại nơi làm việc; tiết lộ bí mật kinh doanh/công nghệ, xâm phạm SHTT, gây thiệt hại nghiêm trọng hoặc quấy rối tình dục; tái phạm khi chưa xóa kỷ luật; bỏ việc 05 ngày cộng dồn trong 30 ngày hoặc 20 ngày cộng dồn trong 365 ngày không có lý do chính đáng. Xóa kỷ luật: khiển trách 03 tháng, kéo dài nâng lương 06 tháng, cách chức 03 năm.",
+  h:["Sa thải không thuộc 4 nhóm căn cứ này hoặc không đúng trình tự là chấm dứt HĐLĐ trái pháp luật (Điều 39, 41)."],
+  g:["Đối chiếu từng khoản của Điều 125 với bằng chứng; ghi rõ khoản áp dụng trong quyết định."],
+  c:["Điều 124, 125, 126 BLLĐ 2019"]},
+ {id:"kl5",t:"Hành vi bị cấm, tạm đình chỉ",
+  n:"Cấm xâm phạm sức khỏe, danh dự, nhân phẩm NLĐ; cấm phạt tiền hoặc cắt lương thay cho kỷ luật; cấm xử lý hành vi không có trong nội quy, HĐLĐ hoặc luật. Tạm đình chỉ công việc tối đa 15 ngày, trường hợp đặc biệt tối đa 90 ngày, phải tham khảo tổ chức đại diện NLĐ; tạm ứng 50% lương; không bị kỷ luật thì phải trả đủ lương cho thời gian đình chỉ.",
+  h:["Phạt tiền, cắt lương trái Điều 127 bị xử phạt hành chính, mức cao trong khung kỷ luật (NĐ 283/2026, Điều 25) *."],
+  g:["Bỏ ngay các điều khoản “phạt tiền” trong nội quy, thay bằng hình thức kỷ luật hợp pháp."],
+  c:["Điều 127, 128, 131 BLLĐ 2019"]}
+]},
+{id:"ct",t:"Chấm dứt hợp đồng lao động",k:5,kids:[
+ {id:"ct1",t:"NLĐ đơn phương chấm dứt",
+  n:"Báo trước 45 ngày (không xác định thời hạn), 30 ngày (xác định 12–36 tháng), 03 ngày làm việc (dưới 12 tháng). Không cần báo trước trong các trường hợp luật định, ví dụ không được trả đủ lương hoặc trả sai hạn, bị ngược đãi, quấy rối tình dục, mang thai theo chỉ định, đủ tuổi nghỉ hưu. NLĐ chấm dứt trái luật: không có trợ cấp thôi việc; bồi thường nửa tháng lương và lương những ngày không báo trước; hoàn trả chi phí đào tạo (Điều 62).",
+  h:["NSDLĐ có quyền đòi bồi thường; không được tự ý khấu trừ vượt mức luật cho phép."],
+  g:["Xác định NLĐ có thuộc trường hợp không cần báo trước hay không trước khi yêu cầu bồi thường."],
+  c:["Điều 35, 40, 62 BLLĐ 2019"]},
+ {id:"ct2",t:"NSDLĐ đơn phương chấm dứt",
+  n:"Chỉ được chấm dứt khi có căn cứ Điều 36: thường xuyên không hoàn thành công việc theo tiêu chí trong quy chế; ốm đau dài ngày; thiên tai, địch họa, thay đổi cơ cấu; không có mặt sau thời hạn quy định; bỏ việc 05 ngày làm việc liên tục; cung cấp thông tin không trung thực. Phải báo trước 45/30/03 ngày làm việc tùy loại HĐLĐ và không được chấm dứt NLĐ thuộc Điều 37 (ốm đau đang điều trị, nghỉ phép, mang thai, nghỉ thai sản, nuôi con dưới 12 tháng), trừ ngoại lệ.",
+  h:["Không đúng căn cứ, thời hạn báo trước hoặc đối tượng cấm là chấm dứt trái luật (Điều 39)."],
+  g:["Lập hồ sơ đánh giá hoàn thành công việc từ trước; lập thông báo chấm dứt bằng văn bản (Điều 45)."],
+  c:["Điều 36, 37, 38, 39, 45 BLLĐ 2019"]},
+ {id:"ct3",t:"Chấm dứt trái luật: hậu quả (NSDLĐ)",
+  n:"NSDLĐ phải: nhận NLĐ trở lại làm việc theo HĐLĐ đã giao kết; trả tiền lương, đóng BHXH, BHYT, BH thất nghiệp trong những ngày NLĐ không được làm việc; bồi thường thêm ít nhất 02 tháng lương theo HĐLĐ. Nếu NLĐ không muốn quay lại: ngoài các khoản trên còn phải trả trợ cấp thôi việc theo Điều 46 và bồi thường ít nhất 02 tháng lương. Nếu vi phạm thời hạn báo trước, phải trả tiền lương những ngày không báo trước *.",
+  h:["Rủi ro tài chính tăng theo thời gian vụ án kéo dài vì phải trả lương cho cả thời gian NLĐ không được làm việc."],
+  g:["Cân nhắc thương lượng sớm: nhận lại làm việc hoặc thỏa thuận chấm dứt (Điều 34 khoản 3) để dừng việc cộng dồn lương.","Dùng bảng tính trong tab “Phân tích tình huống” để ước tính phương án."],
+  c:["Điều 41 BLLĐ 2019"]},
+ {id:"ct4",t:"Thay đổi cơ cấu, kinh tế, sáp nhập",
+  n:"Phải tham khảo tổ chức đại diện NLĐ, báo trước 30 ngày cho UBND cấp tỉnh và NLĐ, và có phương án sử dụng lao động (Điều 44). Phương án phải công khai cho NLĐ trong 15 ngày kể từ ngày được phê duyệt. NLĐ mất việc nhận trợ cấp mất việc làm.",
+  h:["Vi phạm thủ tục có thể bị xử phạt hành chính (mức 5–10 triệu đồng với cá nhân theo NĐ 283/2026, Điều 18) *."],
+  g:["Lập phương án sử dụng lao động trước khi thông báo chấm dứt; lưu bằng chứng gửi thông báo cho UBND tỉnh."],
+  c:["Điều 42, 43, 44, 47 BLLĐ 2019","NĐ 283/2026/NĐ-CP, Điều 18 *"]},
+ {id:"ct5",t:"Trợ cấp thôi việc, mất việc, thanh toán",
+  n:"Trợ cấp thôi việc: mỗi năm làm việc được nửa tháng lương, với NLĐ làm việc từ đủ 12 tháng. Trợ cấp mất việc làm: mỗi năm một tháng lương, tối thiểu 02 tháng. Tiền lương tính theo bình quân 06 tháng liền kề trước khi chấm dứt. Thanh toán trong 14 ngày làm việc kể từ ngày chấm dứt, có thể kéo dài nhưng không quá 30 ngày trong các trường hợp luật định; quyền lợi của NLĐ được ưu tiên khi doanh nghiệp giải thể, phá sản.",
+  h:["Chậm trả phải chịu xử phạt (NĐ 283/2026, Điều 18, 1–20 triệu đồng với cá nhân tùy số NLĐ) *."],
+  g:["Chốt bảng tính từng NLĐ ngay khi có quyết định chấm dứt; trừ thời gian đã tham gia BH thất nghiệp khi tính thời gian làm việc *."],
+  c:["Điều 46, 47, 48 BLLĐ 2019","NĐ 145/2020/NĐ-CP, Điều 8 (cách tính) *"]},
+ {id:"ct6",t:"HĐLĐ vô hiệu",
+  n:"HĐLĐ có thể vô hiệu toàn bộ hoặc từng phần. Tòa án có thẩm quyền tuyên bố HĐLĐ vô hiệu. Xử lý quyền lợi của NLĐ trong thời gian đã làm việc theo quy định.",
+  h:["Điều khoản trái luật trong HĐLĐ không bảo vệ được NSDLĐ trong tranh chấp."],
+  g:["Rà soát mẫu HĐLĐ, loại bỏ điều khoản trái luật (giữ bản gốc giấy tờ, bắt đặt cọc…); ký phụ lục điều chỉnh."],
+  c:["Điều 49, 50, 51 BLLĐ 2019"]}
+]},
+{id:"vc",t:"Trách nhiệm vật chất",k:0,kids:[
+ {id:"vc1",t:"Bồi thường thiệt hại",
+  n:"NLĐ làm hư hỏng dụng cụ, thiết bị hoặc gây thiệt hại tài sản phải bồi thường theo pháp luật hoặc nội quy. Thiệt hại không nghiêm trọng do sơ suất, giá trị không quá 10 tháng lương tối thiểu vùng: bồi thường tối đa 03 tháng lương, khấu trừ hằng tháng. Làm mất tài sản hoặc tiêu hao vật tư vượt định mức: bồi thường một phần hoặc toàn bộ theo giá thị trường hoặc theo hợp đồng trách nhiệm. Bất khả kháng đã áp dụng mọi biện pháp: không phải bồi thường. Mức bồi thường căn cứ lỗi, thiệt hại thực tế, hoàn cảnh gia đình, nhân thân, tài sản của NLĐ.",
+  h:["Khấu trừ lương để bồi thường tối đa 30% tiền lương hằng tháng sau khi trừ các khoản đóng BH và thuế *.","Cấm phạt tiền, cắt lương thay cho kỷ luật (Điều 127)."],
+  g:["Lập biên bản xác định thiệt hại, lỗi, mức; thỏa thuận bằng văn bản về lộ trình hoàn trả.","Tranh chấp bồi thường thiệt hại không bắt buộc hòa giải (Điều 188)."],
+  c:["Điều 129, 130 BLLĐ 2019","Điều 102 khoản 3 BLLĐ 2019 *"]},
+ {id:"vc2",t:"Chi phí đào tạo",
+  n:"NLĐ được đào tạo bằng chi phí của NSDLĐ theo hợp đồng đào tạo, mà chấm dứt HĐLĐ trái cam kết, thì phải hoàn trả chi phí đào tạo. Tranh chấp hợp đồng đào tạo nghề thuộc thẩm quyền hòa giải của hòa giải viên lao động.",
+  h:["Thiếu hợp đồng đào tạo hoặc chứng từ chi phí thì khó đòi hoàn trả."],
+  g:["Lưu hợp đồng đào tạo, chứng từ chi phí thực tế, cam kết thời gian phục vụ."],
+  c:["Điều 62 BLLĐ 2019 *","Điều 184 BLLĐ 2019"]}
+]},
+{id:"hc",t:"Xử phạt hành chính",k:1,kids:[
+ {id:"hc1",t:"NĐ 283/2026/NĐ-CP",
+  n:"Quy định xử phạt vi phạm hành chính về lao động, BHXH, NLĐ Việt Nam đi làm việc ở nước ngoài. Ban hành 15/7/2026, hiệu lực 10/9/2026 theo nguồn tổng hợp, thay NĐ 12/2022. Thời hiệu xử phạt 01 năm với vi phạm lao động. Mức tiền tại Chương II dành cho cá nhân, tổ chức gấp đôi. Mức đáng chú ý (cá nhân): HĐLĐ không bằng văn bản 2–25 triệu theo số NLĐ; giữ giấy tờ gốc, bắt đặt cọc 20–25 triệu; quấy rối tình dục 15–30 triệu; chậm trả lương, trợ cấp 1–20 triệu và lương 5–50 triệu theo số NLĐ; trả dưới lương tối thiểu 20–75 triệu; làm thêm giờ vượt quy định 5–75 triệu; phạt tiền, cắt lương thay kỷ luật 20–40 triệu.",
+  h:["Doanh nghiệp (tổ chức) bị phạt gấp đôi mức của cá nhân."],
+  g:["Đối chiếu bảng mức phạt trong văn bản chính thức trước khi dùng cho quyết định cụ thể (tóm tắt từ nguồn thứ cấp)."],
+  c:["NĐ 283/2026/NĐ-CP (Điều 3, 7, 15–18, 23–25) *"]}
+]},
+{id:"pn",t:"Phòng ngừa",k:2,kids:[
+ {id:"pn1",t:"Đối thoại, thương lượng định kỳ",
+  n:"Tổ chức đối thoại tại nơi làm việc tối thiểu 01 lần mỗi năm; thương lượng tập thể theo trình tự luật định để giảm xung đột về lợi ích.",
+  h:["Thiếu đối thoại làm tăng nguy cơ tranh chấp tập thể và đình công tự phát."],
+  g:["Lập lịch đối thoại hằng năm cho từng pháp nhân; lưu biên bản."],
+  c:["Điều 63, 64 BLLĐ 2019","Điều 65–73 BLLĐ 2019 *"]},
+ {id:"pn2",t:"Bộ hồ sơ nhân sự và HĐLĐ điện tử",
+  n:"Chuẩn hóa HĐLĐ, nội quy, quy chế đánh giá, bảng lương, biên bản kỷ luật. HĐLĐ điện tử theo NĐ 337/2025/NĐ-CP (hiệu lực 01/01/2026).",
+  h:["Thiếu hồ sơ là nguyên nhân chính thua kiện: NSDLĐ phải chứng minh lỗi và căn cứ chấm dứt."],
+  g:["Rà soát hồ sơ theo checklist trong từng kịch bản ở tab “Phân tích tình huống”."],
+  c:["NĐ 337/2025/NĐ-CP *"]}
+]}
+];
+
+/* ===== Kịch bản phân tích ===== */
+const TC_SC={
+kl:{nm:"Sa thải / xử lý kỷ luật bị NLĐ cho là trái luật",f:["nld","hd","ngay1","ngay2","ttc","nhom","tcdd","bd","kt","l1","l6","bh","tn"],
+ hm:"Không bắt buộc hòa giải nếu là sa thải (Điều 188 khoản 1). Các hình thức kỷ luật khác vẫn phải hòa giải trước.",lim:1,
+ hqN:["Sa thải hoặc chấm dứt trái luật: phải nhận NLĐ trở lại, trả lương và đóng bảo hiểm cho thời gian không được làm việc, bồi thường ít nhất 02 tháng lương (Điều 41 khoản 1). Nếu NLĐ không muốn quay lại: thêm trợ cấp thôi việc theo Điều 46.","Quyết định kỷ luật có thể bị Tòa án tuyên hủy.","Thiếu căn cứ hoặc sai trình tự (Điều 122, 123, 127) thì sa thải trái luật dù hành vi có thật.","Rủi ro xử phạt hành chính theo NĐ 283/2026 (Điều 18, 25) *."],
+ hqL:["Sa thải đúng luật: không được trợ cấp thôi việc (Điều 46 khoản 1) *.","Sa thải trái luật: được nhận lại làm việc hoặc nhận các khoản bồi thường ở trên.","Có quyền khiếu nại, yêu cầu giải quyết tranh chấp (Điều 131)."],
+ gq:["Rà soát hồ sơ: nội quy có hiệu lực và đã đăng ký (Điều 118–121), hành vi vi phạm có trong nội quy hoặc HĐLĐ (Điều 127), lỗi có chứng cứ (Điều 122).","Kiểm tra thời hiệu xử lý 06/12 tháng và các trường hợp không được xử lý kỷ luật (Điều 122, 123).","Họp xử lý kỷ luật có đại diện tổ chức đại diện NLĐ (nếu có), NLĐ có mặt và được bào chữa, lập biên bản (Điều 122); thông báo họp trước 05 ngày làm việc *.","Khi NLĐ khiếu nại: trả lời bằng văn bản. NLĐ có thể kiện thẳng Tòa vì sa thải không bắt buộc hòa giải.","Đánh giá rủi ro thua kiện; nếu cao, đề xuất thương lượng: hủy quyết định, nhận lại hoặc thỏa thuận chấm dứt kèm bồi thường (Điều 34 khoản 3, Điều 41)."],
+ ck:["Nội quy lao động và giấy tờ đăng ký, bằng chứng đã thông báo, niêm yết","Biên bản vi phạm, chứng cứ (camera, email, báo cáo)","Thông báo họp xử lý kỷ luật, bằng chứng đã gửi","Biên bản họp, ý kiến tổ chức đại diện NLĐ","Quyết định kỷ luật, biên bản giao nhận","HĐLĐ, bảng lương 06 tháng gần nhất"],
+ cs:["Điều 117–131 BLLĐ 2019","Điều 34, 39, 41, 46 BLLĐ 2019","Điều 188 khoản 1, Điều 190 BLLĐ 2019","NĐ 145/2020/NĐ-CP (trình tự xử lý kỷ luật) *","NĐ 283/2026/NĐ-CP (Điều 18, 25) *"]},
+nsdld:{nm:"NSDLĐ đơn phương chấm dứt HĐLĐ, NLĐ cho là trái luật",f:["nld","hd","ngay1","ngay2","bd","kt","nhom","tcdd","l1","l6","bh","tn"],
+ hm:"Không bắt buộc hòa giải (Điều 188 khoản 1).",lim:1,
+ hqN:["Chấm dứt trái luật (không đúng căn cứ Điều 36, không báo trước đủ, hoặc rơi vào đối tượng cấm Điều 37): chịu toàn bộ nghĩa vụ tại Điều 41.","Phải trả lương, đóng BH cho thời gian NLĐ không được làm việc, cộng bồi thường tối thiểu 02 tháng lương.","Vi phạm thời hạn báo trước: trả lương những ngày không báo trước *."],
+ hqL:["Chấm dứt đúng luật: được trợ cấp thôi việc (Điều 46) nếu đủ điều kiện; thanh toán trong 14 ngày làm việc (Điều 48).","Chấm dứt trái luật: quyền chọn nhận lại làm việc hoặc nhận trợ cấp thôi việc và bồi thường."],
+ gq:["Xác định căn cứ chấm dứt theo Điều 36 và có hồ sơ chứng minh (quy chế đánh giá, kết quả đánh giá, giấy xác nhận y tế…).","Báo trước đúng thời hạn: 45 ngày (không xác định thời hạn), 30 ngày (12–36 tháng), 03 ngày làm việc (dưới 12 tháng) (Điều 36).","Kiểm tra đối tượng cấm tại Điều 37.","Thông báo chấm dứt bằng văn bản (Điều 45); thanh toán trong 14 ngày làm việc (Điều 48).","Khi có tranh chấp: thương lượng sớm; chuẩn bị chứng cứ cho Tòa vì không bắt buộc hòa giải."],
+ ck:["HĐLĐ, phụ lục","Quy chế đánh giá và kết quả đánh giá","Thông báo chấm dứt, bằng chứng đã gửi","Văn bản tham khảo tổ chức đại diện NLĐ (nếu có)","Bảng tính trợ cấp, chứng từ thanh toán"],
+ cs:["Điều 34–48 BLLĐ 2019","Điều 188 khoản 1, Điều 190 BLLĐ 2019","NĐ 283/2026/NĐ-CP, Điều 18 *"]},
+nld:{nm:"NLĐ đơn phương chấm dứt HĐLĐ trái luật (nghỉ không báo trước)",f:["nld","hd","ngay1","ngay2","bd","kt","l1","l6","bh","ndb"],
+ hm:"Không bắt buộc hòa giải đối với tranh chấp đơn phương chấm dứt, bồi thường (Điều 188 khoản 1).",lim:1,
+ hqN:["Có quyền yêu cầu NLĐ bồi thường nửa tháng lương và tiền lương những ngày không báo trước; hoàn trả chi phí đào tạo nếu có cam kết (Điều 40, 62).","Không được tự ý khấu trừ vượt mức cho phép; không giữ bản gốc giấy tờ (xử phạt theo NĐ 283/2026) *."],
+ hqL:["Không có trợ cấp thôi việc.","Phải bồi thường theo Điều 40 và hoàn trả chi phí đào tạo.","Nếu thuộc trường hợp không cần báo trước (chậm lương, bị ngược đãi, quấy rối…) thì không phải bồi thường (Điều 35 khoản 2)."],
+ gq:["Xác định NLĐ có thuộc trường hợp được nghỉ không cần báo trước (Điều 35 khoản 2) hay không.","Gửi thông báo yêu cầu NLĐ giải trình và bàn giao; lập biên bản bàn giao.","Tính khoản bồi thường theo Điều 40; thỏa thuận hoàn trả bằng văn bản.","Chốt lương, sổ BHXH; không giữ giấy tờ gốc."],
+ ck:["Đơn xin nghỉ/ thông báo của NLĐ, bằng chứng thời điểm nhận","HĐLĐ, bảng lương","Hợp đồng đào tạo và chứng từ chi phí","Biên bản bàn giao"],
+ cs:["Điều 35, 40, 62 BLLĐ 2019","Điều 188 khoản 1, Điều 190 BLLĐ 2019"]},
+mv:{nm:"Chấm dứt do thay đổi cơ cấu, kinh tế, chia tách, sáp nhập (trợ cấp mất việc)",f:["nld","hd","ngay1","ngay2","bd","kt","l1","l6","bh"],
+ hm:"Không bắt buộc hòa giải đối với chấm dứt HĐLĐ và trợ cấp (Điều 188 khoản 1).",lim:1,
+ hqN:["Phải tham khảo tổ chức đại diện NLĐ, báo trước 30 ngày cho UBND cấp tỉnh và NLĐ, có phương án sử dụng lao động (Điều 42, 44).","Trả trợ cấp mất việc làm: mỗi năm một tháng lương, tối thiểu 02 tháng (Điều 47).","Vi phạm thủ tục: xử phạt hành chính (NĐ 283/2026, Điều 18) *."],
+ hqL:["Được trợ cấp mất việc làm; thanh toán trong 14 ngày làm việc (Điều 48)."],
+ gq:["Lập phương án sử dụng lao động và công khai cho NLĐ trong 15 ngày kể từ khi phê duyệt (Điều 44).","Tham khảo tổ chức đại diện NLĐ; thông báo cho UBND cấp tỉnh trước 30 ngày.","Chốt bảng tính trợ cấp từng NLĐ; thanh toán đúng hạn."],
+ ck:["Phương án sử dụng lao động","Thông báo gửi UBND tỉnh","Biên bản tham khảo tổ chức đại diện NLĐ","Bảng tính trợ cấp"],
+ cs:["Điều 42, 43, 44, 47, 48 BLLĐ 2019","NĐ 283/2026/NĐ-CP, Điều 18 *"]},
+tctv:{nm:"Trợ cấp thôi việc / thanh toán quyền lợi khi chấm dứt",f:["nld","hd","ngay1","ngay2","bd","kt","l1","l6","bh"],
+ hm:"Không bắt buộc hòa giải đối với tranh chấp trợ cấp khi chấm dứt HĐLĐ (Điều 188 khoản 1).",lim:1,
+ hqN:["Chậm hoặc không trả đủ: xử phạt hành chính (NĐ 283/2026, Điều 18) *; NLĐ có thể kiện đòi.","Thanh toán trong 14 ngày làm việc, có thể kéo dài không quá 30 ngày trong trường hợp luật định (Điều 48)."],
+ hqL:["Trợ cấp thôi việc: nửa tháng lương cho mỗi năm làm việc, khi làm đủ 12 tháng (Điều 46)."],
+ gq:["Xác định thời gian làm việc tính trợ cấp: tổng thời gian làm việc trừ thời gian đã tham gia BH thất nghiệp và thời gian đã chi trả trợ cấp *.","Tính lương bình quân 06 tháng liền kề trước khi chấm dứt.","Lập bảng thanh toán, thanh toán trong 14 ngày làm việc."],
+ ck:["HĐLĐ, quyết định chấm dứt","Bảng lương 06 tháng","Sổ BHXH/ xác nhận thời gian đóng BH thất nghiệp","Chứng từ chi trả"],
+ cs:["Điều 46, 47, 48 BLLĐ 2019","NĐ 145/2020/NĐ-CP, Điều 8 *"]},
+luong:{nm:"Nợ lương / trả lương chậm",f:["nld","hd","ngay1","ngay2","l1","nlg"],
+ hm:"BẮT BUỘC hòa giải trước khi yêu cầu trọng tài hoặc Tòa án (không thuộc danh sách ngoại lệ Điều 188 khoản 1).",lim:1,
+ hqN:["NLĐ có thể chấm dứt HĐLĐ không cần báo trước nếu không được trả đủ lương hoặc trả không đúng thời hạn (Điều 35 khoản 2).","Trả lương chậm từ 15 ngày trở lên phải đền bù thêm theo lãi suất theo Điều 97 *.","Xử phạt hành chính theo NĐ 283/2026, Điều 23: cá nhân 5–50 triệu theo số NLĐ, tổ chức gấp đôi *."],
+ hqL:["Được yêu cầu trả đủ lương và khoản đền bù; có quyền nghỉ việc không cần báo trước."],
+ gq:["Chốt số tiền nợ theo từng NLĐ, từng kỳ lương.","Làm việc với đại diện NLĐ, đề xuất lộ trình thanh toán bằng văn bản.","Nếu NLĐ yêu cầu hòa giải: tham dự, có người đại diện đủ thẩm quyền (Điều 188).","Thanh toán, lưu chứng từ."],
+ ck:["Bảng lương, chứng từ đã trả","Thông báo lý do chậm lương","Biên bản thỏa thuận lộ trình"],
+ cs:["Điều 35, 97, 188 BLLĐ 2019 *","NĐ 283/2026/NĐ-CP, Điều 23 *"]},
+bt:{nm:"Bồi thường thiệt hại vật chất do NLĐ gây ra",f:["nld","hd","ngay1","ngay2","l1","tth","ltt","mlo"],
+ hm:"Không bắt buộc hòa giải đối với bồi thường thiệt hại (Điều 188 khoản 1).",lim:1,
+ hqN:["Không được phạt tiền, cắt lương thay kỷ luật (Điều 127); khấu trừ lương bồi thường tối đa 30% lương tháng *.","Phải chứng minh lỗi, thiệt hại thực tế và có cơ sở nội quy hoặc hợp đồng trách nhiệm."],
+ hqL:["Bồi thường theo mức lỗi, thiệt hại thực tế, hoàn cảnh gia đình và tài sản (Điều 130).","Bất khả kháng, đã áp dụng mọi biện pháp: không phải bồi thường."],
+ gq:["Lập biên bản xác định thiệt hại, nguyên nhân, lỗi.","Xác định nhóm: sơ suất không nghiêm trọng, hay mất tài sản/tiêu hao vượt định mức.","Họp xử lý trách nhiệm vật chất theo nội quy; thỏa thuận lộ trình hoàn trả bằng văn bản.","Không đạt thỏa thuận: khởi kiện Tòa án."],
+ ck:["Nội quy quy định trách nhiệm vật chất","Biên bản sự việc, định giá thiệt hại","Hợp đồng trách nhiệm (nếu có)","Thỏa thuận hoàn trả"],
+ cs:["Điều 129, 130, 127 BLLĐ 2019","Điều 102 khoản 3 BLLĐ 2019 *"]},
+dt:{nm:"Hoàn trả chi phí đào tạo",f:["nld","hd","ngay1","ngay2","l1"],
+ hm:"Hòa giải viên có thẩm quyền hòa giải tranh chấp hợp đồng đào tạo nghề (Điều 184).",lim:1,
+ hqN:["Chỉ đòi được khoản có chứng từ và có cam kết hoàn trả trong hợp đồng đào tạo."],
+ hqL:["Chấm dứt HĐLĐ trái cam kết phải hoàn trả chi phí đào tạo (Điều 40, 62) *."],
+ gq:["Tập hợp hợp đồng đào tạo, chứng từ chi phí thực tế.","Gửi yêu cầu hoàn trả bằng văn bản, nêu cơ sở tính.","Hòa giải hoặc khởi kiện."],
+ ck:["Hợp đồng đào tạo, cam kết thời gian phục vụ","Chứng từ chi phí","Thông báo yêu cầu hoàn trả"],
+ cs:["Điều 40, 62 BLLĐ 2019 *","Điều 184 BLLĐ 2019"]},
+bh:{nm:"Tranh chấp BHXH, BHYT, BH thất nghiệp, TNLĐ-BNN",f:["nld","hd","ngay1","ngay2"],
+ hm:"Không bắt buộc hòa giải (Điều 188 khoản 1).",lim:1,
+ hqN:["Truy đóng, xử phạt khi chậm đóng, trốn đóng theo quy định BHXH và NĐ 283/2026 *.","Cần đối chiếu Luật BHXH 2024 (hiệu lực 01/7/2025) vì đã sửa đổi nhiều quy định *."],
+ hqL:["Có thể yêu cầu cơ quan BHXH hoặc NSDLĐ giải quyết; kiện Tòa án khi không đồng ý."],
+ gq:["Đối chiếu hồ sơ đóng, sổ BHXH, thời điểm đóng.","Gửi văn bản xác nhận, điều chỉnh với cơ quan BHXH.","Đàm phán phương án truy đóng; xử lý khiếu nại, khởi kiện nếu cần."],
+ ck:["Danh sách đóng BH, chứng từ nộp","Sổ BHXH, quyết định hưởng","Văn bản trao đổi với cơ quan BHXH"],
+ cs:["Điều 188 khoản 1 BLLĐ 2019","Luật BHXH 2024 *","NĐ 283/2026/NĐ-CP *"]},
+ttq:{nm:"Tranh chấp lao động tập thể về quyền",f:["nld","ngay1","ngay2","tcdd"],
+ hm:"BẮT BUỘC hòa giải (Điều 191).",lim:1,
+ hqN:["Không được đơn phương hành động chống bên kia trong thời gian giải quyết (Điều 186).","Nếu có vi phạm pháp luật (Điều 179 khoản 2 điểm b, c), hòa giải viên/trọng tài chuyển hồ sơ cho cơ quan có thẩm quyền xử lý."],
+ hqL:["Tổ chức đại diện NLĐ không được đình công trong tranh chấp về quyền (Điều 199)."],
+ gq:["Xác định đúng nội dung tranh chấp: thỏa ước, nội quy, pháp luật, phân biệt đối xử, can thiệp tổ chức đại diện.","Gặp trực tiếp tổ chức đại diện NLĐ, đối chiếu quy định.","Hòa giải viên: thủ tục như Điều 188 (05 ngày làm việc).","Không thành: chọn Hội đồng trọng tài (07 ngày lập Ban, 30 ngày quyết định) hoặc Tòa án.","Không được đồng thời yêu cầu trọng tài và Tòa án."],
+ ck:["Thỏa ước lao động tập thể, nội quy","Văn bản yêu cầu của tổ chức đại diện NLĐ","Bằng chứng thực hiện/không thực hiện","Biên bản hòa giải"],
+ cs:["Điều 179, 191–194 BLLĐ 2019"]},
+ttl:{nm:"Tranh chấp lao động tập thể về lợi ích / thương lượng tập thể",f:["nld","ngay1","ngay2","tcdd"],
+ hm:"BẮT BUỘC hòa giải trước khi yêu cầu trọng tài hoặc đình công (Điều 195).",lim:0,
+ hqN:["Biên bản hòa giải thành có giá trị như thỏa ước lao động tập thể doanh nghiệp (Điều 196).","Hòa giải không thành hoặc trọng tài quá hạn: có thể đối mặt với đình công hợp pháp."],
+ hqL:["Quyền đình công khi đủ điều kiện Điều 199 và thực hiện đúng trình tự Điều 200–202."],
+ gq:["Ghi nhận thời điểm một bên từ chối thương lượng hoặc không thương lượng đúng hạn.","Tham gia thương lượng, trả lời yêu sách bằng văn bản.","Hòa giải bắt buộc; không thành thì chọn trọng tài hoặc chuẩn bị phương án khi đình công.","Trong thời gian trọng tài giải quyết, không được đình công (Điều 197)."],
+ ck:["Yêu sách và biên bản thương lượng","Biên bản hòa giải","Quyết định trọng tài (nếu có)"],
+ cs:["Điều 179, 195–197 BLLĐ 2019","Điều 65–73 BLLĐ 2019 *"]},
+dc:{nm:"Đình công xảy ra tại doanh nghiệp",f:["nld","ngay1"],
+ hm:"Không áp dụng thời hiệu theo Điều 190; xử lý theo Điều 198–211.",lim:0,
+ hqN:["NSDLĐ được yêu cầu Tòa án tuyên bố đình công bất hợp pháp (Điều 203).","Cấm kỷ luật, trù dập người đình công, lãnh đạo đình công (Điều 208).","Chỉ trả lương ngừng việc cho người không đình công mà phải ngừng việc (Điều 207)."],
+ hqL:["Người đình công không được trả lương và quyền lợi khác, trừ khi thỏa thuận (Điều 207).","Tham gia đình công bất hợp pháp: có thể phải bồi thường thiệt hại *."],
+ gq:["Nhận thông báo: đối chiếu điều kiện và trình tự (Điều 199–202, 204).","Thông báo cho UBND cấp huyện; họp trong 12 giờ theo Điều 211 nếu sai trình tự.","Tiếp tục thương lượng, hòa giải (Điều 203).","Cân nhắc đóng cửa tạm thời, thông báo trước 03 ngày làm việc (Điều 205, 206).","Yêu cầu Tòa án tuyên bố bất hợp pháp nếu có căn cứ."],
+ ck:["Thông báo đình công và kết quả lấy ý kiến","Biên bản hòa giải","Danh sách người tham gia, người ngừng việc","Biên bản thiệt hại"],
+ cs:["Điều 198–211 BLLĐ 2019"]},
+vh:{nm:"Hợp đồng lao động vô hiệu",f:["nld","hd","ngay1","ngay2"],
+ hm:"Tòa án có thẩm quyền tuyên bố HĐLĐ vô hiệu (Điều 50).",lim:1,
+ hqN:["Phải xử lý quyền lợi của NLĐ cho thời gian đã làm việc; điều khoản trái luật không có hiệu lực."],
+ hqL:["Được hưởng quyền lợi cho thời gian đã làm việc theo quy định."],
+ gq:["Rà soát điều khoản trái luật; thương lượng sửa đổi bằng phụ lục.","Không thỏa thuận được: yêu cầu Tòa án xử lý."],
+ ck:["HĐLĐ và phụ lục","Văn bản chỉ ra điều khoản trái luật"],
+ cs:["Điều 49, 50, 51 BLLĐ 2019"]},
+qr:{nm:"Quấy rối tình dục tại nơi làm việc",f:["nld","hd","ngay1","ngay2","tcdd","nhom"],
+ hm:"Tùy hình thức xử lý: sa thải không bắt buộc hòa giải (Điều 188 khoản 1).",lim:1,
+ hqN:["Có thể sa thải nếu hành vi được quy định trong nội quy (Điều 125 khoản 2).","Nội quy bắt buộc có nội dung phòng chống quấy rối tình dục (Điều 118).","Không có quy trình xử lý: rủi ro bị xử phạt (NĐ 283/2026, Điều 17, 15–30 triệu đồng với cá nhân) *."],
+ hqL:["NLĐ bị quấy rối được đơn phương chấm dứt HĐLĐ không cần báo trước (Điều 35 khoản 2)."],
+ gq:["Tiếp nhận khiếu nại, bảo mật thông tin, tách người bị khiếu nại khỏi nạn nhân nếu cần.","Xác minh, lấy lời khai, lập biên bản.","Họp xử lý kỷ luật đúng trình tự Điều 122; thời hiệu 06 tháng (Điều 123).","Báo cáo cơ quan có thẩm quyền nếu có dấu hiệu tội phạm."],
+ ck:["Đơn khiếu nại, bằng chứng","Biên bản xác minh, lời khai","Nội quy và quy trình phòng chống quấy rối","Hồ sơ họp xử lý kỷ luật"],
+ cs:["Điều 118, 122, 123, 125, 35 BLLĐ 2019","NĐ 283/2026/NĐ-CP, Điều 17 *"]}
+};
+
+const TC_FIELDS={
+ nld:{l:"Người lao động / vị trí",t:"text",ph:"VD: Nguyễn Văn A, chuyên viên"},
+ hd:{l:"Loại HĐLĐ",t:"sel",o:["Xác định thời hạn 12–36 tháng","Không xác định thời hạn","Dưới 12 tháng (mùa vụ)"]},
+ ngay1:{l:"Ngày xảy ra sự việc / hành vi",t:"date"},
+ ngay2:{l:"Ngày phát hiện hành vi xâm phạm quyền (mốc thời hiệu); để trống = ngày xảy ra sự việc",t:"date"},
+ ttc:{l:"Tính chất hành vi vi phạm",t:"sel",o:["Thông thường (thời hiệu xử lý 06 tháng)","Liên quan trực tiếp tài chính, tài sản, bí mật công nghệ, bí mật kinh doanh (12 tháng)"]},
+ nhom:{l:"NLĐ thuộc nhóm bảo vệ đặc biệt?",t:"sel",o:["Không","Đang nghỉ ốm đau, điều dưỡng, hoặc nghỉ có sự đồng ý của NSDLĐ","Mang thai, nghỉ thai sản, nuôi con dưới 12 tháng","Đang bị tạm giữ, tạm giam","Là cán bộ công đoàn cơ sở trong nhiệm kỳ"]},
+ tcdd:{l:"Có tổ chức đại diện NLĐ tại cơ sở?",t:"sel",o:["Có","Không"]},
+ bd:{l:"Ngày bắt đầu làm việc",t:"date"},
+ kt:{l:"Ngày chấm dứt HĐLĐ",t:"date"},
+ l1:{l:"Tiền lương tháng theo HĐLĐ (đồng)",t:"int"},
+ l6:{l:"Tiền lương bình quân 06 tháng liền kề (đồng); để trống = lương theo HĐLĐ",t:"int"},
+ bh:{l:"Số tháng đã tham gia BH thất nghiệp",t:"int"},
+ tn:{l:"Số tháng NLĐ không được làm việc (tính đến ngày xét xử/thỏa thuận)",t:"int"},
+ ndb:{l:"Số ngày báo trước còn thiếu",t:"int"},
+ nlg:{l:"Số tiền lương còn nợ (đồng)",t:"int"},
+ tth:{l:"Giá trị thiệt hại (đồng)",t:"int"},
+ ltt:{l:"Lương tối thiểu vùng áp dụng (đồng)",t:"int"},
+ mlo:{l:"Mức độ lỗi",t:"sel",o:["Sơ suất, thiệt hại không nghiêm trọng","Làm mất tài sản / tiêu hao vật tư vượt định mức","Bất khả kháng đã áp dụng mọi biện pháp"]}
+};
+
+const TC_STAGES=["Mới phát sinh","Thương lượng nội bộ","Hòa giải viên lao động","Hội đồng trọng tài lao động","Tòa án","Đã giải quyết / đóng"];
+
+const TC_LAW=[
+ ["Bộ luật Lao động 2019 (45/2019/QH14)","Hiệu lực 01/01/2021. Được sửa đổi bởi Luật BHXH 2024 (01/7/2025), Luật Công nghiệp công nghệ số 2025 (01/01/2026), Luật Giáo dục nghề nghiệp 2025 (01/01/2026), Luật Dân số 2025 (01/7/2026). Văn bản hợp nhất: 18/VBHN-VPQH (12/2/2026).","Nội dung Chương VIII, XIV và Điều 34–48 đã đối chiếu từ nguồn thứ cấp. Chưa kiểm tra từng điều có bị sửa bởi các luật trên hay không."],
+ ["NĐ 145/2020/NĐ-CP","Hướng dẫn BLLĐ: điều kiện lao động, quan hệ lao động (hiệu lực 01/02/2021).","Điều dẫn (Điều 8, Điều 70) lấy từ hiểu biết, chưa đối chiếu nguyên văn."],
+ ["NĐ 283/2026/NĐ-CP","Xử phạt vi phạm hành chính về lao động, BHXH, NLĐ đi làm việc nước ngoài. Ban hành 15/7/2026, hiệu lực 10/9/2026; thay NĐ 12/2022.","Một nguồn ghi tiêu đề là sửa đổi một số điều của NĐ 12/2022, nguồn khác ghi NĐ 12/2022 hết hiệu lực từ 10/9/2026. Mức phạt chỉ là tóm tắt, phải đối chiếu bản gốc."],
+ ["NĐ 337/2025/NĐ-CP","Hợp đồng lao động điện tử, hiệu lực 01/01/2026.","Chưa đọc nội dung."],
+ ["NĐ 293/2025/NĐ-CP","Mức lương tối thiểu theo hợp đồng lao động, hiệu lực 01/01/2026.","Cần tra mức vùng áp dụng khi tính ngưỡng 10 tháng lương tối thiểu vùng."],
+ ["BLTTDS 2015, sửa đổi bởi Luật 85/2025/QH15","Hiệu lực 01/7/2025. Tòa án nhân dân khu vực giải quyết tranh chấp lao động thuộc thẩm quyền sơ thẩm.","Điều 32, 35, 39 BLTTDS chưa đối chiếu nguyên văn."],
+ ["Luật Công đoàn 2024; Luật BHXH 2024","Bảo vệ cán bộ công đoàn cơ sở; bảo hiểm xã hội.","Chưa đọc nội dung, chỉ nhắc để rà soát."]
+];
+
+(function(){
+function boot(){
+const tpcp=document.getElementById("tpcp"),vp=document.getElementById("vprof");
+if(!tpcp||!vp){console.error("Tab Tranh chấp lao động: không tìm thấy thanh tab");return}
+const nav=tpcp.parentNode;
+const P2=n=>String(n).padStart(2,"0");
+const isoD=d=>d.getFullYear()+"-"+P2(d.getMonth()+1)+"-"+P2(d.getDate());
+function addD(s,n){const t=new Date(s+"T00:00:00");t.setDate(t.getDate()+n);return isoD(t)}
+function addM(s,n){if(!s)return"";const a=s.split("-").map(Number);const t=new Date(a[0],a[1]-1+n,1);const last=new Date(t.getFullYear(),t.getMonth()+1,0).getDate();t.setDate(Math.min(a[2],last));return isoD(t)}
+function addWk(s,n){const t=new Date(s+"T00:00:00");let k=0;while(k<n){t.setDate(t.getDate()+1);const w=t.getDay();if(w!==0&&w!==6)k++}return isoD(t)}
+const dd=(a,b)=>Math.round((new Date(b+"T00:00:00")-new Date(a+"T00:00:00"))/864e5);
+function monthsBetween(a,b){if(!a||!b||b<a)return 0;const x=a.split("-").map(Number),y=addD(b,1).split("-").map(Number);let m=(y[0]-x[0])*12+(y[1]-x[1]);if(y[2]<x[2])m--;return Math.max(0,m)}
+const yrs=m=>{const f=Math.floor(m/12),r=m%12;return f+(r===0?0:r<=6?0.5:1)};
+const vnd=n=>money(Math.round(n))+" đồng";
+const TCD=()=>{const p=CFG.prof=CFG.prof||{};if(!Array.isArray(p.tc))p.tc=[];return p.tc};
+const nid=()=>"tc"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+const st=(n,l)=>`<div class="stat"><b>${n}</b><span>${l}</span></div>`;
+const chip=c=>c?`<span class="chip" style="--cc:var(--c${Math.max(0,COS().findIndex(x=>x===c))%6})">${esc(c)}</span>`:"";
+const star=s=>/\*\s*$/.test(s);
+const clist=a=>a.length?`<ul class="tcc">${a.map(x=>`<li${star(x)?' class="st"':""}>${esc(x)}</li>`).join("")}</ul>`:"";
+const ulist=a=>a&&a.length?`<ul>${a.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:"";
+const olist=a=>a&&a.length?`<ol>${a.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>`:"";
+const LEGEND=`<p class="tcnote">Dấu * ở cuối căn cứ: chưa đối chiếu được nguyên văn, cần kiểm tra lại trước khi dùng chính thức.</p>`;
+
+/* ---------- Khung ---------- */
+const tab=document.createElement("button");tab.id="tptc";tab.textContent="Tranh chấp lao động";nav.appendChild(tab);
+const vtc=document.createElement("div");vtc.id="vtc";vtc.hidden=true;
+vtc.innerHTML=`<section class="stats" id="tcstats"></section>
+<nav class="tcsub" id="tcsub"><button data-t="map">Sơ đồ tư duy</button><button data-t="an">Phân tích tình huống</button><button data-t="log">Sổ vụ việc</button><button data-t="law">Căn cứ pháp lý</button></nav>
+<div id="tcmapw" class="tcgrid"><div class="tcmapbox"><div class="tcbar"><button id="tcopen">Mở tất cả</button><button id="tcshut">Thu gọn tất cả</button></div><div id="tcmap"></div></div><aside id="tcdet" class="tcdet"></aside></div>
+<div id="tcan" hidden></div><div id="tclog" hidden></div><div id="tclaw" hidden></div>`;
+vp.after(vtc);
+const dlg=document.createElement("dialog");dlg.id="tcdlg";
+dlg.innerHTML=`<h2 id="tcdt">Vụ việc tranh chấp lao động</h2><div class="grid" id="tcform"></div><div class="foot"><button id="tcdel" style="margin-right:auto;color:var(--seal)">Xóa</button><button id="tccancel">Đóng</button><button class="primary" id="tcok">Lưu</button></div>`;
+document.body.appendChild(dlg);
+
+const OTHER=["tl","tb","td","tp","tphs","tphop","tpct","tpcp"];
+const hideTc=()=>{vtc.hidden=true;tab.classList.remove("on")};
+OTHER.forEach(i=>{const b=document.getElementById(i);if(b)b.addEventListener("click",hideTc)});
+tab.onclick=()=>{["vlist","vbud","vdash","vprof"].forEach(i=>{const e=document.getElementById(i);if(e)e.hidden=true});
+  OTHER.forEach(i=>{const b=document.getElementById(i);if(b)b.classList.remove("on")});
+  vtc.hidden=false;tab.classList.add("on");render()};
+
+let cur="map",curNode=null;const closed=new Set();
+$("tcsub").onclick=e=>{const b=e.target.closest("[data-t]");if(b){cur=b.dataset.t;render()}};
+
+/* ---------- Sơ đồ tư duy ---------- */
+const COLS=["--c0","--c1","--c2","--c3","--c4","--c5"];
+function rMap(){
+  $("tcmap").innerHTML=`<div class="mm"><div class="mm-root">Tranh chấp lao động<small>BLLĐ 2019, Chương XIV</small></div><div class="mm-l1">${TC_MAP.map((b,i)=>`<div class="mm-b" style="--k:var(${COLS[i%6]})"><button class="mm-n1" data-b="${b.id}">${esc(b.t)}<i>${closed.has(b.id)?"+":"−"}</i></button><div class="mm-l2"${closed.has(b.id)?" hidden":""}>${b.kids.map(k=>`<button class="mm-n2${curNode===k.id?" on":""}" data-n="${k.id}">${esc(k.t)}</button>`).join("")}</div></div>`).join("")}</div></div>`;
+  if(curNode)showNode(curNode,true);else rDet0();
+}
+function rDet0(){
+  $("tcdet").innerHTML=`<h3>Cách dùng</h3><p>Bấm vào từng nhánh trong sơ đồ để xem nội dung, hậu quả pháp lý, cách giải quyết và căn cứ pháp lý. Muốn điền số liệu vụ việc cụ thể, chuyển sang tab “Phân tích tình huống”.</p>
+  <h3>Lộ trình tranh chấp cá nhân</h3><div class="flow"><span>Thương lượng nội bộ</span><b>→</b><span>Hòa giải viên<br><small>05 ngày làm việc</small></span><b>→</b><span>Hội đồng trọng tài<br><small>30 ngày, nếu cả hai đồng ý</small></span><b>/</b><span>Tòa án<br><small>thời hiệu 01 năm</small></span></div>
+  <p class="tcnote">Sa thải, đơn phương chấm dứt HĐLĐ, bồi thường, trợ cấp khi chấm dứt, bảo hiểm… không bắt buộc hòa giải (Điều 188 khoản 1). Tranh chấp lương vẫn phải hòa giải trước.</p>
+  <h3>Lộ trình tranh chấp tập thể</h3><div class="flow"><span>Hòa giải bắt buộc</span><b>→</b><span>Hội đồng trọng tài / Tòa án<br><small>về quyền</small></span></div><div class="flow"><span>Hòa giải bắt buộc</span><b>→</b><span>Trọng tài</span><b>/</b><span>Đình công<br><small>chỉ với tranh chấp về lợi ích</small></span></div>`;
+}
+function findNode(id){for(const b of TC_MAP)for(const k of b.kids)if(k.id===id)return{b,k}}
+function showNode(id,keep){
+  const f=findNode(id);if(!f)return;curNode=id;const{b,k}=f,all=[...(k.c||[])];
+  $("tcdet").innerHTML=`<div class="crumb">${esc(b.t)}</div><h3>${esc(k.t)}</h3>
+  <h4>Nội dung quy định</h4><p>${esc(k.n)}</p>
+  <h4>Hậu quả pháp lý</h4>${ulist(k.h)}
+  <h4>Cách giải quyết</h4>${ulist(k.g)}
+  <h4>Căn cứ pháp lý</h4>${clist(all)}${all.some(star)?LEGEND:""}`;
+  document.querySelectorAll("#tcmap .mm-n2").forEach(x=>x.classList.toggle("on",x.dataset.n===id));
+  if(!keep&&window.innerWidth<1000)$("tcdet").scrollIntoView({behavior:"smooth",block:"start"});
+}
+$("tcmap").onclick=e=>{const n=e.target.closest("[data-n]");if(n){showNode(n.dataset.n);return}
+  const b=e.target.closest("[data-b]");if(b){const i=b.dataset.b;closed.has(i)?closed.delete(i):closed.add(i);rMap()}};
+$("tcopen").onclick=()=>{closed.clear();rMap()};
+$("tcshut").onclick=()=>{TC_MAP.forEach(b=>closed.add(b.id));rMap()};
+
+/* ---------- Phân tích tình huống ---------- */
+function ctl(k){const F=TC_FIELDS[k],a=`id="a_${k}"`;
+  if(F.t==="sel")return `<select ${a}>${F.o.map(o=>`<option>${esc(o)}</option>`).join("")}</select>`;
+  if(F.t==="date")return `<input ${a} type="date">`;
+  if(F.t==="int")return `<input ${a} type="text" inputmode="numeric" placeholder="0">`;
+  return `<input ${a} type="text"${F.ph?` placeholder="${esc(F.ph)}"`:""}>`}
+function rAn(keep){
+  const old={};if(keep)document.querySelectorAll("#tcan [id^=a_]").forEach(e=>old[e.id]=e.value);
+  const cos=[...new Set(COS())];
+  $("tcan").innerHTML=`<div class="tcform noprint"><p class="tcnote" style="margin-top:0">Chọn loại vụ việc, điền các ô hiện ra, bấm “Phân tích”. Kết quả là ước tính tham khảo, không thay thế ý kiến pháp lý cho vụ việc cụ thể.</p>
+  <table class="tcft"><tbody>
+  <tr><th>Pháp nhân</th><td><select id="a_co">${cos.map(c=>`<option>${esc(c)}</option>`).join("")}</select></td></tr>
+  <tr><th>Loại vụ việc</th><td><select id="a_sc">${Object.keys(TC_SC).map(k=>`<option value="${k}">${esc(TC_SC[k].nm)}</option>`).join("")}</select></td></tr>
+  ${Object.keys(TC_FIELDS).map(k=>`<tr data-f="${k}"><th>${esc(TC_FIELDS[k].l)}</th><td>${ctl(k)}</td></tr>`).join("")}
+  </tbody></table>
+  <div class="tcbtn"><button class="primary" id="a_go">Phân tích</button><button id="a_save">Lưu vào Sổ vụ việc</button><button id="a_clr">Xóa trắng</button></div></div><div id="tcres"></div>`;
+  Object.keys(old).forEach(i=>{const e=$(i);if(e)e.value=old[i]});
+  vis();
+  $("a_sc").onchange=()=>{vis();$("tcres").innerHTML=""};
+  $("a_go").onclick=analyze;
+  $("a_clr").onclick=()=>{rAn(false)};
+  $("a_save").onclick=()=>{const r=readForm();TCD().push({id:nid(),co:r.co,nld:r.nld,sc:r.sc,ngay1:r.ngay1,ngay2:r.ngay2,buoc:TC_STAGES[0],gt:"",yc:"",hen:"",note:""});saveC();alert("Đã thêm vào Sổ vụ việc.");rStats()};
+}
+function vis(){const s=TC_SC[$("a_sc").value];document.querySelectorAll("#tcan tr[data-f]").forEach(r=>r.hidden=!s.f.includes(r.dataset.f))}
+function readForm(){const o={co:$("a_co").value,sc:$("a_sc").value};Object.keys(TC_FIELDS).forEach(k=>{const e=$("a_"+k);o[k]=e?e.value.trim():""});return o}
+const nmv=(o,k)=>{const s=String(o[k]||"").replace(/[^\d]/g,"");return s?parseInt(s,10):0};
+function tctv(o){const total=monthsBetween(o.bd,o.kt),bh=nmv(o,"bh"),net=Math.max(0,total-bh),L6=nmv(o,"l6")||nmv(o,"l1");
+  const y=yrs(net);return{total,bh,net,y,L6,amt:net>=12?0.5*y*L6:0,mv:Math.max(2,y)*L6}}
+function stt(d){const n=dd(today(),d);return n<0?`<b class="bad">đã quá ${-n} ngày</b>`:n<=30?`<b class="wn">còn ${n} ngày</b>`:`còn ${n} ngày`}
+function analyze(){
+  const o=readForm(),S=TC_SC[o.sc],base=o.ngay2||o.ngay1,L1=nmv(o,"l1"),al=[],dl=[],mn=[];
+  /* Thời hạn */
+  if(S.lim){
+    if(!base)al.push(["wn","Chưa nhập ngày xảy ra / ngày phát hiện, nên chưa tính được thời hiệu."]);
+    else{
+      [["Yêu cầu hòa giải viên lao động",6],["Yêu cầu Hội đồng trọng tài lao động",9],["Khởi kiện tại Tòa án",12]].forEach(x=>dl.push({t:x[0],d:addM(base,x[1]),n:"Điều 190 BLLĐ 2019: "+(x[1]===12?"01 năm":x[1]+" tháng")+" kể từ ngày phát hiện hành vi"}));
+      const court=dl[2].d;
+      if(court<today())al.push(["bad","Đã quá thời hiệu khởi kiện 01 năm. Chỉ còn khả năng nếu chứng minh được bất khả kháng hoặc trở ngại khách quan (Điều 190 khoản 4)."]);
+      else if(dl[0].d<today())al.push(["wn","Đã quá thời hiệu yêu cầu hòa giải viên (06 tháng). Vẫn có thể còn thời hiệu trọng tài (09 tháng) và Tòa án (01 năm)."]);
+    }
+  }
+  if(o.sc==="kl"||o.sc==="qr"){
+    if(o.ngay1){const m=o.ttc.indexOf("12 tháng")>=0?12:6,d=addM(o.ngay1,m);dl.push({t:"Hết thời hiệu xử lý kỷ luật ("+m+" tháng từ ngày xảy ra hành vi)",d,n:"Điều 123 BLLĐ 2019. Có thể kéo dài tối đa 60 ngày nếu thời hiệu hết khi NLĐ thuộc trường hợp chưa được xử lý, hoặc còn dưới 60 ngày"});
+      if(d<today())al.push(["bad","Đã quá thời hiệu xử lý kỷ luật. Quyết định kỷ luật ban hành lúc này dễ bị coi là trái luật (xem điều kiện kéo dài tại Điều 123)."])}
+    else al.push(["wn","Nhập ngày xảy ra hành vi để tính thời hiệu xử lý kỷ luật."]);
+  }
+  if(["nsdld","mv","tctv"].indexOf(o.sc)>=0&&o.kt){dl.push({t:"Hạn thanh toán quyền lợi khi chấm dứt HĐLĐ (14 ngày làm việc)",d:addWk(o.kt,14),n:"Điều 48 BLLĐ 2019. Có thể kéo dài tối đa 30 ngày trong trường hợp luật định. App chỉ bỏ thứ Bảy, Chủ nhật, chưa trừ ngày lễ"})}
+  /* Nhóm bảo vệ, tổ chức đại diện */
+  if(TC_SC[o.sc].f.indexOf("nhom")>=0){
+    const g=o.nhom;
+    if(/ốm đau|nghỉ có sự đồng ý/.test(g))al.push(["bad","NLĐ đang nghỉ ốm đau, điều dưỡng hoặc nghỉ được NSDLĐ đồng ý: không được xử lý kỷ luật (Điều 122); không được đơn phương chấm dứt HĐLĐ trong thời gian điều trị theo Điều 37, trừ ngoại lệ."]);
+    if(/Mang thai/.test(g))al.push(["bad","NLĐ mang thai, nghỉ thai sản hoặc nuôi con dưới 12 tháng: không được xử lý kỷ luật (Điều 122) và không được đơn phương chấm dứt HĐLĐ (Điều 37), trừ ngoại lệ."]);
+    if(/tạm giữ/.test(g))al.push(["wn","NLĐ đang bị tạm giữ, tạm giam: không được xử lý kỷ luật trong thời gian này (Điều 122); thời hiệu có thể kéo dài tối đa 60 ngày (Điều 123)."]);
+    if(/công đoàn/.test(g))al.push(["bad","NLĐ là cán bộ công đoàn cơ sở trong nhiệm kỳ: việc chấm dứt HĐLĐ, chuyển việc, kỷ luật sa thải cần có sự đồng ý theo quy định về bảo vệ cán bộ công đoàn (BLLĐ Điều 177, Luật Công đoàn 2024) *."]);
+  }
+  if(o.sc==="kl"&&o.tcdd==="Có")al.push(["wn","Phải có sự tham gia của tổ chức đại diện NLĐ tại cơ sở vào cuộc họp xử lý kỷ luật (Điều 122). Thiếu là sai trình tự và có thể làm quyết định bị tuyên trái luật."]);
+  if(o.sc==="kl"&&o.tcdd==="Không")al.push(["info","Không có tổ chức đại diện NLĐ tại cơ sở: vẫn phải họp xử lý, lập biên bản, cho NLĐ có mặt và tự bào chữa (Điều 122)."]);
+  if(o.sc==="nsdld"){const t=o.hd.indexOf("Không xác định")===0?"45 ngày":o.hd.indexOf("Dưới")===0?"03 ngày làm việc":"30 ngày";al.push(["info","Thời hạn báo trước tối thiểu khi NSDLĐ đơn phương chấm dứt: "+t+" (Điều 36), trừ trường hợp không cần báo trước theo luật."])}
+  if(o.sc==="nld"){const t=o.hd.indexOf("Không xác định")===0?"45 ngày":o.hd.indexOf("Dưới")===0?"03 ngày làm việc":"30 ngày";al.push(["info","NLĐ phải báo trước tối thiểu "+t+" (Điều 35), trừ các trường hợp không cần báo trước tại Điều 35 khoản 2."])}
+  /* Tiền */
+  const T=tctv(o),needDates=!o.bd||!o.kt;
+  const hasPay=["kl","nsdld","nld","mv","tctv","bt","luong"].indexOf(o.sc)>=0;
+  if(hasPay&&!L1&&o.sc!=="luong")al.push(["wn","Nhập tiền lương tháng theo HĐLĐ để ước tính số tiền."]);
+  if((o.sc==="kl"||o.sc==="nsdld")&&L1){
+    const tn=nmv(o,"tn"),A=tn*L1+2*L1;
+    mn.push({h:"Phương án 1: nhận NLĐ trở lại làm việc (Điều 41 khoản 1)",rows:[
+      ["Tiền lương những ngày không được làm việc ("+tn+" tháng × lương HĐLĐ)",tn*L1],["Bồi thường tối thiểu 02 tháng lương",2*L1]],tot:A,note:"Chưa gồm khoản đóng BHXH, BHYT, BH thất nghiệp cho thời gian không được làm việc, và khoản bồi thường thêm nếu hai bên thỏa thuận."});
+    if(needDates)mn.push({h:"Phương án 2: NLĐ không muốn quay lại (Điều 41 khoản 2)",rows:[["Nhập ngày bắt đầu làm việc và ngày chấm dứt HĐLĐ để tính trợ cấp thôi việc",0]],tot:A,note:"Hiện chỉ cộng lương và bồi thường như Phương án 1."});
+    else mn.push({h:"Phương án 2: NLĐ không muốn quay lại (Điều 41 khoản 2)",rows:[["Tiền lương những ngày không được làm việc",tn*L1],["Bồi thường tối thiểu 02 tháng lương",2*L1],["Trợ cấp thôi việc (Điều 46): "+T.net+" tháng tính trợ cấp ≈ "+T.y+" năm × 0,5 × lương bình quân 06 tháng",T.amt]],tot:A+T.amt,note:T.net<12?"Chưa đủ 12 tháng làm việc tính trợ cấp nên trợ cấp thôi việc bằng 0.":"Thời gian tính trợ cấp = tổng thời gian làm việc trừ thời gian đã tham gia BH thất nghiệp; tháng lẻ ≤ 06 tháng tính nửa năm, trên 06 tháng tính một năm *."});
+  }
+  if(o.sc==="nld"&&L1){const nd=nmv(o,"ndb"),x=0.5*L1,y=nd*(L1/26);mn.push({h:"Bồi thường khi NLĐ chấm dứt trái luật (Điều 40)",rows:[["Nửa tháng lương theo HĐLĐ",x],["Tiền lương những ngày không báo trước ("+nd+" ngày × lương tháng ÷ 26)",y]],tot:x+y,note:"Chia 26 là cách tính tham khảo; chưa gồm chi phí đào tạo phải hoàn trả (Điều 62) *."})}
+  if(o.sc==="mv"&&L1){if(needDates)al.push(["wn","Nhập ngày bắt đầu làm việc và ngày chấm dứt HĐLĐ để tính trợ cấp mất việc làm."]);else mn.push({h:"Trợ cấp mất việc làm (Điều 47)",rows:[["Thời gian tính trợ cấp: "+T.net+" tháng ≈ "+T.y+" năm; tối thiểu 02 tháng lương; lương bình quân 06 tháng liền kề",T.mv]],tot:T.mv,note:"Mỗi năm làm việc một tháng lương, tối thiểu 02 tháng. Trừ thời gian đã tham gia BH thất nghiệp *."})}
+  if(o.sc==="tctv"&&L1){if(needDates)al.push(["wn","Nhập ngày bắt đầu làm việc và ngày chấm dứt HĐLĐ để tính trợ cấp thôi việc."]);else mn.push({h:"Trợ cấp thôi việc (Điều 46)",rows:[["Thời gian tính trợ cấp: "+T.net+" tháng ≈ "+T.y+" năm × 0,5 × lương bình quân 06 tháng liền kề",T.amt]],tot:T.amt,note:T.net<12?"Chưa đủ 12 tháng làm việc tính trợ cấp nên trợ cấp thôi việc bằng 0.":"Tháng lẻ ≤ 06 tháng tính nửa năm, trên 06 tháng tính một năm *."})}
+  if(o.sc==="luong"){const n=nmv(o,"nlg");if(n)mn.push({h:"Khoản lương còn nợ",rows:[["Số tiền lương còn nợ",n]],tot:n,note:"Chưa gồm khoản đền bù khi chậm trả từ 15 ngày trở lên (Điều 97) và tiền phạt hành chính (NĐ 283/2026, Điều 23) *."})}
+  if(o.sc==="bt"){
+    const th=nmv(o,"tth"),lt=nmv(o,"ltt"),lv=o.mlo;
+    if(!th)al.push(["wn","Nhập giá trị thiệt hại để ước tính mức bồi thường."]);
+    else if(/Bất khả kháng/.test(lv))mn.push({h:"Bồi thường thiệt hại (Điều 129)",rows:[["Bất khả kháng đã áp dụng mọi biện pháp cần thiết: không phải bồi thường",0]],tot:0,note:""});
+    else if(/Sơ suất/.test(lv)){
+      if(!lt)al.push(["wn","Nhập lương tối thiểu vùng để kiểm tra ngưỡng 10 tháng lương tối thiểu vùng."]);
+      else if(th>10*lt)al.push(["wn","Giá trị thiệt hại vượt 10 tháng lương tối thiểu vùng nên không thuộc nhóm “sơ suất, thiệt hại không nghiêm trọng” giới hạn 03 tháng lương. Xem xét theo nhóm mất tài sản/tiêu hao vượt định mức hoặc theo hợp đồng trách nhiệm."]);
+      else{const cap=3*L1,b=Math.min(th,cap);mn.push({h:"Bồi thường thiệt hại do sơ suất, không nghiêm trọng (Điều 129 khoản 1)",rows:[["Thiệt hại",th],["Mức tối đa 03 tháng lương",cap]],tot:b,note:L1?"Khấu trừ hằng tháng tối đa 30% tiền lương sau khi trừ BH và thuế: khoảng "+Math.ceil(b/(0.3*L1))+" tháng nếu khấu trừ 30% lương HĐLĐ *.":""})}
+    }else mn.push({h:"Bồi thường thiệt hại: mất tài sản hoặc tiêu hao vượt định mức (Điều 129)",rows:[["Theo giá thị trường hoặc hợp đồng trách nhiệm, tối đa bằng thiệt hại thực tế",th]],tot:th,note:"Mức cụ thể căn cứ lỗi, thiệt hại thực tế, hoàn cảnh gia đình, nhân thân, tài sản của NLĐ (Điều 130)."});
+  }
+  /* Render */
+  const dlH=dl.length?`<table class="tcrt"><thead><tr><th>Mốc</th><th>Hạn</th><th>Tình trạng</th><th>Căn cứ</th></tr></thead><tbody>${dl.map(x=>`<tr><td>${esc(x.t)}</td><td class="nw">${fmt(x.d)}</td><td class="nw">${stt(x.d)}</td><td><small>${esc(x.n)}</small></td></tr>`).join("")}</tbody></table>`:"";
+  const mnH=mn.map(m=>`<table class="tcrt"><thead><tr><th colspan="2">${esc(m.h)}</th></tr></thead><tbody>${m.rows.map(r=>`<tr><td>${esc(r[0])}</td><td class="num nw">${vnd(r[1])}</td></tr>`).join("")}<tr class="tot"><td>Cộng ước tính</td><td class="num nw">${vnd(m.tot)}</td></tr></tbody></table>${m.note?`<p class="tcnote">${esc(m.note)}</p>`:""}`).join("");
+  const alH=al.map(a=>`<div class="tca ${a[0]}">${esc(a[1])}</div>`).join("");
+  $("tcres").innerHTML=`<section class="tcr"><div class="tcrh"><h3>Kết quả phân tích: ${esc(S.nm)}</h3><div class="noprint"><button id="a_prt">In / lưu PDF</button></div></div>
+  <p class="meta">${esc(o.co)}${o.nld?" | "+esc(o.nld):""} | Ngày lập: ${fmt(today())}</p>
+  <div class="tca ${/BẮT BUỘC/.test(S.hm)?"wn":"info"}"><b>Hòa giải:</b> ${esc(S.hm)}</div>${alH}
+  ${dlH?"<h4>Thời hạn cần theo dõi</h4>"+dlH:""}${mnH?"<h4>Số tiền ước tính</h4>"+mnH:""}
+  <div class="tc2"><div><h4>Hậu quả pháp lý với doanh nghiệp (NSDLĐ)</h4>${ulist(S.hqN)}</div><div><h4>Hậu quả pháp lý với người lao động</h4>${ulist(S.hqL)}</div></div>
+  <h4>Cách giải quyết, theo thứ tự</h4>${olist(S.gq)}
+  <h4>Hồ sơ, chứng cứ cần chuẩn bị</h4>${ulist(S.ck)}
+  <h4>Căn cứ pháp lý</h4>${clist(S.cs)}${S.cs.some(star)?LEGEND:""}
+  <p class="tcnote">Kết quả mang tính tham khảo, tính theo công thức luật định ở mức cơ bản, chưa tính đến thỏa thuận riêng, án lệ, hướng dẫn mới hoặc tình tiết đặc thù của vụ việc.</p></section>`;
+  $("a_prt").onclick=()=>{document.body.classList.add("tcp");const done=()=>{document.body.classList.remove("tcp");window.removeEventListener("afterprint",done)};window.addEventListener("afterprint",done);setTimeout(()=>window.print(),60)};
+  $("tcres").scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+/* ---------- Sổ vụ việc ---------- */
+function deadlines(r){const S=TC_SC[r.sc];if(!S||!S.lim)return null;const b=r.ngay2||r.ngay1;if(!b)return null;return{g:addM(b,6),t:addM(b,9),c:addM(b,12)}}
+const closedCase=r=>r.buoc===TC_STAGES[5];
+function rStats(){
+  const L=TCD(),open=L.filter(r=>!closedCase(r));let soon=0,over=0,sum=0;
+  open.forEach(r=>{sum+=+r.gt||0;const d=deadlines(r);if(!d)return;if(d.c<today())over++;else if(dd(today(),d.c)<=30||dd(today(),d.g)>=0&&dd(today(),d.g)<=30)soon++});
+  $("tcstats").innerHTML=st(L.length,"Vụ việc trong sổ")+st(open.length,"Đang xử lý")+st(soon,"Sắp hết thời hiệu (≤30 ngày)")+st(over,"Quá thời hiệu khởi kiện")+st(money(sum),"Tổng giá trị tranh chấp đang xử lý (đồng)");
+}
+function dlCell(r){const d=deadlines(r);if(!d)return"<small>Không áp dụng</small>";if(closedCase(r))return"—";
+  const one=(l,x)=>`<div>${l}: ${fmt(x)} ${stt(x)}</div>`;return one("Hòa giải",d.g)+one("Trọng tài",d.t)+one("Tòa án",d.c)}
+function rLog(){
+  const L=TCD();
+  const rows=[...L].sort((a,b)=>(closedCase(a)-closedCase(b))||String(b.ngay1||"").localeCompare(String(a.ngay1||"")));
+  $("tclog").innerHTML=`<div class="tcbtn" style="margin:0 0 10px"><button class="primary" id="l_add">Thêm vụ việc</button></div>`+(rows.length?`<div class="tcw"><table class="m"><thead><tr><th>Pháp nhân</th><th>NLĐ / nội dung</th><th>Loại vụ việc</th><th>Giai đoạn</th><th>Ngày xảy ra</th><th>Thời hiệu yêu cầu</th><th>Giá trị</th><th></th></tr></thead><tbody>${rows.map(r=>`<tr data-id="${r.id}"${closedCase(r)?' class="cl"':""}><td>${chip(r.co)}</td><td class="t"><b>${esc(r.nld||"")}</b>${r.yc?`<small>${esc(r.yc)}</small>`:""}${r.note?`<small class="s">${esc(String(r.note).slice(0,140))}</small>`:""}${r.hen?`<small>Hạn xử lý tiếp: ${fmt(r.hen)} ${stt(r.hen)}</small>`:""}</td><td>${esc((TC_SC[r.sc]||{}).nm||"")}</td><td>${esc(r.buoc||"")}</td><td class="nw">${fmt(r.ngay2||r.ngay1)}</td><td>${dlCell(r)}</td><td class="num">${r.gt?money(r.gt):""}</td><td><button data-an="${r.id}">Phân tích</button></td></tr>`).join("")}</tbody></table></div>`:`<div class="empty">Chưa có vụ việc nào. Bấm “Thêm vụ việc”, hoặc dùng “Lưu vào Sổ vụ việc” ở tab Phân tích tình huống.</div>`);
+  $("l_add").onclick=()=>openRec(null);
+}
+$("tclog").onclick=e=>{const a=e.target.closest("[data-an]");if(a){e.stopPropagation();const r=TCD().find(x=>x.id===a.dataset.an);if(!r)return;cur="an";render();
+    const set=(k,v)=>{const el=$("a_"+k);if(el&&v!=null)el.value=v};set("co",r.co);set("sc",r.sc);vis();set("nld",r.nld);set("ngay1",r.ngay1);set("ngay2",r.ngay2);window.scrollTo(0,0);return}
+  const tr=e.target.closest("tr[data-id]");if(tr)openRec(tr.dataset.id)};
+let editId=null;
+function openRec(id){editId=id;const r=TCD().find(x=>x.id===id)||{co:COS()[0]||"",sc:"kl",buoc:TC_STAGES[0]};
+  $("tcdt").textContent=(id?"Sửa":"Thêm")+" vụ việc tranh chấp lao động";$("tcdel").style.display=id?"":"none";
+  const cos=[...new Set(COS())];if(r.co&&cos.indexOf(r.co)<0)cos.push(r.co);
+  const s=(k,l,o,v)=>`<label>${l}<select id="r_${k}">${o.map(x=>`<option value="${esc(x[0])}"${x[0]===v?" selected":""}>${esc(x[1])}</option>`).join("")}</select></label>`;
+  $("tcform").innerHTML=s("co","Doanh nghiệp",cos.map(c=>[c,c]),r.co)+`<label>Người lao động / bên tranh chấp<input id="r_nld" value="${esc(r.nld||"")}"></label>`
+   +s("sc","Loại vụ việc",Object.keys(TC_SC).map(k=>[k,TC_SC[k].nm]),r.sc)+s("buoc","Giai đoạn giải quyết",TC_STAGES.map(x=>[x,x]),r.buoc)
+   +`<label>Ngày xảy ra sự việc<input id="r_ngay1" type="date" value="${esc(r.ngay1||"")}"></label><label>Ngày phát hiện vi phạm quyền (mốc thời hiệu)<input id="r_ngay2" type="date" value="${esc(r.ngay2||"")}"></label>`
+   +`<label>Giá trị tranh chấp (đồng)<input id="r_gt" inputmode="numeric" value="${esc(r.gt||"")}"></label><label>Hạn xử lý bước tiếp theo<input id="r_hen" type="date" value="${esc(r.hen||"")}"></label>`
+   +`<label class="full">Yêu cầu của NLĐ / nội dung tranh chấp<input id="r_yc" value="${esc(r.yc||"")}"></label><label class="full">Ghi chú, hướng xử lý<textarea id="r_note" rows="3">${esc(r.note||"")}</textarea></label>`;
+  dlg.showModal()}
+$("tccancel").onclick=()=>dlg.close();
+$("tcdel").onclick=()=>{if(!editId)return;if(!confirm("Xóa vụ việc này?"))return;const L=TCD();L.splice(L.findIndex(x=>x.id===editId),1);saveC();dlg.close();render()};
+$("tcok").onclick=()=>{const o={co:$("r_co").value,nld:$("r_nld").value.trim(),sc:$("r_sc").value,buoc:$("r_buoc").value,ngay1:$("r_ngay1").value,ngay2:$("r_ngay2").value,gt:parseInt(String($("r_gt").value).replace(/[^\d]/g,""),10)||"",hen:$("r_hen").value,yc:$("r_yc").value.trim(),note:$("r_note").value.trim()};
+  if(!o.nld){$("r_nld").focus();return}
+  const L=TCD();if(editId){const r=L.find(x=>x.id===editId);Object.assign(r,o)}else L.push({id:nid(),...o});saveC();dlg.close();render()};
+
+/* ---------- Căn cứ pháp lý ---------- */
+function rLaw(){
+  $("tclaw").innerHTML=`<div class="tcw"><table class="m" style="min-width:760px"><thead><tr><th>Văn bản</th><th>Nội dung, hiệu lực</th><th>Mức đối chiếu</th></tr></thead><tbody>${TC_LAW.map(r=>`<tr><td class="t"><b>${esc(r[0])}</b></td><td>${esc(r[1])}</td><td>${esc(r[2])}</td></tr>`).join("")}</tbody></table></div>
+  <p class="tcnote">Nguồn đã tra khi lập tab này (cần đối chiếu bản chính thức trên Cơ sở dữ liệu quốc gia về văn bản pháp luật):</p>
+  <ul class="tcc"><li><a href="https://hethongphapluat.com/bo-luat-lao-dong-2019/chuong-14" target="_blank" rel="noopener">BLLĐ 2019, Chương XIV (Điều 179–211)</a></li><li><a href="https://hethongphapluat.com/bo-luat-lao-dong-2019/chuong-8" target="_blank" rel="noopener">BLLĐ 2019, Chương VIII (Điều 117–131)</a></li><li><a href="https://thuvienphapluat.vn/van-ban/Lao-dong-Tien-luong/Bo-Luat-lao-dong-2019-333670.aspx" target="_blank" rel="noopener">BLLĐ 2019, Điều 34–74</a></li><li><a href="https://thuvienphapluat.vn/van-ban/Bao-hiem/Decree-283-2026-ND-CP-penalties-for-administrative-violations-against-regulations-on-labour-719911.aspx" target="_blank" rel="noopener">NĐ 283/2026/NĐ-CP (bản tóm tắt)</a></li><li><a href="https://thuvienphapluat.vn/chinh-sach-phap-luat-moi/vn/ho-tro-phap-luat/tu-van-phap-luat/33549/tong-hop-van-ban-huong-dan-bo-luat-lao-dong-2019" target="_blank" rel="noopener">Tổng hợp văn bản hướng dẫn BLLĐ 2019</a></li></ul>`;
+}
+
+function render(){
+  document.querySelectorAll("#tcsub [data-t]").forEach(b=>b.classList.toggle("on",b.dataset.t===cur));
+  $("tcmapw").hidden=cur!=="map";$("tcan").hidden=cur!=="an";$("tclog").hidden=cur!=="log";$("tclaw").hidden=cur!=="law";
+  rStats();
+  if(cur==="map")rMap();else if(cur==="an"){if(!$("a_sc"))rAn(false);}else if(cur==="log")rLog();else rLaw();
+}
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot();
+})();
+</script>
+
 
 </body>
 </html>
