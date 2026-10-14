@@ -1901,7 +1901,9 @@ function govGaps(){
       else{if(bd.length<3)out.push({c:c.code,h:1,t:"HĐQT mới có "+bd.length+" thành viên đang hiệu lực, thấp hơn mức tối thiểu 03 thành viên (Điều 154 Luật Doanh nghiệp)"});
         if(bd.length>11)out.push({c:c.code,h:0,t:"HĐQT có "+bd.length+" thành viên, vượt mức tối đa 11 (Điều 154 Luật Doanh nghiệp)"});
         if(!act.some(isChair))out.push({c:c.code,h:1,t:"HĐQT chưa có Chủ tịch đang hiệu lực (Điều 152 Luật Doanh nghiệp)"})}}
-    const nd=act.filter(p=>/nddpl|daidienphapluat/.test(norm(p.role)));
+    const nd0=act.filter(p=>/nddpl|daidienphapluat/.test(norm(p.role)));
+    act.filter(p=>p.role==="Người được ủy quyền"&&p.uqa).forEach(p=>{if(!nd0.some(n=>same(n.name,p.uqa)))out.push({c:c.code,h:1,t:"Văn bản ủy quyền của "+p.uqa+" cho "+p.name+" tự hết hiệu lực vì "+p.uqa+" không còn là người đại diện theo pháp luật hiện hành: cần ký văn bản ủy quyền mới hoặc đóng chức vụ ủy quyền này"})});
+    const nd=nd0;
     if(nd.length){const vn=nd.some(p=>{const q=(d.ppl.find(x=>same(x.name,p.name))||{}).qt;return !q||/viet nam/.test(pn(q))});
       if(!vn)out.push({c:c.code,h:1,t:"Tất cả NĐDPL đang hiệu lực đều không phải công dân Việt Nam: phải có ít nhất một NĐDPL cư trú tại Việt Nam (Điều 12 Luật Doanh nghiệp)"})}});
   d.pos.filter(p=>activeP(p,t0)&&(isBoard(p)||isBKS(p)||isMgr(p))).forEach(p=>{
@@ -1925,7 +1927,7 @@ function rPos(r,all){
     h+=`<tr data-id="${x.id}" data-gk="${esc(gk)}"${cl?" hidden":""}${on?"":' style="opacity:.6"'}><td class="t"><b>${esc(x.name)}</b>${x.note?`<small>${esc(x.note)}</small>`:""}</td><td>${esc(x.role)}<small class="s">${esc(x.title)}</small></td><td>${x.from?fmt(x.from):"…"} đến ${x.to?fmt(x.to):"nay"}${x.to&&x.to<t0?'<small class="s bad">Hết hiệu lực</small>':""}</td><td>${esc(x.uq)}</td><td>${dkTag(x)}</td></tr>`});
   const gg=govGaps(),gh=gg.filter(g=>g.h);
   const gpn=`<div class="panel full${gh.length?" warnp":""}" style="margin:0 0 12px"><h3>${gh.length?"⚠ ":""}Rà soát nhân sự quản lý (${gg.length})</h3>${gg.length?gg.map(g=>`<div class="act${g.h?" wnrow":""}" style="cursor:default"><span class="d">${chip(g.c)}</span><span>${esc(g.t)}</span></div>`).join(""):'<small style="color:var(--mute)">Chưa phát hiện vấn đề về nhiệm kỳ, cơ cấu HĐQT, NĐDPL.</small>'}<small style="display:block;margin-top:6px;color:var(--mute)">Dựa trên Luật Doanh nghiệp 2020 (sửa đổi 2025). Cần đối chiếu Điều lệ từng công ty, nhất là nhiệm kỳ và số thành viên HĐQT.</small></div>`;
-  $("plist").innerHTML=gpn+h+"</tbody></table>";
+  $("plist").innerHTML=gpn+uqBox(COS())+h+"</tbody></table>";try{const bx=$("plist").querySelector("[data-uqbox]");if(bx)fillUq(bx)}catch(e){}
 }
 
 /* ===== phân tích sở hữu liên kết ===== */
@@ -2644,6 +2646,61 @@ function printM12(o,mode){const c=o.co;if(!c)return;const it=HSI.find(x=>x.t===o
     if(S.ten||S.tru||S.von||S.nganh)ndMeetPages(c,o2,S).forEach(x=>pages.push(x));
     if(o.uq)pages.push(ndGUQ(c,o2,it.t))}
   showSheet(pages.join(""),{title:it.t+" - "+c})}
+/* ===== Văn bản ủy quyền ký hợp đồng, giao dịch (người đại diện theo pháp luật ủy quyền cho người khác ký thay) ===== */
+const UQ_PV="Được trực tiếp đàm phán, được toàn quyền quyết định và ký kết, thực hiện các hợp đồng, giao dịch và phụ lục của hợp đồng phục vụ hoạt động sản xuất kinh doanh của Công ty bao gồm mua bán, cung ứng hàng hóa/dịch vụ, hợp đồng cho thuê tài sản/mặt bằng theo chính sách giá đã ban hành, hợp đồng xây dựng/nhà thầu trong phạm vi dự án đã được phê duyệt đầu tư, và các giao dịch khác cùng tính chất.";
+const uqCan=r=>["Căn cứ Bộ luật Dân sự số 91/2015/QH13 ngày 24/11/2015;","Căn cứ Luật Doanh nghiệp số 59/2020/QH14 ngày 17/6/2020;","Căn cứ Điều lệ tổ chức và hoạt động của "+(r.name||r.code)+";","Căn cứ Quy chế phân cấp thẩm quyền phê duyệt và ký kết hợp đồng, giao dịch của Công ty ban hành kèm theo Quyết định số …… ngày …… của Hội đồng quản trị;","Căn cứ nhu cầu quản lý, điều hành hoạt động sản xuất kinh doanh của Công ty."].join("\n");
+function uqBox(cos){
+  const L=(t,i)=>`<label class="stl">${t}${i}</label>`,inp=(k,ph,ty)=>`<input data-uq="${k}" ${ty?'type="date"':'type="text"'}${ph?` placeholder="${esc(ph)}"`:""}>`,sel=k=>`<select data-uq="${k}"></select>`;
+  return `<div class="hsp" style="border-color:var(--seal)"><b>Văn bản ủy quyền nội bộ ký hợp đồng, giao dịch</b> (không nộp cơ quan đăng ký; người đại diện theo pháp luật ủy quyền cho người khác ký thay; điền sẵn từ Pháp nhân, Nhân sự, Chức vụ).<div class="stgrid" data-uqbox>
+${L("Doanh nghiệp (Bên A, bên ủy quyền)",`<select data-uq="co">${cos.map(c=>`<option>${esc(c)}</option>`).join("")}</select>`)}
+${L("Người đại diện theo pháp luật ký ủy quyền",sel("a"))}${L("Chức danh người ký (Bên A)",inp("at","VD: Chủ tịch Hội đồng quản trị"))}
+${L("Người được ủy quyền (Bên B)",sel("b"))}${L("Chức vụ Bên B",inp("bt","VD: Tổng Giám đốc"))}
+${L("Số văn bản",inp("so","VD: 01/2026/HLI/UQ-TGĐ"))}${L("Ngày ký",inp("ngay","",1))}
+<label class="stl" style="grid-column:1/-1">Các căn cứ (mỗi dòng một căn cứ)<textarea data-uq="can" rows="5"></textarea></label>
+<label class="stl" style="grid-column:1/-1">Điều 1. Phạm vi ủy quyền<textarea data-uq="pv" rows="5"></textarea></label>
+<div style="grid-column:1/-1"><button class="primary" data-uqprint>In văn bản ủy quyền / PDF</button></div></div><small style="display:block;color:var(--mute);margin-top:4px">Thông tin Bên B (ngày sinh, CCCD, địa chỉ) lấy từ tab Nhân sự. Phần căn cứ và phạm vi sửa được trước khi in. Đối chiếu căn cứ pháp lý hiện hành trước khi ký.</small></div>`}
+function fillUq(bx,keep){
+  const q=k=>bx.querySelector('[data-uq="'+k+'"]'),c=q("co").value,r=coRec(c),t0=today(),isN=p=>/nddpl|daidienphapluat/.test(norm(p.role)),
+    P=PD().pos.filter(p=>same(p.co,c)),a=P.filter(p=>isN(p)&&activeP(p,t0))[0]||P.filter(p=>isN(p))[0];
+  const set=(k,v)=>{const e=q(k);e.innerHTML=setPeopleOpts(v);e.value=v};
+  set("a",a?cleanN(a.name):"");q("at").value=a?(a.title||a.role||""):"";
+  if(!keep){set("b","");q("bt").value="";q("can").value=uqCan(r);q("pv").value=UQ_PV}
+}
+function uqRead(bx){const q=k=>bx.querySelector('[data-uq="'+k+'"]').value;return{c:q("co"),a:q("a"),at:q("at").trim(),b:q("b"),bt:q("bt").trim(),so:q("so").trim(),ngay:q("ngay"),can:q("can"),pv:q("pv").trim()}}
+function uqMissing(o){const r=coRec(o.c),m=[],p=persOf(o.b);
+  if(!o.a)m.push("chưa chọn người đại diện theo pháp luật (Bên A)");if(!o.b)m.push("chưa chọn người được ủy quyền (Bên B)");
+  else{if(!p.cccd&&!p.hc)m.push("Bên B chưa có số CCCD (tab Nhân sự)");if(!p.dob)m.push("Bên B chưa có ngày sinh");if(!p.addr&&!p.ttru)m.push("Bên B chưa có địa chỉ")}
+  if(!r.msdn)m.push("pháp nhân thiếu mã số doanh nghiệp");if(!r.addr)m.push("pháp nhân thiếu địa chỉ trụ sở");return m}
+function uqDoc(o){
+  const r=coRec(o.c),b=persOf(o.b),A=persOf(o.a),cq=cqOf(r)||"……………",dia=diaOf(r)||"……………",bl=blank,v=x=>x?esc(x):bl,
+    cc=o.can.split("\n").map(x=>x.trim()).filter(Boolean).map(x=>esc(x)).join("<br>"),
+    tn=esc((r.name||r.code).toUpperCase()),btc=o.bt||"……………",atc=o.at||"……………";
+  const idn=b.cccd?"CCCD số":"Hộ chiếu số",idv=b.cccd||b.hc||"",idd=b.cccd?b.cccdngay:b.hcngay,idp=b.cccd?b.cccdnoi:b.hcnoi;
+  return `<div class="fpage nq"><div class="fh" style="text-align:center"><b>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><br><b>Độc lập – Tự do – Hạnh phúc</b><br>――――――――――<br><i style="display:block;text-align:right">${esc(dia)}, ${dmy(o.ngay)}</i></div>
+<div class="fh"><h2 style="margin-top:8px">VĂN BẢN ỦY QUYỀN</h2><div class="fs">Số: ${v(o.so)}</div></div>
+<p>${cc}</p>
+<p>Hôm nay, ${dmy(o.ngay)}, tại ${esc(r.name||r.code)} (Công Ty), chúng tôi gồm có:</p>
+<p><b>BÊN A (BÊN ỦY QUYỀN): ${tn}</b><br>Giấy chứng nhận đăng ký doanh nghiệp số: ${v(r.msdn)} do ${esc(cq)} cấp.<br>Địa chỉ: ${v(fixProv(r.addr))}<br>Mã số thuế: ${v(r.msdn)}${r.sdt?"<br>Điện thoại: "+esc(r.sdt):""}<br>Đại diện pháp luật: ${ttl(A)} <b>${esc(cleanN(o.a).toUpperCase())||bl}</b><br>Chức vụ: ${esc(atc)}</p>
+<p>Và một bên là:</p>
+<p><b>BÊN B (BÊN NHẬN ỦY QUYỀN)</b><br>Họ và tên: <b>${esc(cleanN(o.b))||bl}</b> &nbsp;&nbsp; Sinh ngày: ${b.dob?fmt(b.dob):bl}<br>${idn}: ${v(idv)} &nbsp;&nbsp; Cấp ngày: ${idd?fmt(idd):bl}<br>Nơi cấp: ${v(idp)}<br>Địa chỉ: ${v(b.ttru||b.addr)}<br>Chức vụ: ${esc(btc)}</p>
+<p>Bằng văn bản này, Bên A đồng ý ủy quyền và Bên B đồng ý nhận ủy quyền thực hiện các công việc sau đây:</p>
+<p><b>Điều 1. Phạm vi ủy quyền ký kết hợp đồng, giao dịch.</b><br>${esc(o.pv||UQ_PV)}</p>
+<p><b>Điều 2. Thời hạn ủy quyền:</b><br>Văn bản ủy quyền có hiệu lực kể từ ngày ký.<br>Bên A có quyền đơn phương thu hồi, chấm dứt hoặc điều chỉnh nội dung ủy quyền này bất kỳ lúc nào bằng văn bản thông báo cho Bên B; việc thu hồi/chấm dứt có hiệu lực kể từ ngày Bên B nhận được thông báo, không ảnh hưởng đến các giao dịch đã được Bên B xác lập hợp pháp với bên thứ ba trước thời điểm đó.<br>Văn bản ủy quyền này đương nhiên hết hiệu lực khi Bên A hoặc Bên B không còn giữ chức danh nêu trên, trừ trường hợp có văn bản khác của Công ty quy định khác.</p>
+<p><b>Điều 3. Cam kết của các bên:</b><br>- Các bên cam kết thực hiện đúng và đầy đủ nghĩa vụ của mình theo nội dung của văn bản ủy quyền này.<br>- Bên B cam kết có đầy đủ năng lực trong việc thực hiện các công việc trong phạm vi ủy quyền và chịu trách nhiệm pháp lý trong việc thực hiện các công việc nhận ủy quyền.<br>- Bên B cam kết thực hiện đúng nội dung ủy quyền, thông báo cho Bên A tất cả các nội dung có liên quan đến công việc nhận ủy quyền cũng như tiến độ thực hiện các công việc đó.<br>- Bên A cam kết chịu trách nhiệm về các công việc được Bên B thực hiện với Bên Thứ Ba theo đúng nội dung đã thống nhất trong văn bản ủy quyền này.<br>- Bên B cam kết chịu trách nhiệm trước Bên A đối với các thiệt hại xảy ra do vi phạm nội dung ủy quyền.</p>
+<p>Văn bản ủy quyền này được lập thành 02 (hai) bản, có giá trị pháp lý như nhau, mỗi bên giữ 01 (một) bản./.</p>
+<table style="width:100%;text-align:center;margin-top:10px"><tr><td style="width:50%"><b>BÊN NHẬN ỦY QUYỀN</b><br><i>(Ký, ghi rõ họ tên)</i><div style="height:80px"></div><b>${esc(cleanN(o.b))}</b></td><td><b>BÊN ỦY QUYỀN</b><br><i>(Ký, đóng dấu, ghi rõ họ tên)</i><div style="height:80px"></div><b>${esc(cleanN(o.a))}</b></td></tr></table></div>`}
+$("plist").addEventListener("click",e=>{const b=e.target.closest("[data-uqprint]");if(!b)return;e.stopPropagation();const bx=b.closest("[data-uqbox]"),o=uqRead(bx),ms=uqMissing(o);
+  if(ms.length&&!confirm("Dữ liệu chưa đủ để điền hết văn bản ủy quyền:\n\n- "+ms.join("\n- ")+"\n\nBấm OK để in luôn (phần thiếu để dấu chấm điền tay), Hủy để bổ sung dữ liệu trước."))return;
+  if(o.a&&o.b&&confirm("Ghi nhận ủy quyền này vào tab Chức vụ (Bên B: vai trò 'Người được ủy quyền', ghi số, ngày; cảnh báo khi người đại diện thay đổi)?")){
+    const d=PD();let x=d.pos.find(p=>same(p.co,o.c)&&same(p.name,o.b)&&p.role==="Người được ủy quyền"&&same(p.uqa,o.a)&&!p.to);
+    if(!d.ppl.some(q=>same(q.name,o.b)))d.ppl.push({id:uid(),name:o.b});
+    if(!x){x={id:uid(),name:o.b,co:o.c,role:"Người được ủy quyền",dk:"Không áp dụng"};d.pos.push(x)}
+    x.uqa=o.a;x.title=o.bt||x.title||"";if(o.ngay)x.from=o.ngay;x.uq=(o.so?"Số "+o.so:"Văn bản ủy quyền")+(o.ngay?" ngày "+fmt(o.ngay):"");x.note="Được "+o.a+" (người đại diện theo pháp luật) ủy quyền ký hợp đồng, giao dịch";
+    saveC();renderProf()}
+  showSheet(uqDoc(o),{title:"Văn bản ủy quyền "+o.c+(o.b?" - "+cleanN(o.b):"")})},true);
+$("plist").addEventListener("change",e=>{const t=e.target;if(!t.dataset||!t.dataset.uq)return;const bx=t.closest("[data-uqbox]");if(!bx)return;
+  if(t.dataset.uq==="co")fillUq(bx,false);
+  if(t.dataset.uq==="b"||t.dataset.uq==="a"){const c=bx.querySelector('[data-uq="co"]').value,k=t.dataset.uq==="b"?"bt":"at",p=PD().pos.filter(x=>same(x.co,c)&&same(x.name,t.value)&&activeP(x,today()))[0];if(p)bx.querySelector('[data-uq="'+k+'"]').value=p.title||p.role||""}});
 const FORMS={m10:{t:"Danh sách CSHHL (Mẫu 10)",f:formM10},m13:{t:"Thay đổi NĐDPL (Mẫu 13)",f:formM13}};
 function printForm(key,co){
   const F=FORMS[key];if(!F)return;const prev=sec,t0=document.title,cos=co==="*"?COS().filter(c=>boModel().out.some(o=>same(o.c,c))||key==="m13"):[co];
