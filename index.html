@@ -274,7 +274,7 @@ body.pd .act{cursor:default}
 #vprof .hspg{display:inline-block;margin:4px 14px 4px 0}
 /* tờ khai in */
 .fpage{page-break-after:always;color:#000;font-family:"Times New Roman",serif;font-size:13px;line-height:1.4;background:#fff}
-.fpage:last-child{page-break-after:auto}.fpage.uqp{min-height:250mm;display:flex;flex-direction:column;box-sizing:border-box}.fpage.uqp .uqf{margin-top:auto;padding-top:8px;text-align:center;font-size:12px;font-style:italic}
+.fpage:last-child{page-break-after:auto}.fpage.uqp{min-height:250mm;display:flex;flex-direction:column;box-sizing:border-box}.fpage.uqp p{margin:4px 0}.fpage.uqp{line-height:1.35}.fpage.uqp .uqf{margin-top:auto;padding-top:8px;text-align:center;font-size:12px;font-style:italic}
 .fh{text-align:center;margin:0 0 10px}.fh h2{margin:10px 0 2px;font-size:16px;color:#000}.fh .fs{font-size:12px;font-style:italic}.fq{font-size:12px}
 table.fm{border-collapse:collapse;width:100%;margin:6px 0;font-size:12px}
 table.fm th,table.fm td{border:1px solid #000;padding:4px 6px;text-align:center;vertical-align:middle;background:#fff!important;color:#000!important}
@@ -2700,8 +2700,8 @@ function uqDoc(o){
 <p><b>BÊN B (BÊN NHẬN ỦY QUYỀN)</b><br>Họ và tên: <b>${esc(cleanN(o.b))||bl}</b> &nbsp;&nbsp; Sinh ngày: ${b.dob?fmt(b.dob):bl}<br>${idn}: ${v(idv)} &nbsp;&nbsp; Cấp ngày: ${idd?fmt(idd):bl}<br>Nơi cấp: ${v(idp)}<br>Địa chỉ: ${v(b.ttru||b.addr)}<br>Chức vụ: ${esc(btc)}</p>
 <p>Bằng văn bản này, Bên A đồng ý ủy quyền và Bên B đồng ý nhận ủy quyền thực hiện các công việc sau đây:</p>
 <p><b>Điều 1. Phạm vi ủy quyền ký kết hợp đồng, giao dịch.</b><br>${esc(o.pv||UQ_PV)}</p>
-${pf(1)}</div><div class="fpage nq uqp">
 <p><b>Điều 2. Thời hạn ủy quyền:</b><br>Văn bản ủy quyền có hiệu lực kể từ ngày ký${o.hethan?" đến hết ngày "+fmt(o.hethan):""}.<br>Bên A có quyền đơn phương thu hồi, chấm dứt hoặc điều chỉnh nội dung ủy quyền này bất kỳ lúc nào bằng văn bản thông báo cho Bên B; việc thu hồi/chấm dứt có hiệu lực kể từ ngày Bên B nhận được thông báo, không ảnh hưởng đến các giao dịch đã được Bên B xác lập hợp pháp với bên thứ ba trước thời điểm đó.<br>Văn bản ủy quyền này đương nhiên hết hiệu lực khi Bên A hoặc Bên B không còn giữ chức danh nêu trên, trừ trường hợp có văn bản khác của Công ty quy định khác.</p>
+${pf(1)}</div><div class="fpage nq uqp">
 <p><b>Điều 3. Cam kết của các bên:</b><br>- Các bên cam kết thực hiện đúng và đầy đủ nghĩa vụ của mình theo nội dung của văn bản ủy quyền này.<br>- Bên B cam kết có đầy đủ năng lực trong việc thực hiện các công việc trong phạm vi ủy quyền và chịu trách nhiệm pháp lý trong việc thực hiện các công việc nhận ủy quyền.<br>- Bên B cam kết thực hiện đúng nội dung ủy quyền, thông báo cho Bên A tất cả các nội dung có liên quan đến công việc nhận ủy quyền cũng như tiến độ thực hiện các công việc đó.<br>- Bên A cam kết chịu trách nhiệm về các công việc được Bên B thực hiện với Bên Thứ Ba theo đúng nội dung đã thống nhất trong văn bản ủy quyền này.<br>- Bên B cam kết chịu trách nhiệm trước Bên A đối với các thiệt hại xảy ra do vi phạm nội dung ủy quyền.</p>
 <p>Văn bản ủy quyền này được lập thành 03 (ba) bản, có giá trị pháp lý như nhau, Bên A giữ 02 (hai) bản, Bên B giữ 01 (một) bản./.</p>
 <table style="width:100%;text-align:center;margin-top:10px"><tr><td style="width:50%"><b>BÊN NHẬN ỦY QUYỀN</b><br><i>(Ký, ghi rõ họ tên)</i><div style="height:80px"></div><b>${esc(cleanN(o.b))}</b></td><td><b>BÊN ỦY QUYỀN</b><br><i>(Ký, đóng dấu, ghi rõ họ tên)</i><div style="height:80px"></div><b>${esc(cleanN(o.a))}</b></td></tr></table>${pf(2)}</div>`}
