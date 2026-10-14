@@ -1405,7 +1405,23 @@ const GTL=["Công bố","Thanh lý, chốt nghĩa vụ","Nộp hồ sơ"];
 const gtStep=x=>{if(!/Giải thể doanh nghiệp/.test(x.tt||""))return"";const n=gtN(x);return `<span class="gts">${GTL.map((l,i)=>`<i class="${i+1<n?"dn":i+1===n?"cur":""}">${i+1}. ${l}</i>`).join("")}${n<3&&x.st!=="Đã có kết quả"?`<button class="gtn" data-gtnext="${x.id}" title="Chuyển sang bước ${n+1}/3">Sang bước ${n+1}</button>`:""}</span>`};
 const MAS=["Nháp","Đang dùng","Chờ cập nhật","Hết hiệu lực"];
 const CPL=["Giấy phép / điều kiện kinh doanh","Báo cáo định kỳ với cơ quan nhà nước","Hồ sơ nội bộ cần lưu giữ, cập nhật","Đăng ký, gia hạn khác"],CPK=["Một lần","Hàng tháng","Hàng quý","6 tháng","Hàng năm","Khác"],CPS=["Đang theo dõi","Đang thực hiện","Đã hoàn thành","Ngừng áp dụng"];
+const DV_L=["Chi nhánh","Văn phòng đại diện","Địa điểm kinh doanh","Chi nhánh ở nước ngoài","Văn phòng đại diện ở nước ngoài"],DV_S=["Đang hoạt động","Đang đăng ký thành lập","Đang chấm dứt","Tạm ngừng","Đã chấm dứt"];
 const SEC={
+  dv:{lab:"Chi nhánh, VPĐD",one:"chi nhánh, VPĐD, địa điểm kinh doanh",req:["co","ten"],
+    key:o=>[o.co,o.loai,o.ten].map(norm).join("|"),
+    f:[{k:"co",l:"Pháp nhân chủ quản",list:"p_codes"},
+       {k:"loai",l:"Loại đơn vị",t:"sel",o:DV_L},
+       {k:"ten",l:"Tên chi nhánh, VPĐD, địa điểm kinh doanh",full:1},
+       {k:"ma",l:"Mã số (chi nhánh, VPĐD, địa điểm kinh doanh)"},
+       {k:"st",l:"Tình trạng",t:"sel",o:DV_S},
+       {k:"addr",l:"Địa chỉ",full:1},
+       {k:"qd",l:"Quyết định thành lập (số, ngày)"},
+       {k:"ngay",l:"Ngày cấp giấy chứng nhận hoạt động hoặc giấy xác nhận",t:"date"},
+       {k:"nguoi",l:"Người đứng đầu",list:"p_names"},
+       {k:"cqdk",l:"Cơ quan đăng ký (VD: Phòng Đăng ký kinh doanh, Sở Tài chính tỉnh ...)"},
+       {k:"nganh",l:"Ngành, nghề hoạt động (nếu có)",full:1},
+       {k:"ngayct",l:"Ngày chấm dứt hoạt động (nếu đã chấm dứt)",t:"date"},
+       {k:"note",l:"Ghi chú",t:"area",full:1}]},
   co:{lab:"Pháp nhân",one:"pháp nhân",req:["code"],
     key:o=>norm(o.code),
     f:[{k:"code",l:"Mã / tên viết tắt",list:"p_codes"},
@@ -1488,6 +1504,8 @@ const SEC={
        {k:"nm",l:"Người đại diện mới (chọn từ Nhân sự; chỉ dùng cho thay đổi NĐDPL, tự cập nhật Chức vụ khi có kết quả)",list:"p_names"},
        {k:"nc",l:"Người đại diện cũ thôi giữ chức (nếu có)",list:"p_names"},
        {k:"bn",l:"Cá nhân CSHHL liên quan (chỉ dùng cho kê khai CSHHL; nhiều người cách nhau dấu chấm phẩy)",full:1},
+       {k:"dvn",l:"Tên chi nhánh, VPĐD, địa điểm kinh doanh liên quan (chỉ dùng cho nhóm chi nhánh; tự cập nhật tab Chi nhánh, VPĐD)",full:1},
+       {k:"dvl",l:"Loại đơn vị phụ thuộc (để trống: tự nhận theo tên thủ tục)",t:"sel",o:["",...DV_L]},
        {k:"mv",l:"Giá trị mới sau thay đổi (tự cập nhật Pháp nhân khi có kết quả: vốn điều lệ mới VD 580 tỷ, địa chỉ trụ sở mới, tên mới)",full:1},
        {k:"buoc",l:"Bước giải thể (chỉ dùng cho thủ tục giải thể)",t:"sel",o:GTB},
        {k:"note",l:"Ghi chú",t:"area",full:1}]},
@@ -1593,7 +1611,7 @@ const SEC={
        {k:"lk",l:"Nơi lưu file gốc / đường dẫn",full:1},
        {k:"note",l:"Ghi chú, lý do cập nhật",t:"area",full:1}]}
 };
-const ORDER=["co","ppl","pos","own","bo","hs","mt","nq","ct","cp","prj","mau"];
+const ORDER=["co","dv","ppl","pos","own","bo","hs","mt","nq","ct","cp","prj","mau"];
 let sec="dash",dsec="co",editId=null,seq=0;const ownClosed=new Set(),posClosed=new Set();
 
 /* ---------- Tiện ích ---------- */
@@ -1756,7 +1774,7 @@ function renderProf(){
   const fk=sec==="co"?"code":"co";
   const posOf=n=>PD().pos.filter(p=>same(p.name,n));
   const r=all.filter(x=>(!c||sec==="prj"||(sec==="ppl"?posOf(x.name).some(p=>same(p.co,c)):same(x[fk],c)))&&(!q||(Object.values(x).join(" ")+(sec==="ppl"?" "+posOf(x.name).map(p=>Object.values(p).join(" ")).join(" "):"")).toLowerCase().includes(q)));
-  ({co:rCo,ppl:rPpl,pos:rPos,own:rOwn,bo:rBo,hs:rHs,mt:rMt,nq:rNq,ct:rCt,cp:rCp,prj:rPrj,mau:rMau})[sec](r,all);
+  ({co:rCo,dv:rDv,ppl:rPpl,pos:rPos,own:rOwn,bo:rBo,hs:rHs,mt:rMt,nq:rNq,ct:rCt,cp:rCp,prj:rPrj,mau:rMau})[sec](r,all);
 }
 function rDash(){
   const d=PD(),t0=today(),sum=(a,k)=>a.reduce((s,x)=>s+(+x[k]||0),0);
@@ -1840,10 +1858,18 @@ function rCo(r,all){
   $("pstats").innerHTML=st(all.length,"Pháp nhân")+st(money(sum("vdl")),"Tổng vốn điều lệ đăng ký (đồng)")+st(money(sum("vtg")),"Tổng vốn thực góp đã nhập (đồng)")+st(miss,"Hồ sơ còn thiếu MSDN, vốn hoặc trụ sở",miss?"late":"")+st(all.filter(x=>x.dk==="Đang thực hiện đăng ký").length,"Đang thực hiện đăng ký thay đổi");
   if(!r.length){$("plist").innerHTML=empty();return}
   r=[...r].sort((a,b)=>ci(a.code)-ci(b.code)||a.code.localeCompare(b.code));
-  $("plist").innerHTML=`<table class="m"><thead><tr><th>Mã</th><th>Doanh nghiệp</th><th>MSDN</th><th>Ngày ĐK lần đầu</th><th>Vốn điều lệ</th><th>Vốn thực góp</th><th>NĐDPL hiện hành</th><th>Lao động / công đoàn</th></tr></thead><tbody>`+
+  $("plist").innerHTML=`<table class="m"><thead><tr><th>Mã</th><th>Doanh nghiệp</th><th>MSDN</th><th>Ngày ĐK lần đầu</th><th>Vốn điều lệ</th><th>Vốn thực góp</th><th>NĐDPL hiện hành</th><th>Chi nhánh, VPĐD</th><th>Lao động / công đoàn</th></tr></thead><tbody>`+
   r.map(x=>{const lack=x.vtg!==""&&x.vtg!=null&&x.vdl&&+x.vtg<+x.vdl;
-    return `<tr data-id="${x.id}"><td>${chip(x.code)}</td><td class="t">${esc(x.name)}<small>${esc(x.addr)}</small></td><td>${esc(x.msdn)}<small class="s">${[x.lan?"Lần "+x.lan:"",x.ngay?fmt(x.ngay):""].filter(Boolean).join(" - ")}</small>${x.dk&&x.dk!=="Không áp dụng"?`<small class="s">${dkTag(x)}${x.dknd?": "+esc(x.dknd):""}</small>`:""}</td><td>${x.ngaylan1?fmt(x.ngaylan1):'<span class="bad">Chưa có</span>'}</td><td class="num">${money(x.vdl)}</td><td class="num">${x.vtg===""||x.vtg==null?"":money(x.vtg)}${lack?`<small class="s bad">Thấp hơn vốn điều lệ ${money(+x.vdl-+x.vtg)}</small>`:""}</td><td>${rep(x.code)}</td><td>${(()=>{const q=window.__nldSum?window.__nldSum(x.code):{n:0,cd:null},c=q.cd;return (q.n?q.n+" lao động đang làm việc":'<span style="color:var(--mute)">Chưa có hồ sơ lao động</span>')+`<small class="s">${c?esc(c.st)+(+c.dv?", "+c.dv+" đoàn viên":""):"Chưa theo dõi công đoàn"}</small>`})()}</td></tr>`}).join("")+"</tbody></table>";
+    return `<tr data-id="${x.id}"><td>${chip(x.code)}</td><td class="t">${esc(x.name)}<small>${esc(x.addr)}</small></td><td>${esc(x.msdn)}<small class="s">${[x.lan?"Lần "+x.lan:"",x.ngay?fmt(x.ngay):""].filter(Boolean).join(" - ")}</small>${x.dk&&x.dk!=="Không áp dụng"?`<small class="s">${dkTag(x)}${x.dknd?": "+esc(x.dknd):""}</small>`:""}</td><td>${x.ngaylan1?fmt(x.ngaylan1):'<span class="bad">Chưa có</span>'}</td><td class="num">${money(x.vdl)}</td><td class="num">${x.vtg===""||x.vtg==null?"":money(x.vtg)}${lack?`<small class="s bad">Thấp hơn vốn điều lệ ${money(+x.vdl-+x.vtg)}</small>`:""}</td><td>${rep(x.code)}</td><td>${(()=>{const D=(PD().dv||[]).filter(v=>same(v.co,x.code)&&v.st!=="Đã chấm dứt"),c=l=>D.filter(v=>v.loai===l).length,t=[[c("Chi nhánh")+c("Chi nhánh ở nước ngoài"),"chi nhánh"],[c("Văn phòng đại diện")+c("Văn phòng đại diện ở nước ngoài"),"VPĐD"],[c("Địa điểm kinh doanh"),"địa điểm KD"]].filter(a=>a[0]).map(a=>a[0]+" "+a[1]);return t.length?t.join(", "):'<span style="color:var(--mute)">Chưa có</span>'})()}</td><td>${(()=>{const q=window.__nldSum?window.__nldSum(x.code):{n:0,cd:null},c=q.cd;return (q.n?q.n+" lao động đang làm việc":'<span style="color:var(--mute)">Chưa có hồ sơ lao động</span>')+`<small class="s">${c?esc(c.st)+(+c.dv?", "+c.dv+" đoàn viên":""):"Chưa theo dõi công đoàn"}</small>`})()}</td></tr>`}).join("")+"</tbody></table>";
 }
+function rDv(r,all){
+  const act=x=>x.st!=="Đã chấm dứt",n=l=>all.filter(x=>act(x)&&x.loai===l).length;
+  $("pstats").innerHTML=st(n("Chi nhánh")+n("Chi nhánh ở nước ngoài"),"Chi nhánh đang có")+st(n("Văn phòng đại diện")+n("Văn phòng đại diện ở nước ngoài"),"Văn phòng đại diện đang có")+st(n("Địa điểm kinh doanh"),"Địa điểm kinh doanh đang có")+st(all.filter(x=>x.st==="Đang đăng ký thành lập"||x.st==="Đang chấm dứt").length,"Đang đăng ký hoặc đang chấm dứt")+st(all.filter(x=>x.st==="Đã chấm dứt").length,"Đã chấm dứt");
+  if(!r.length){$("plist").innerHTML=empty()+'<p class="tcnote" style="margin:8px 24px">Khi nộp hồ sơ "Đăng ký hoạt động chi nhánh, VPĐD" hoặc "Chấm dứt chi nhánh, VPĐD" ở tab Hồ sơ nộp Sở TC và nhập "Tên đơn vị phụ thuộc", danh sách này tự cập nhật.</p>';return}
+  const L=[...r].sort((a,b)=>ci(a.co)-ci(b.co)||DV_L.indexOf(a.loai)-DV_L.indexOf(b.loai)||String(a.ten).localeCompare(String(b.ten),"vi"));
+  const stT=x=>x.st==="Đang hoạt động"?'<span style="color:var(--ok);font-weight:600">Đang hoạt động</span>':x.st==="Đã chấm dứt"?'<span style="color:var(--mute)">Đã chấm dứt'+(x.ngayct?" "+fmt(x.ngayct):"")+'</span>':'<span class="dkp">'+esc(x.st||"")+'</span>';
+  $("plist").innerHTML=`<table class="m"><thead><tr><th>Pháp nhân</th><th>Loại</th><th>Tên, địa chỉ</th><th>Mã số</th><th>Giấy chứng nhận, quyết định</th><th>Người đứng đầu</th><th>Tình trạng</th></tr></thead><tbody>`+
+  L.map(x=>`<tr data-id="${x.id}"${x.st==="Đã chấm dứt"?' class="cl"':""}><td>${chip(x.co)}</td><td>${esc(x.loai||"")}</td><td class="t"><b>${esc(x.ten)}</b>${x.addr?`<small>${esc(x.addr)}</small>`:""}${x.nganh?`<small class="s">${esc(x.nganh)}</small>`:""}</td><td>${esc(x.ma||"")}</td><td>${x.ngay?fmt(x.ngay):""}${x.qd?`<small class="s">${esc(x.qd)}</small>`:""}${x.cqdk?`<small class="s">${esc(x.cqdk)}</small>`:""}</td><td>${esc(x.nguoi||"")}</td><td>${stT(x)}</td></tr>`).join("")+"</tbody></table>"}
 function rPpl(r,all){
   const t0=today(),P=PD().pos,isN=p=>/nddpl|daidienphapluat/.test(norm(p.role));
   const posOf=n=>P.filter(p=>same(p.name,n)).sort((a,b)=>ci(a.co)-ci(b.co)||(activeP(b,t0)-activeP(a,t0))||String(b.from||"").localeCompare(String(a.from||"")));
@@ -2100,6 +2126,14 @@ function hsEnt(){
           if(/vốn điều lệ/i.test(h.tt)){const v=parseVnMoney(h.mv);if(v){x.vdl=v;out.push("vốn điều lệ "+money(v))}}
           else if(/trụ sở/i.test(h.tt)){x.addr=h.mv;out.push("địa chỉ trụ sở")}
           else if(/tên doanh nghiệp/i.test(h.tt)){x.name=h.mv;out.push("tên doanh nghiệp")}}}});
+    if(g==="cn"&&h.dvn){
+      const isTerm=/Chấm dứt/.test(h.tt),isNew=/Đăng ký hoạt động|Lập chi nhánh/.test(h.tt),ab=/nước ngoài/.test(h.tt);
+      d.dv=d.dv||[];let r=d.dv.find(x=>same(x.co,h.co)&&same(x.ten,h.dvn));
+      if(!r&&isNew){r={id:uid(),co:h.co,loai:h.dvl||(ab?"Chi nhánh ở nước ngoài":"Chi nhánh"),ten:h.dvn,ma:"",st:"Đang đăng ký thành lập",addr:"",qd:"",ngay:"",nguoi:"",cqdk:"",nganh:"",ngayct:"",note:"Tự tạo từ hồ sơ nộp Sở TC"};d.dv.push(r);out.push("tạo '"+h.dvn+"' ở tab Chi nhánh, VPĐD")}
+      if(r){const before=r.st;
+        if(isNew){if(fin){r.st="Đang hoạt động";if(!r.ngay&&h.kq)r.ngay=h.kq}else if(r.st!=="Đang hoạt động")r.st="Đang đăng ký thành lập"}
+        else if(isTerm){if(fin){r.st="Đã chấm dứt";r.ngayct=h.kq||today()}else r.st="Đang chấm dứt"}
+        if(r.st!==before)out.push("'"+h.dvn+"': "+r.st)}}
     if(g==="bo"){
       if(h.bn){String(h.bn).split(/[;\n]/).map(t=>t.trim()).filter(Boolean).forEach(nmx=>{const L=(d.bo||[]).filter(x=>same(x.co,h.co)&&same(x.name,nmx));
         if(!d.ppl.some(x=>same(x.name,nmx))){d.ppl.push({id:uid(),name:nmx});out.push("thêm "+nmx+" vào Nhân sự")}
@@ -2125,6 +2159,7 @@ function hsGaps(){
     if(g==="bo"&&d.bo.some(x=>same(x.co,h.co)&&x.dk==="Đang thực hiện đăng ký"))out.push({c:h.co,t:"Hồ sơ CSHHL đã có kết quả: cập nhật trạng thái kê khai ở tab CSHHL"})});
   d.hs.filter(h=>h.st==="Đã có kết quả"&&grpOf(h)==="dd"&&h.kq&&dDiff(h.kq,t0)<=60).forEach(h=>{const L=d.pos.filter(p=>same(p.co,h.co)&&isN(p)&&activeP(p,t0));if(L.length>1)out.push({c:h.co,h:0,soft:1,t:"Sau hồ sơ thay đổi NĐDPL ("+fmt(h.kq)+") vẫn có "+L.length+" NĐDPL đang hiệu lực ("+L.map(p=>p.name).join(", ")+"): nếu có người đã thôi giữ chức thì nhập 'Hiệu lực đến' ở tab Chức vụ"})});
   d.hs.filter(h=>grpOf(h)==="dd"&&h.st!=="Đang soạn"&&h.st!=="Chờ ký"&&!h.nm&&!d.pos.some(p=>same(p.co,h.co)&&isN(p)&&pend(p))).forEach(h=>out.push({c:h.co,h:0,soft:1,t:"Hồ sơ \""+h.tt+"\" chưa chọn 'Người đại diện mới' nên không tự cập nhật được Chức vụ khi có kết quả: mở hồ sơ và chọn người từ Nhân sự"}));
+  d.hs.filter(h=>grpOf(h)==="cn"&&h.st!=="Đang soạn"&&h.st!=="Chờ ký"&&!h.dvn&&/Đăng ký hoạt động|Chấm dứt/.test(h.tt)).forEach(h=>out.push({c:h.co,h:0,soft:1,t:"Hồ sơ \""+h.tt+"\" chưa nhập tên chi nhánh, VPĐD liên quan nên tab Chi nhánh, VPĐD không tự cập nhật"}));
   d.hs.filter(h=>grpOf(h)==="bo"&&h.st!=="Đang soạn"&&h.st!=="Chờ ký"&&!h.bn&&!d.bo.some(x=>same(x.co,h.co)&&pend(x))).forEach(h=>out.push({c:h.co,h:0,soft:1,t:"Hồ sơ \""+h.tt+"\" chưa chọn 'Cá nhân CSHHL liên quan' nên không tự cập nhật được CSHHL khi có kết quả"}));
   d.hs.filter(h=>h.st==="Đã nộp"&&h.hen&&h.hen<t0&&!h.kq).forEach(h=>out.push({c:h.co,t:"Hồ sơ \""+h.tt+"\" đã quá hẹn trả kết quả ("+fmt(h.hen)+")"}));
   d.hs.filter(h=>h.st==="Cần bổ sung hồ sơ").forEach(h=>out.push({c:h.co,t:"Hồ sơ \""+h.tt+"\" cần bổ sung"}));
@@ -3291,7 +3326,7 @@ body.pp #vprof .sechead{margin:0 0 8px;padding:5px 10px;font-size:14px;color:var
 body.pp #vprof .sechead.first{break-before:auto}
 }`;
 document.head.appendChild(pcss);
-const RN={co:rCo,ppl:rPpl,pos:rPos,own:rOwn,bo:rBo,hs:rHs,mt:rMt,nq:rNq,ct:rCt,cp:rCp,prj:rPrj,mau:rMau};
+const RN={co:rCo,dv:rDv,ppl:rPpl,pos:rPos,own:rOwn,bo:rBo,hs:rHs,mt:rMt,nq:rNq,ct:rCt,cp:rCp,prj:rPrj,mau:rMau};
 function printProf(all){
   const prev=sec,t0=document.title,cc={dash:0,co:0,ppl:1,pos:4,own:2,bo:5,hs:3,prj:3};
   let html="",label;
