@@ -1485,6 +1485,9 @@ const SEC={
        {k:"hen",l:"Ngày hẹn trả kết quả",t:"date"},
        {k:"kq",l:"Ngày nhận kết quả",t:"date"},
        {k:"nd",l:"Nội dung đề nghị (VD: tăng vốn lên 580 tỷ; đổi NĐDPL sang ông ...)",full:1},
+       {k:"nm",l:"Người đại diện mới (chọn từ Nhân sự; chỉ dùng cho thay đổi NĐDPL, tự cập nhật Chức vụ khi có kết quả)",list:"p_names"},
+       {k:"nc",l:"Người đại diện cũ thôi giữ chức (nếu có)",list:"p_names"},
+       {k:"bn",l:"Cá nhân CSHHL liên quan (chỉ dùng cho kê khai CSHHL; nhiều người cách nhau dấu chấm phẩy)",full:1},
        {k:"mv",l:"Giá trị mới sau thay đổi (tự cập nhật Pháp nhân khi có kết quả: vốn điều lệ mới VD 580 tỷ, địa chỉ trụ sở mới, tên mới)",full:1},
        {k:"buoc",l:"Bước giải thể (chỉ dùng cho thủ tục giải thể)",t:"sel",o:GTB},
        {k:"note",l:"Ghi chú",t:"area",full:1}]},
@@ -2069,14 +2072,25 @@ const parseVnMoney=t=>{const m=String(t||"").match(/([\d][\d.,\s]*)\s*(tỷ|ty|t
   if(u){v=parseFloat(raw.replace(/\s/g,"").replace(/\./g,"").replace(",","."));if(isNaN(v))return null;v*=/^t/.test(u)?1e9:1e6}
   else{v=parseInt(raw.replace(/[.,\s]/g,""),10);if(isNaN(v))return null}
   return Math.round(v)};
+function hsOpenDd(c){return(PD().hs||[]).filter(h=>same(h.co,c)&&(HSI.find(i=>i.t===h.tt)||{}).g==="dd"&&h.nm&&h.st!=="Đã có kết quả").sort((a,b)=>String(b.ngay||"").localeCompare(String(a.ngay||"")))[0]||null}
 function hsEnt(){
   const d=PD();let ch=false;const isN=p=>/nddpl|daidienphapluat/.test(norm(p.role)),msgs=[];
+  /* hồ sơ đổi NĐDPL còn mở và đã chọn người mới: bảo đảm có dòng Chức vụ để điền sẵn vào Mẫu 13 */
+  (d.hs||[]).forEach(h=>{if(!h.nm||h.st==="Đã có kết quả"||(HSI.find(i=>i.t===h.tt)||{}).g!=="dd")return;
+    if(!d.ppl.some(x=>same(x.name,h.nm))){d.ppl.push({id:uid(),name:h.nm});ch=true}
+    if(!d.pos.some(p=>same(p.co,h.co)&&same(p.name,h.nm)&&isN(p))){d.pos.push({id:uid(),name:h.nm,co:h.co,role:"NĐDPL",title:"",from:"",to:"",uq:"",dk:"Chưa đăng ký",note:"Tự tạo từ hồ sơ nộp Sở TC"});ch=true}});
   (d.hs||[]).forEach(h=>{const prev=h._ent;if(prev===h.st)return;h._ent=h.st;ch=true;
     if(!["Đã nộp","Cần bổ sung hồ sơ","Đã có kết quả"].includes(h.st))return;
     const g=(HSI.find(i=>i.t===h.tt)||{}).g,fin=h.st==="Đã có kết quả",nv=fin?"Đã đăng ký":"Đang thực hiện đăng ký",
       fresh=fin&&prev!==undefined&&prev!=="Đã có kết quả",out=[],
       set=x=>{if(x.dk==="Chưa đăng ký"||(fin&&x.dk==="Đang thực hiện đăng ký")){x.dk=nv;return true}return false};
-    if(g==="dd"){const L=(d.pos||[]).filter(p=>same(p.co,h.co)&&isN(p));let n=0;L.forEach(p=>{if(set(p))n++});if(n)out.push("Chức vụ NĐDPL: "+nv)}
+    if(g==="dd"){
+      if(h.nm){const L=(d.pos||[]).filter(p=>same(p.co,h.co)&&same(p.name,h.nm)&&isN(p));
+        if(!d.ppl.some(x=>same(x.name,h.nm))){d.ppl.push({id:uid(),name:h.nm});out.push("thêm "+h.nm+" vào Nhân sự")}
+        if(L.length)L.forEach(p=>{if(p.dk!==nv){p.dk=nv;out.push("Chức vụ NĐDPL "+h.nm+": "+nv)}if(fin&&!p.from&&h.kq)p.from=h.kq});
+        else if(fin){d.pos.push({id:uid(),name:h.nm,co:h.co,role:"NĐDPL",title:"",from:h.kq||"",to:"",uq:"",dk:"Đã đăng ký",note:"Tự tạo từ hồ sơ nộp Sở TC"});out.push("tạo chức vụ NĐDPL "+h.nm+" (Đã đăng ký)")}
+        if(fin&&h.nc)(d.pos||[]).filter(p=>same(p.co,h.co)&&same(p.name,h.nc)&&isN(p)&&!p.to).forEach(p=>{p.to=h.kq||today();out.push("kết thúc chức vụ NĐDPL "+h.nc+" ngày "+fmt(p.to))})}
+      else{const L=(d.pos||[]).filter(p=>same(p.co,h.co)&&isN(p));let n=0;L.forEach(p=>{if(set(p))n++});if(n)out.push("Chức vụ NĐDPL: "+nv)}}
     if(g==="nd"||g==="dd"||g==="cn")(d.co||[]).filter(x=>same(x.code,h.co)).forEach(x=>{
       if(set(x))out.push("Pháp nhân: "+nv);
       if(fresh&&(g==="nd"||g==="dd")){
@@ -2086,7 +2100,12 @@ function hsEnt(){
           if(/vốn điều lệ/i.test(h.tt)){const v=parseVnMoney(h.mv);if(v){x.vdl=v;out.push("vốn điều lệ "+money(v))}}
           else if(/trụ sở/i.test(h.tt)){x.addr=h.mv;out.push("địa chỉ trụ sở")}
           else if(/tên doanh nghiệp/i.test(h.tt)){x.name=h.mv;out.push("tên doanh nghiệp")}}}});
-    if(g==="bo")(d.bo||[]).filter(x=>same(x.co,h.co)).forEach(x=>{if(set(x)){out.push("CSHHL "+x.name+": "+nv);if(fin&&!x.ngay)x.ngay=h.ngay||h.kq||""}});
+    if(g==="bo"){
+      if(h.bn){String(h.bn).split(/[;\n]/).map(t=>t.trim()).filter(Boolean).forEach(nmx=>{const L=(d.bo||[]).filter(x=>same(x.co,h.co)&&same(x.name,nmx));
+        if(!d.ppl.some(x=>same(x.name,nmx))){d.ppl.push({id:uid(),name:nmx});out.push("thêm "+nmx+" vào Nhân sự")}
+        if(L.length)L.forEach(x=>{if(x.dk!==nv){x.dk=nv;out.push("CSHHL "+nmx+": "+nv)}if(fin&&!x.ngay)x.ngay=h.ngay||h.kq||""});
+        else if(fin){d.bo.push({id:uid(),co:h.co,name:nmx,tc:"",tl:"",ngay:h.ngay||h.kq||"",dk:"Đã đăng ký",dknd:"",note:"Tự tạo từ hồ sơ nộp Sở TC"});out.push("tạo CSHHL "+nmx+" (Đã đăng ký)")}})}
+      else(d.bo||[]).filter(x=>same(x.co,h.co)).forEach(x=>{if(set(x)){out.push("CSHHL "+x.name+": "+nv);if(fin&&!x.ngay)x.ngay=h.ngay||h.kq||""}})}
     if(out.length&&prev!==undefined)msgs.push("<b>"+esc(h.co)+"</b> – "+esc(h.tt)+": "+out.map(esc).join("; "))});
   if(msgs.length)entToast("Đã tự cập nhật theo hồ sơ nộp Sở TC (nếu sai, sửa tay ở tab Pháp nhân, Chức vụ, CSHHL):<br>"+msgs.join("<br>"));
   return ch}
@@ -2105,6 +2124,8 @@ function hsGaps(){
     if(g==="nd"&&d.co.some(x=>same(x.code,h.co)&&x.dk==="Đang thực hiện đăng ký"))out.push({c:h.co,t:"Hồ sơ thay đổi nội dung ĐKDN đã có kết quả: cập nhật trạng thái đăng ký ở tab Pháp nhân"});
     if(g==="bo"&&d.bo.some(x=>same(x.co,h.co)&&x.dk==="Đang thực hiện đăng ký"))out.push({c:h.co,t:"Hồ sơ CSHHL đã có kết quả: cập nhật trạng thái kê khai ở tab CSHHL"})});
   d.hs.filter(h=>h.st==="Đã có kết quả"&&grpOf(h)==="dd"&&h.kq&&dDiff(h.kq,t0)<=60).forEach(h=>{const L=d.pos.filter(p=>same(p.co,h.co)&&isN(p)&&activeP(p,t0));if(L.length>1)out.push({c:h.co,h:0,soft:1,t:"Sau hồ sơ thay đổi NĐDPL ("+fmt(h.kq)+") vẫn có "+L.length+" NĐDPL đang hiệu lực ("+L.map(p=>p.name).join(", ")+"): nếu có người đã thôi giữ chức thì nhập 'Hiệu lực đến' ở tab Chức vụ"})});
+  d.hs.filter(h=>grpOf(h)==="dd"&&h.st!=="Đang soạn"&&h.st!=="Chờ ký"&&!h.nm&&!d.pos.some(p=>same(p.co,h.co)&&isN(p)&&pend(p))).forEach(h=>out.push({c:h.co,h:0,soft:1,t:"Hồ sơ \""+h.tt+"\" chưa chọn 'Người đại diện mới' nên không tự cập nhật được Chức vụ khi có kết quả: mở hồ sơ và chọn người từ Nhân sự"}));
+  d.hs.filter(h=>grpOf(h)==="bo"&&h.st!=="Đang soạn"&&h.st!=="Chờ ký"&&!h.bn&&!d.bo.some(x=>same(x.co,h.co)&&pend(x))).forEach(h=>out.push({c:h.co,h:0,soft:1,t:"Hồ sơ \""+h.tt+"\" chưa chọn 'Cá nhân CSHHL liên quan' nên không tự cập nhật được CSHHL khi có kết quả"}));
   d.hs.filter(h=>h.st==="Đã nộp"&&h.hen&&h.hen<t0&&!h.kq).forEach(h=>out.push({c:h.co,t:"Hồ sơ \""+h.tt+"\" đã quá hẹn trả kết quả ("+fmt(h.hen)+")"}));
   d.hs.filter(h=>h.st==="Cần bổ sung hồ sơ").forEach(h=>out.push({c:h.co,t:"Hồ sơ \""+h.tt+"\" cần bổ sung"}));
   d.hs.filter(h=>!h.tid||!tasks.some(t=>t.id===h.tid)).forEach(h=>out.push({c:h.co,t:"Hồ sơ \""+h.tt+"\" chưa liên kết công việc: bấm Đồng bộ công việc",soft:1}));
@@ -2189,7 +2210,8 @@ ${fn(8,"Cá nhân kiểm soát ghi một hoặc nhiều các quyền sau: quyề
 ${fn(9,"Người đại diện theo pháp luật của doanh nghiệp/Chủ tịch công ty/Chủ tịch Hội đồng thành viên của Công ty/Chủ tịch Hội đồng quản trị ký trực tiếp và ghi rõ họ tên theo quy định. Trường hợp Tòa án hoặc Trọng tài chỉ định người thực hiện thủ tục đăng ký doanh nghiệp thì người được chỉ định ký trực tiếp vào phần này.")}
 </div></div>`}
 function m13People(c){const t0=today(),isN=p=>/nddpl|daidienphapluat/.test(norm(p.role)),L=PD().pos.filter(p=>same(p.co,c)&&isN(p));
-  const nw=L.filter(p=>p.dk==="Đang thực hiện đăng ký"||p.dk==="Chưa đăng ký");
+  const hl=hsOpenDd(c),lk=hl?L.filter(p=>same(p.name,hl.nm)):[];
+  const nw=lk.length?lk:L.filter(p=>p.dk==="Đang thực hiện đăng ký"||p.dk==="Chưa đăng ký");
   return{nw:nw.length?nw:L.filter(p=>activeP(p,t0)),pending:nw.length>0}}
 function m13Missing(c){const o=[],{nw,pending}=m13People(c);
   if(!nw.length)return["Chưa có NĐDPL nào ở tab Chức vụ"];
@@ -2945,7 +2967,7 @@ function printSet(c,o){
 }
 function setDefaults(c,mid){
   const t0=today(),isN=p=>/nddpl|daidienphapluat/.test(norm(p.role)),P=PD().pos.filter(p=>same(p.co,c)),m=PD().mt.find(x=>x.id===mid)||{};
-  const nw=m13People(c).nw[0]||null,old=P.filter(p=>isN(p)&&p!==nw&&activeP(p,t0))[0]||P.filter(p=>isN(p)&&p!==nw).sort((a,b)=>String(b.to||"").localeCompare(String(a.to||"")))[0]||null,ch=chairOf(c);
+  const nw=m13People(c).nw[0]||null,hl=hsOpenDd(c),oldL=hl&&hl.nc?P.filter(p=>isN(p)&&p!==nw&&same(p.name,hl.nc))[0]:null,old=oldL||P.filter(p=>isN(p)&&p!==nw&&activeP(p,t0))[0]||P.filter(p=>isN(p)&&p!==nw).sort((a,b)=>String(b.to||"").localeCompare(String(a.to||"")))[0]||null,ch=chairOf(c);
   const H=gmHolders(c);
   return{nw:nw?cleanN(nw.name):"",nwt:nw?(nw.title||nw.role||""):"",old:old?cleanN(old.name):"",oldt:old?(old.title||old.role||""):"",chair:cleanN(m.cp||(ch?ch.name:"")),tk:cleanN(m.tk||meName()),
     reps:H.rows.map(x=>({n:x.n,ent:isEnt(x.n),rep:cleanN((H.g.rows.find(y=>y.holder===x.n)||{}).dd||"")})).filter(x=>x.ent),so:m.so||""}}
