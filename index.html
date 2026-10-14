@@ -1756,7 +1756,7 @@ function rDash(){
   d.prj.forEach(x=>{if(!x.owner)W.push([x.name,"thiếu chủ đầu tư"]);if(!x.nddpl)W.push([x.name,"thiếu NĐDPL / người điều hành dự án"])});
   const BOM=boModel().out;BOM.forEach(o=>o.warn.forEach(w=>{if(w.k==="miss")W.push([o.c,"CSHHL "+w.b.name+" ("+nf(w.b.t)+"%) đạt ngưỡng 25% nhưng chưa ghi nhận kê khai"])}));
   hsGaps().filter(g=>!g.soft).forEach(g=>W.push([g.c,g.t]));govGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));cpGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));intGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));
-  const MG=mtGaps();MG.filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));ctGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));mauGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));(window.__nldGaps?window.__nldGaps():[]).filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));
+  const MG=mtGaps();MG.filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));ctGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));mauGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));(window.__nldGaps?window.__nldGaps():[]).filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));(window.__invGaps?window.__invGaps():[]).filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));
   const nBO=new Set(BOM.flatMap(o=>o.bo.map(b=>b.key))).size;
   const pB=`<div class="panel full"><h3>Chủ sở hữu hưởng lợi theo doanh nghiệp (ngưỡng 25%)</h3>${BOM.length?BOM.map(o=>`<div class="act" style="cursor:default;align-items:flex-start"><span class="d">${chip(o.c)}</span><span style="flex:1">${o.bo.length?o.bo.map(b=>`<b>${esc(b.name)}</b> ${nf(b.t)}%${b.d>0&&b.i>0.005?` <small style="color:var(--mute)">(TT ${nf(b.d)}% + GT ${nf(b.i)}%)</small>`:""} ${(()=>{const s=boStat(o,b);return s==="Đã đăng ký"?'<small style="color:var(--ok)">đã kê khai</small>':s==="Đang thực hiện đăng ký"?'<span class="dkp">đang kê khai</span>':s==="Chưa đăng ký"?'<span class="wn1">⚠ chưa kê khai</span>':s==="Chưa ghi nhận"?'<span class="wn1">⚠ chưa ghi nhận kê khai</span>':""})()}`).join("<br>"):'<small style="color:var(--warn)">Chưa có cá nhân đạt 25%: xét tiêu chí kiểm soát</small>'}</span></div>`).join(""):'<small style="color:var(--mute)">Chưa có dữ liệu sở hữu vốn.</small>'}</div>`;
   const pW=`<div class="panel full${W.length?" warnp":""}"><h3>${W.length?"⚠ ":""}Cảnh báo cần xử lý (${W.length})</h3>${W.length?W.map(w=>`<div class="act wnrow" style="cursor:default"><span class="d">${COS().some(c=>same(c,w[0]))?chip(w[0]):`<b class="late-d">${esc(w[0])}</b>`}</span><span>${esc(w[1])}</span></div>`).join(""):'<small style="color:var(--mute)">Hồ sơ đã đủ, không có cảnh báo.</small>'}</div>`;
@@ -3624,7 +3624,7 @@ const TC_LAW=[
  ["Bộ luật Lao động 2019 (45/2019/QH14)","Hiệu lực 01/01/2021. Được sửa đổi bởi Luật BHXH 2024 (01/7/2025), Luật Công nghiệp công nghệ số 2025 (01/01/2026), Luật Giáo dục nghề nghiệp 2025 (01/01/2026), Luật Dân số 2025 (01/7/2026). Văn bản hợp nhất: 18/VBHN-VPQH (12/2/2026).","Nội dung Chương VIII, XIV và Điều 34–48 đã đối chiếu từ nguồn thứ cấp. Chưa kiểm tra từng điều có bị sửa bởi các luật trên hay không."],
  ["NĐ 145/2020/NĐ-CP","Hướng dẫn BLLĐ: điều kiện lao động, quan hệ lao động (hiệu lực 01/02/2021).","Điều dẫn (Điều 8, Điều 70) lấy từ hiểu biết, chưa đối chiếu nguyên văn."],
  ["NĐ 283/2026/NĐ-CP","Xử phạt vi phạm hành chính về lao động, BHXH, NLĐ đi làm việc nước ngoài. Ban hành 15/7/2026, hiệu lực 10/9/2026; thay NĐ 12/2022.","Một nguồn ghi tiêu đề là sửa đổi một số điều của NĐ 12/2022, nguồn khác ghi NĐ 12/2022 hết hiệu lực từ 10/9/2026. Mức phạt chỉ là tóm tắt, phải đối chiếu bản gốc."],
- ["NĐ 337/2025/NĐ-CP","Hợp đồng lao động điện tử, hiệu lực 01/01/2026.","Chưa đọc nội dung."],
+ ["NĐ 337/2025/NĐ-CP","Hợp đồng lao động điện tử, hiệu lực 01/01/2026. Nền tảng HĐLĐ điện tử vận hành chậm nhất 01/7/2026.","Đã đọc bản tổng hợp của MISA, chưa đối chiếu nguyên văn; xem tab con Lao động."],
  ["NĐ 293/2025/NĐ-CP","Mức lương tối thiểu theo hợp đồng lao động, hiệu lực 01/01/2026.","Cần tra mức vùng áp dụng khi tính ngưỡng 10 tháng lương tối thiểu vùng."],
  ["BLTTDS 2015, sửa đổi bởi Luật 85/2025/QH15","Hiệu lực 01/7/2025. Tòa án nhân dân khu vực giải quyết tranh chấp lao động thuộc thẩm quyền sơ thẩm.","Điều 32, 35, 39 BLTTDS chưa đối chiếu nguyên văn."],
  ["Luật Công đoàn 2024; Luật BHXH 2024","Bảo vệ cán bộ công đoàn cơ sở; bảo hiểm xã hội.","Chưa đọc nội dung, chỉ nhắc để rà soát."]
@@ -3657,15 +3657,16 @@ const LEGEND=`<p class="tcnote">Dấu * ở cuối căn cứ: chưa đối chi�
 /* ---------- Khung ---------- */
 const tab=document.createElement("button");tab.id="tptc";tab.textContent="Người lao động";nav.appendChild(tab);
 const vtc=document.createElement("div");vtc.id="vtc";vtc.hidden=true;
-vtc.innerHTML=`<nav class="tcsub" id="nldsub"><button data-m="lao">Lao động</button><button data-m="cd">Công đoàn</button><button data-m="tc">Tranh chấp lao động</button></nav>
+vtc.innerHTML=`<nav class="tcsub" id="nldsub"><button data-m="lao">Lao động</button><button data-m="cd">Công đoàn</button><button data-m="nn">Người lao động nước ngoài</button><button data-m="tc">Tranh chấp lao động</button></nav>
 <div id="nldwrap"><section class="stats" id="ldstats"></section><div id="ldbody"></div></div>
+<div id="nnwrap" hidden><section class="stats" id="nnstats"></section><div id="nnbody"></div></div>
 <div id="cdwrap" hidden><section class="stats" id="cdstats"></section><div id="cdbody"></div></div>
 <div id="tcwrap"><section class="stats" id="tcstats"></section>
 <nav class="tcsub" id="tcsub"><button data-t="map">Sơ đồ tư duy</button><button data-t="an">Phân tích tình huống</button><button data-t="log">Sổ vụ việc</button><button data-t="law">Căn cứ pháp lý</button></nav>
 <div id="tcmapw" class="tcgrid"><div class="tcmapbox"><div class="tcbar"><button id="tcopen">Mở tất cả</button><button id="tcshut">Thu gọn tất cả</button></div><div id="tcmap"></div></div><aside id="tcdet" class="tcdet"></aside></div>
 <div id="tcan" hidden></div><div id="tclog" hidden></div><div id="tclaw" hidden></div></div>`;
 vp.after(vtc);
-const sty=document.createElement("style");sty.textContent="#vtc #nldsub{border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:2px}#vtc #nldsub button{font-weight:600}#vtc #ldbody,#vtc #cdbody{padding:0 24px}#vtc #cdbody .tcbtn,#vtc #ldbody .tcbtn{margin:0 0 10px;align-items:center}#vtc #cdbody table.m td small,#vtc #ldbody table.m td small{display:block;color:var(--mute)}#vtc .ldal{margin:2px 0;font-size:12.5px;line-height:1.5}#vtc .ldal.h{color:var(--seal);font-weight:600}#vtc .ldal.s{color:var(--mute)}@media(max-width:700px){#vtc #ldbody,#vtc #cdbody{padding:0 12px}}";document.head.appendChild(sty);
+const sty=document.createElement("style");sty.textContent="#vtc #nldsub{border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:2px}#vtc #nldsub button{font-weight:600}#vtc #ldbody,#vtc #cdbody,#vtc #nnbody{padding:0 24px}#vtc #nnbody .tcbtn,#vtc #cdbody .tcbtn,#vtc #ldbody .tcbtn{margin:0 0 10px;align-items:center}#vtc #nnbody table.m td small,#vtc #cdbody table.m td small,#vtc #ldbody table.m td small{display:block;color:var(--mute)}#vtc details.ldg{border:1px solid var(--line);border-radius:10px;background:var(--card);padding:8px 14px;margin:6px 0}#vtc details.ldg summary{cursor:pointer}#vtc ol.ldgs{margin:8px 0 4px;padding-left:22px}#vtc ol.ldgs li{margin:6px 0;line-height:1.55}#vtc ol.ldgs small{display:block;color:var(--mute);margin-top:1px}#vtc .ldal{margin:2px 0;font-size:12.5px;line-height:1.5}#vtc .ldal.h{color:var(--seal);font-weight:600}#vtc .ldal.s{color:var(--mute)}@media(max-width:700px){#vtc #ldbody,#vtc #cdbody,#vtc #nnbody{padding:0 12px}}";document.head.appendChild(sty);
 const dlg=document.createElement("dialog");dlg.id="tcdlg";
 dlg.innerHTML=`<h2 id="tcdt">Vụ việc tranh chấp lao động</h2><div class="grid" id="tcform"></div><div class="foot"><button id="tcdel" style="margin-right:auto;color:var(--seal)">Xóa</button><button id="tccancel">Đóng</button><button class="primary" id="tcok">Lưu</button></div>`;
 document.body.appendChild(dlg);
@@ -3676,6 +3677,10 @@ document.body.appendChild(ldlg);
 const cdlg=document.createElement("dialog");cdlg.id="cdlg";
 cdlg.innerHTML=`<h2 id="cddt">Công đoàn cơ sở</h2><div class="grid" id="cdform"></div><div class="foot"><button id="cddel" style="margin-right:auto;color:var(--seal)">Xóa</button><button id="cdcancel">Đóng</button><button class="primary" id="cdok">Lưu</button></div>`;
 document.body.appendChild(cdlg);
+
+const nndlg=document.createElement("dialog");nndlg.id="nndlg";
+nndlg.innerHTML=`<h2 id="nndt">Người lao động nước ngoài</h2><div class="grid" id="nnform"></div><div class="foot"><button id="nndel" style="margin-right:auto;color:var(--seal)">Xóa</button><button id="nncancel">Đóng</button><button class="primary" id="nnok">Lưu</button></div>`;
+document.body.appendChild(nndlg);
 
 const OTHER=["tl","tb","td","tp","tphs","tphop","tpct","tpcp","tpmau"];
 const hideTc=()=>{vtc.hidden=true;tab.classList.remove("on")};
@@ -3864,6 +3869,7 @@ function rLaw(){
 const LDD=()=>{const p=CFG.prof=CFG.prof||{};if(!Array.isArray(p.nld))p.nld=[];return p.nld};
 const LD_GRP=[["qldn","Người quản lý doanh nghiệp (tối đa 180 ngày)",180],["dh","Chức danh cần trình độ chuyên môn kỹ thuật từ cao đẳng trở lên (tối đa 60 ngày)",60],["tc","Chức danh cần trình độ trung cấp, công nhân kỹ thuật, nhân viên nghiệp vụ (tối đa 30 ngày)",30],["khac","Công việc khác (tối đa 6 ngày làm việc)",6]];
 const LD_LOAI=["Chỉ thử việc","Xác định thời hạn","Không xác định thời hạn"],LD_ST=["Đang làm việc","Đã nghỉ việc"];
+const LD_HT=["Bản giấy","Điện tử","Bản giấy đã chuyển đổi sang điện tử"],LD_BH=["","Đã có sổ BHXH điện tử / VssID","Chưa kích hoạt VssID / VNeID mức 2"],LD_YN=["","Đã thực hiện","Chưa thực hiện"];
 const ldMax=r=>(LD_GRP.find(g=>g[0]===r.grp)||[0,0,0])[2];
 function ldTvEnd(r){const n=parseInt(r.tvn,10);if(!r.tv1||!n)return"";return r.grp==="khac"?addWk(r.tv1,n-1):addD(r.tv1,n-1)}
 function ldAlerts(r){const t0=today(),o=[],push=(h,t)=>o.push({h,t});
@@ -3881,21 +3887,48 @@ function ldAlerts(r){const t0=today(),o=[],push=(h,t)=>o.push({h,t});
         if(m>36)push(1,"HĐ xác định thời hạn dài "+m+" tháng, vượt mức tối đa 36 tháng (Điều 20*)");
         if(d<0){const left=dd(t0,lim);push(1,"HĐ đã hết hạn từ "+fmt(r.hdto)+(left>=0?": nếu NLĐ vẫn làm việc, phải ký HĐLĐ mới trước "+fmt(lim)+" (còn "+left+" ngày), nếu không HĐ cũ chuyển thành HĐ không xác định thời hạn":": quá 30 ngày kể từ khi hết hạn, nếu NLĐ vẫn làm việc mà chưa ký HĐ mới thì HĐ đã chuyển thành không xác định thời hạn")+" (Điều 20*)")}
         else if(d<=45)push((r.lan||"1")==="2"?1:0,"HĐ hết hạn trong "+d+" ngày ("+fmt(r.hdto)+"): "+((r.lan||"1")==="2"?"đã ký xác định thời hạn lần 2, nếu tiếp tục sử dụng phải ký HĐ không xác định thời hạn (trừ trường hợp luật cho phép ngoại lệ)*":"quyết định gia hạn bằng HĐ mới (chỉ được ký thêm 1 lần xác định thời hạn) hoặc chấm dứt*"))}}}
+  if(r.hth&&r.hth!=="Bản giấy"&&!r.ecid)push(1,"HĐLĐ điện tử chưa ghi ID gắn trên nền tảng của Bộ Nội vụ: nhà cung cấp eContract phải gửi hợp đồng lên nền tảng để gắn ID trong 24 giờ kể từ khi bên cuối cùng ký (NĐ 337/2025/NĐ-CP, khoản 4 Điều 6*)");
+  if(r.bhdt==="Chưa kích hoạt VssID / VNeID mức 2")push(0,"Người lao động chưa kích hoạt VssID / VNeID mức 2 để nhận sổ BHXH điện tử (Luật BHXH 2024, Điều 25*; NĐ 164/2025/NĐ-CP, Điều 8*)");
   if(r.loai!=="Chỉ thử việc"&&!r.bhxh)o.push({h:0,s:1,t:"Chưa ghi ngày bắt đầu đóng BHXH (Luật BHXH 2024*)"});
   return o}
+const LD_GUIDE=[
+ ["Thực hiện HĐLĐ điện tử",[
+  ["Chọn nhà cung cấp eContract đã đáp ứng điều kiện kỹ thuật, có giấy phép dịch vụ tin cậy và kết nối được với nền tảng HĐLĐ điện tử của Bộ Nội vụ. Ghi vào thiết lập pháp nhân.","NĐ 337/2025/NĐ-CP, khoản 1, 3 Điều 6, Điều 21*"],
+  ["Chuẩn bị chữ ký số và dịch vụ cấp dấu thời gian cho người ký bên người sử dụng lao động. Người lao động cần giấy tờ tùy thân còn hiệu lực (CCCD, căn cước điện tử, tài khoản định danh điện tử mức 2 hoặc hộ chiếu).","NĐ 337/2025/NĐ-CP, khoản 2 Điều 6*"],
+  ["Soạn HĐLĐ với nội dung theo luật (loại hợp đồng, công việc, địa điểm, thời hạn, tiền lương, thời giờ làm việc, bảo hiểm…) rồi đưa lên hệ thống của nhà cung cấp để các bên xác nhận nội dung.","BLLĐ 2019, Điều 21; NĐ 337/2025/NĐ-CP, khoản 1 Điều 6*"],
+  ["Hai bên ký số. Hợp đồng có hiệu lực từ khi bên ký sau cùng hoàn tất chữ ký số kèm dấu thời gian, trừ khi các bên thỏa thuận khác. Ghi ngày ký điện tử cuối cùng vào hồ sơ lao động.","NĐ 337/2025/NĐ-CP, Điều 7*"],
+  ["Nhà cung cấp gửi hợp đồng lên nền tảng của Bộ Nội vụ để gắn ID trong 24 giờ kể từ khi bên cuối cùng ký. Kiểm tra và ghi ID vào hồ sơ lao động; nếu chưa có ID sau 24 giờ thì yêu cầu nhà cung cấp xử lý.","NĐ 337/2025/NĐ-CP, khoản 4 Điều 6*"],
+  ["Lưu trữ, bảo mật, bảo đảm toàn vẹn và truy xuất được; hướng dẫn người lao động truy cập nền tảng; báo ngay cho cơ quan quản lý khi có rủi ro bảo mật, giả mạo hoặc truy cập trái phép.","NĐ 337/2025/NĐ-CP, khoản 2 Điều 19, khoản 2 Điều 20*"],
+  ["Với HĐLĐ giấy đã ký muốn chuyển sang điện tử: xác thực danh tính các bên, người có thẩm quyền ký số bản chuyển đổi khớp bản giấy gốc, sau đó gắn ID. Chọn hình thức \"Bản giấy đã chuyển đổi sang điện tử\" trong hồ sơ.","NĐ 337/2025/NĐ-CP, Điều 8*"],
+  ["Sửa đổi, tạm hoãn, chấm dứt HĐLĐ điện tử cũng thực hiện đúng quy trình điện tử của nhà cung cấp, rồi cập nhật hồ sơ.","NĐ 337/2025/NĐ-CP, khoản 2 Điều 19*"]]],
+ ["Thực hiện BHXH điện tử",[
+  ["Có chữ ký số hợp lệ và tài khoản giao dịch điện tử; doanh nghiệp tự quản lý chữ ký số, giữ an toàn tài khoản định danh điện tử. Theo dõi hạn chữ ký số ở thiết lập pháp nhân.","NĐ 164/2025/NĐ-CP, Điều 5, khoản 3 Điều 12*"],
+  ["Nếu chưa có mã đơn vị: thực hiện thủ tục tham gia BHXH lần đầu. Hồ sơ theo nguồn tra được gồm TK3-TS, danh sách lao động (D02-TS hoặc mẫu mới), TK1-TS của từng người lao động, bản sao giấy chứng nhận đăng ký doanh nghiệp. Biểu mẫu cần đối chiếu theo hướng dẫn mới nhất của BHXH.","Luật BHXH 2024, Điều 27, 28; NĐ 158/2025/NĐ-CP, Điều 23; QĐ 595/QĐ-BHXH*"],
+  ["Nộp hồ sơ trong 30 ngày kể từ ngày người lao động thuộc diện tham gia BHXH bắt buộc. Ghi ngày nộp báo tăng vào hồ sơ lao động.","Luật BHXH 2024, Điều 27, 28; NĐ 158/2025/NĐ-CP, Điều 23*"],
+  ["Ký số và nộp hồ sơ điện tử qua Cổng dịch vụ công quốc gia, cổng giao dịch điện tử của BHXH Việt Nam hoặc qua tổ chức I-VAN. Tài liệu giấy đính kèm phải chuyển sang dạng điện tử.","NĐ 164/2025/NĐ-CP, Điều 3, khoản 1, 2 Điều 9, khoản 1 Điều 12*"],
+  ["Theo dõi biên nhận (hệ thống gửi biên nhận trong 15 phút kể từ khi nhận hồ sơ) và kết quả xử lý. Với cấp sổ BHXH, thẻ BHYT, thời gian xử lý thường không quá 5 ngày làm việc khi hồ sơ hợp lệ.","NĐ 164/2025/NĐ-CP, Điều 10, khoản 2 Điều 13*; nguồn thứ cấp về thời gian xử lý"],
+  ["Khi hệ thống gặp sự cố vào hạn nộp: có thể nộp bản giấy cho cơ quan BHXH trong 3 ngày làm việc (hồ sơ đóng) hoặc 7 ngày làm việc (giao dịch khác), sau đó gửi lại bản điện tử khi hệ thống hoạt động trở lại.","NĐ 164/2025/NĐ-CP, khoản 7 Điều 12*"],
+  ["Lưu trữ đầy đủ, nguyên vẹn hồ sơ điện tử; giữ bản giấy của tờ khai chưa chuyển đổi theo pháp luật lưu trữ, xuất trình khi được yêu cầu.","NĐ 164/2025/NĐ-CP, khoản 3 Điều 7, khoản 4, 5 Điều 12*"],
+  ["Hướng dẫn người lao động kích hoạt VssID hoặc VNeID mức 2 để xem sổ BHXH điện tử (sổ điện tử cấp chậm nhất 01/01/2026, giá trị như sổ giấy). Ghi tình trạng vào hồ sơ lao động.","Luật BHXH 2024, Điều 25; NĐ 164/2025/NĐ-CP, Điều 8*"],
+  ["Lưu ý chế tài: đăng ký thiếu hoặc chậm có thể bị xử phạt theo tỷ lệ trên số tiền phải đóng. Nguồn tra được dẫn NĐ 12/2022/NĐ-CP, khoản 5 Điều 39; NĐ 283/2026/NĐ-CP (hiệu lực 10/9/2026) thay thế nên phải tra lại mức phạt hiện hành.","NĐ 12/2022/NĐ-CP, NĐ 283/2026/NĐ-CP*"]]]
+];
 const LD_RULES=[
  ["Thử việc","Chỉ thử việc 1 lần cho 1 công việc. Mức tối đa: 180 ngày (người quản lý doanh nghiệp), 60 ngày (từ cao đẳng trở lên), 30 ngày (trung cấp, công nhân kỹ thuật, nhân viên nghiệp vụ), 6 ngày làm việc (công việc khác). Lương thử việc ít nhất 85% lương công việc. Không áp dụng thử việc với HĐLĐ dưới 1 tháng.","BLLĐ 2019, Điều 24 đến 27*"],
  ["Loại HĐLĐ","Chỉ có hai loại: xác định thời hạn (tối đa 36 tháng) và không xác định thời hạn. Hết hạn mà NLĐ vẫn làm việc: trong 30 ngày phải ký HĐ mới, quá 30 ngày thì HĐ cũ thành không xác định thời hạn. Chỉ được ký thêm 1 lần xác định thời hạn, sau đó phải ký không xác định thời hạn (có ngoại lệ cho một số đối tượng).","BLLĐ 2019, Điều 20*"],
  ["Báo trước khi NLĐ đơn phương chấm dứt","45 ngày (HĐ không xác định thời hạn), 30 ngày (HĐ xác định thời hạn 12 đến 36 tháng), 3 ngày làm việc (HĐ dưới 12 tháng); một số trường hợp không cần báo trước hoặc báo trước theo luật quy định.","BLLĐ 2019, Điều 35*"],
  ["Báo trước khi người sử dụng lao động đơn phương chấm dứt","Phải có căn cứ theo luật và báo trước theo loại HĐ (thường 45/30/3 ngày làm việc; một số trường hợp 120/90/60 ngày). Chấm dứt trái luật phát sinh nghĩa vụ bồi thường, nhận lại NLĐ (xem tab con Tranh chấp lao động).","BLLĐ 2019, Điều 36, 41, 42*"],
- ["Hình thức HĐLĐ điện tử","HĐLĐ có thể giao kết bằng phương tiện điện tử theo điều kiện luật định.","BLLĐ 2019 Điều 14; NĐ 337/2025/NĐ-CP (chưa đọc nội dung)*"]
+ ["HĐLĐ điện tử: giá trị và điều kiện","HĐLĐ điện tử là thông điệp dữ liệu, có giá trị như HĐLĐ bằng văn bản giấy. Giao kết qua hệ thống của nhà cung cấp eContract, các bên dùng chữ ký số và dịch vụ cấp dấu thời gian, xác thực giấy tờ tùy thân (CCCD, tài khoản định danh điện tử mức 2 hoặc hộ chiếu). Hợp đồng có hiệu lực từ khi bên ký sau cùng hoàn tất chữ ký số, trừ khi các bên thỏa thuận khác.","BLLĐ 2019, Điều 14; NĐ 337/2025/NĐ-CP, Điều 3, 6, 7 (hiệu lực từ 01/01/2026)*"],
+ ["HĐLĐ điện tử: nền tảng của Bộ Nội vụ","Nền tảng HĐLĐ điện tử vận hành chính thức chậm nhất 01/7/2026. Nhà cung cấp eContract gửi hợp đồng lên nền tảng để gắn ID trong 24 giờ kể từ khi bên cuối cùng ký. Chuyển hợp đồng giấy đã ký sang điện tử: xác thực danh tính, người có thẩm quyền ký số bản chuyển đổi khớp với bản giấy gốc, rồi gắn ID.","NĐ 337/2025/NĐ-CP, khoản 4 Điều 6, Điều 8, Điều 28*"],
+ ["HĐLĐ điện tử: nghĩa vụ của người sử dụng lao động","Giao kết, sửa đổi, tạm hoãn, chấm dứt đúng quy định; lưu trữ, bảo mật, bảo đảm toàn vẹn và truy xuất được; hướng dẫn người lao động dùng nền tảng; thông báo khi có rủi ro bảo mật, giả mạo hoặc truy cập trái phép; tuân thủ quy định bảo vệ dữ liệu cá nhân.","NĐ 337/2025/NĐ-CP, khoản 2 Điều 19*"],
+ ["BHXH điện tử: sổ BHXH","Sổ BHXH được cấp dưới dạng điện tử hoặc giấy, giá trị pháp lý như nhau. Sổ điện tử được cấp chậm nhất 01/01/2026, tích hợp tài khoản định danh điện tử (VNeID mức 2) và VssID; sổ giấy vẫn được cấp khi người tham gia yêu cầu. Từ 01/8/2025 số định danh cá nhân / CCCD thay mã số BHXH theo hướng dẫn của BHXH Việt Nam.","Luật BHXH 2024, Điều 25; NĐ 164/2025/NĐ-CP, Điều 8; TT 09/2026/TT-BTC, Điều 3; CV 1804/BHXH-QLT*"],
+ ["BHXH điện tử: giao dịch của doanh nghiệp","Doanh nghiệp cần có tài khoản giao dịch BHXH điện tử và chữ ký số còn hạn để nộp hồ sơ (báo tăng, giảm, điều chỉnh lao động). Nội dung chi tiết về nghĩa vụ này chưa tra được từ nguồn đã đọc, cần đối chiếu NĐ 164/2025/NĐ-CP và hướng dẫn của cơ quan BHXH.","NĐ 164/2025/NĐ-CP*"]
 ];
 function ldList(){const q=($("ld_q")||{value:""}).value.toLowerCase().trim(),f=($("ld_co")||{value:""}).value,L=LDD().filter(r=>(!f||r.co===f)&&(!q||Object.values(r).join(" ").toLowerCase().includes(q)));
   const act=r=>r.st!=="Đã nghỉ việc";
   return[...L].sort((a,b)=>(act(b)-act(a))||(ldAlerts(b).filter(x=>x.h).length-ldAlerts(a).filter(x=>x.h).length)||String(a.name).localeCompare(String(b.name),"vi"))}
-const ldGaps=()=>LDD().flatMap(r=>ldAlerts(r).map(a=>({c:r.co,h:a.h,soft:a.s,k:"ld"+r.id,t:"Lao động "+r.name+": "+a.t})));
+const ldGaps=()=>[...LDD().flatMap(r=>ldAlerts(r).map(a=>({c:r.co,h:a.h,soft:a.s,k:"ld"+r.id,t:"Lao động "+r.name+": "+a.t}))),...LDE().flatMap(r=>eAlerts(r).map(a=>({c:r.co,h:a.h,k:"le"+r.id,t:"Giao dịch điện tử: "+a.t})))];
 function cdGaps(){return CDD().flatMap(r=>cdAlerts(r).map(a=>({c:r.co,h:a.h,k:"cd"+r.id,t:"Công đoàn: "+a.t})))}
-window.__nldGaps=()=>[...ldGaps(),...cdGaps()];
+window.__nldGaps=()=>[...ldGaps(),...cdGaps(),...nnGaps()];
 window.__nldSum=code=>{const A=LDD().filter(r=>r.co===code&&r.st!=="Đã nghỉ việc"),c=CDD().find(r=>r.co===code);return{n:A.length,cd:c||null}};
 function mkTasks(gaps){let n=0;gaps.filter(g=>g.h).forEach(g=>{const key=g.k+"|"+g.t.replace(/\d+/g,"#").slice(0,70);
     if(tasks.some(t=>t.src===key&&t.st!=="Hoàn thành"))return;
@@ -3910,14 +3943,36 @@ function rLao(){
   rLaoStats();const cos=[...new Set([...COS(),...LDD().map(r=>r.co).filter(Boolean)])],old=$("ld_co")?$("ld_co").value:"",oq=$("ld_q")?$("ld_q").value:"";
   $("ldbody").innerHTML=`<p class="tcnote">Sổ theo dõi hợp đồng lao động để cảnh báo thử việc, hết hạn HĐ, ký tiếp. Dữ liệu lưu cùng dữ liệu app; không nhập số CCCD, lương hay thông tin cá nhân nhạy cảm vào đây nếu kho đồng bộ GitHub của bạn là công khai.</p>
   <div class="tcbtn"><button class="primary" id="ld_add">Thêm hồ sơ lao động</button><input id="ld_q" type="search" placeholder="Tìm theo tên, chức danh…" value="${esc(oq)}"><select id="ld_co"><option value="">Mọi pháp nhân</option>${cos.map(c=>`<option${c===old?" selected":""}>${esc(c)}</option>`).join("")}</select><button id="ld_exp">Xuất CSV</button><button id="ld_task" title="Tạo công việc cho các cảnh báo nghiêm trọng">Tạo công việc từ cảnh báo</button></div><div id="ld_tbl"></div>
-  <h3 style="margin:18px 0 6px">Quy tắc cần nhớ khi quản lý HĐLĐ</h3><div class="tcw" style="margin:0"><table class="m" style="min-width:760px"><thead><tr><th>Nội dung</th><th>Quy định</th><th>Căn cứ</th></tr></thead><tbody>${LD_RULES.map(x=>`<tr><td class="t"><b>${esc(x[0])}</b></td><td>${esc(x[1])}</td><td>${esc(x[2])}</td></tr>`).join("")}</tbody></table></div>${LEGEND}`;
-  ldTable();$("ld_add").onclick=()=>openLd(null);$("ld_q").oninput=ldTable;$("ld_co").onchange=ldTable;$("ld_exp").onclick=ldExport;$("ld_task").onclick=()=>mkTasks(ldGaps())}
+  <h3 style="margin:18px 0 6px">Thiết lập HĐLĐ điện tử và BHXH điện tử theo pháp nhân</h3><div class="tcbtn"><button id="le_add">Thêm thiết lập pháp nhân</button></div><div id="le_tbl"></div><h3 style="margin:18px 0 6px">Hướng dẫn thực hiện theo căn cứ pháp lý</h3>${LD_GUIDE.map((g,i)=>`<details class="ldg"${i===0?" open":""}><summary><b>${esc(g[0])}</b> (${g[1].length} bước)</summary><ol class="ldgs">${g[1].map(x=>`<li>${esc(x[0])}<small>Căn cứ: ${esc(x[1])}</small></li>`).join("")}</ol></details>`).join("")}<h3 style="margin:18px 0 6px">Quy tắc cần nhớ khi quản lý HĐLĐ</h3><div class="tcw" style="margin:0"><table class="m" style="min-width:760px"><thead><tr><th>Nội dung</th><th>Quy định</th><th>Căn cứ</th></tr></thead><tbody>${LD_RULES.map(x=>`<tr><td class="t"><b>${esc(x[0])}</b></td><td>${esc(x[1])}</td><td>${esc(x[2])}</td></tr>`).join("")}</tbody></table></div>${LEGEND}`;
+  eTable();$("le_add").onclick=()=>openE(null);ldTable();$("ld_add").onclick=()=>openLd(null);$("ld_q").oninput=ldTable;$("ld_co").onchange=ldTable;$("ld_exp").onclick=ldExport;$("ld_task").onclick=()=>mkTasks(ldGaps())}
 function ldTable(){const rows=ldList();
   $("ld_tbl").innerHTML=rows.length?`<div class="tcw" style="margin:0"><table class="m"><thead><tr><th>Người lao động</th><th>Pháp nhân</th><th>Hợp đồng</th><th>Thử việc</th><th>Cảnh báo</th></tr></thead><tbody>${rows.map(r=>{const al=ldAlerts(r),tvE=ldTvEnd(r);
-    return `<tr data-id="${r.id}"${r.st==="Đã nghỉ việc"?' class="cl"':""}><td class="t"><b>${esc(r.name)}</b>${r.pos?`<small>${esc(r.pos)}</small>`:""}${r.st==="Đã nghỉ việc"?"<small>Đã nghỉ việc</small>":""}</td><td>${chip(r.co)}</td><td>${esc(r.loai==="Chỉ thử việc"?"Chưa ký HĐLĐ chính thức":r.loai)}${r.so?`<small>Số ${esc(r.so)}</small>`:""}${r.hdfrom?`<small>${fmt(r.hdfrom)}${r.hdto?" đến "+fmt(r.hdto):""}${r.loai==="Xác định thời hạn"?" (lần "+(r.lan||"1")+")":""}</small>`:""}</td><td>${r.tv1?fmt(r.tv1)+(tvE?" đến "+fmt(tvE):"")+(r.tvn?`<small>${esc(r.tvn)} ngày</small>`:""):""}</td><td>${al.length?al.map(a=>`<div class="ldal${a.h?" h":a.s?" s":""}">${a.h?"⚠ ":""}${esc(a.t)}</div>`).join(""):'<span style="color:var(--ok)">Chưa có cảnh báo</span>'}</td></tr>`}).join("")}</tbody></table></div>`:'<div class="empty">Chưa có hồ sơ lao động. Chọn “Thêm hồ sơ lao động” để nhập.</div>'}
-$("ldbody").onclick=e=>{const tr=e.target.closest("tr[data-id]");if(tr&&tr.closest("#ld_tbl"))openLd(tr.dataset.id)};
+    return `<tr data-id="${r.id}"${r.st==="Đã nghỉ việc"?' class="cl"':""}><td class="t"><b>${esc(r.name)}</b>${r.pos?`<small>${esc(r.pos)}</small>`:""}${r.st==="Đã nghỉ việc"?"<small>Đã nghỉ việc</small>":""}</td><td>${chip(r.co)}</td><td>${esc(r.loai==="Chỉ thử việc"?"Chưa ký HĐLĐ chính thức":r.loai)}${r.so?`<small>Số ${esc(r.so)}</small>`:""}${r.hth&&r.hth!=="Bản giấy"?`<small>${esc(r.hth)}${r.ecid?", ID "+esc(r.ecid):""}</small>`:""}${r.bhdt?`<small>${esc(r.bhdt)}</small>`:""}${r.hdfrom?`<small>${fmt(r.hdfrom)}${r.hdto?" đến "+fmt(r.hdto):""}${r.loai==="Xác định thời hạn"?" (lần "+(r.lan||"1")+")":""}</small>`:""}</td><td>${r.tv1?fmt(r.tv1)+(tvE?" đến "+fmt(tvE):"")+(r.tvn?`<small>${esc(r.tvn)} ngày</small>`:""):""}</td><td>${al.length?al.map(a=>`<div class="ldal${a.h?" h":a.s?" s":""}">${a.h?"⚠ ":""}${esc(a.t)}</div>`).join(""):'<span style="color:var(--ok)">Chưa có cảnh báo</span>'}</td></tr>`}).join("")}</tbody></table></div>`:'<div class="empty">Chưa có hồ sơ lao động. Chọn “Thêm hồ sơ lao động” để nhập.</div>'}
+$("ldbody").onclick=e=>{const tr=e.target.closest("tr[data-id]");if(!tr)return;if(tr.closest("#ld_tbl"))openLd(tr.dataset.id);else if(tr.closest("#le_tbl"))openE(tr.dataset.id)};
+/* ---------- Thiết lập giao dịch điện tử theo pháp nhân (HĐLĐ điện tử, BHXH điện tử) ---------- */
+const LDE=()=>{const p=CFG.prof=CFG.prof||{};if(!Array.isArray(p.nldE))p.nldE=[];return p.nldE};
+function eAlerts(r){const t0=today(),o=[],push=(h,t)=>o.push({h,t});
+  const ck=(d,nm)=>{if(!d)return;const n=dd(t0,d);if(n<0)push(1,nm+" đã hết hạn từ "+fmt(d)+": không ký số hoặc nộp hồ sơ điện tử được cho đến khi gia hạn");else if(n<=30)push(0,nm+" hết hạn trong "+n+" ngày ("+fmt(d)+")")};
+  ck(r.cks,"Chữ ký số dùng ký HĐLĐ điện tử");ck(r.bhcks,"Chữ ký số dùng nộp hồ sơ BHXH");
+  if(r.econ&&r.nen==="Chưa thực hiện")push(0,"Đã chọn nhà cung cấp eContract ("+r.econ+") nhưng chưa kết nối nền tảng HĐLĐ điện tử của Bộ Nội vụ (nền tảng vận hành từ 01/7/2026, NĐ 337/2025/NĐ-CP*)");
+  if(r.bhtk==="Chưa thực hiện")push(0,"Chưa đăng ký tài khoản giao dịch BHXH điện tử của doanh nghiệp*");
+  return o}
+let eEdit=null;
+function eTable(){const L=LDE();
+  $("le_tbl").innerHTML=L.length?`<div class="tcw" style="margin:0"><table class="m"><thead><tr><th>Pháp nhân</th><th>HĐLĐ điện tử</th><th>BHXH điện tử</th><th>Cảnh báo</th></tr></thead><tbody>${L.map(r=>{const al=eAlerts(r);
+    return `<tr data-id="${r.id}"><td>${chip(r.co)}</td><td>${r.econ?esc(r.econ):'<span style="color:var(--mute)">Chưa chọn nhà cung cấp</span>'}${r.nen?`<small>Kết nối nền tảng Bộ Nội vụ: ${esc(r.nen)}</small>`:""}${r.cks?`<small>Chữ ký số đến ${fmt(r.cks)}</small>`:""}</td><td>${r.bhtk?"Tài khoản giao dịch: "+esc(r.bhtk):'<span style="color:var(--mute)">Chưa ghi</span>'}${r.bhcks?`<small>Chữ ký số đến ${fmt(r.bhcks)}</small>`:""}</td><td>${al.length?al.map(a=>`<div class="ldal${a.h?" h":""}">${a.h?"⚠ ":""}${esc(a.t)}</div>`).join(""):'<span style="color:var(--ok)">Chưa có cảnh báo</span>'}</td></tr>`}).join("")}</tbody></table></div>`:'<div class="empty">Chưa có thiết lập. Chọn “Thêm thiết lập pháp nhân”.</div>'}
+function openE(id){eEdit=id;const r=LDE().find(x=>x.id===id)||{co:COS()[0]||""};
+  $("lddt").textContent="Thiết lập giao dịch điện tử";$("lddel").style.display=id?"":"none";
+  const cos=[...new Set(COS())];if(r.co&&cos.indexOf(r.co)<0)cos.push(r.co);
+  const s2=(k,l,o,v)=>`<label>${l}<select id="e_${k}">${o.map(x=>`<option${x===v?" selected":""}>${esc(x)}</option>`).join("")}</select></label>`;
+  const i2=(k,l,t)=>`<label>${l}<input id="e_${k}" type="${t||"text"}" value="${esc(r[k]||"")}"></label>`;
+  $("ldform").innerHTML=s2("co","Pháp nhân",cos,r.co)+i2("econ","Nhà cung cấp eContract (HĐLĐ điện tử)")+s2("nen","Đã kết nối nền tảng HĐLĐ điện tử của Bộ Nội vụ",LD_YN,r.nen||"")+i2("cks","Chữ ký số ký HĐLĐ hết hạn ngày","date")
+   +s2("bhtk","Tài khoản giao dịch BHXH điện tử của doanh nghiệp",LD_YN,r.bhtk||"")+i2("bhcks","Chữ ký số nộp BHXH hết hạn ngày","date")+`<label class="full">Ghi chú<textarea id="e_note" rows="3">${esc(r.note||"")}</textarea></label>`;
+  ldEMode=true;ldlg.showModal()}
+let ldEMode=false;
+
 let ldEdit=null;
-function openLd(id){ldEdit=id;const r=LDD().find(x=>x.id===id)||{co:COS()[0]||"",grp:"dh",loai:"Xác định thời hạn",lan:"1",st:LD_ST[0]};
+function openLd(id){ldEMode=false;ldEdit=id;const r=LDD().find(x=>x.id===id)||{co:COS()[0]||"",grp:"dh",loai:"Xác định thời hạn",lan:"1",st:LD_ST[0]};
   $("lddt").textContent=(id?"Sửa":"Thêm")+" hồ sơ lao động";$("lddel").style.display=id?"":"none";
   const cos=[...new Set(COS())];if(r.co&&cos.indexOf(r.co)<0)cos.push(r.co);
   const s=(k,l,o,v)=>`<label>${l}<select id="l_${k}">${o.map(x=>`<option value="${esc(x[0])}"${x[0]===v?" selected":""}>${esc(x[1])}</option>`).join("")}</select></label>`;
@@ -3925,16 +3980,19 @@ function openLd(id){ldEdit=id;const r=LDD().find(x=>x.id===id)||{co:COS()[0]||""
   $("ldform").innerHTML=s("co","Pháp nhân sử dụng lao động",cos.map(c=>[c,c]),r.co)+i("name","Họ tên người lao động")+i("pos","Chức danh")+s("st","Tình trạng",LD_ST.map(x=>[x,x]),r.st)
    +s("grp","Nhóm công việc (xác định mức thử việc tối đa)",LD_GRP.map(g=>[g[0],g[1]]),r.grp)+i("tv1","Ngày bắt đầu thử việc","date")+i("tvn","Số ngày thử việc (để trống nếu không thử việc)")
    +s("loai","Loại hợp đồng",LD_LOAI.map(x=>[x,x]),r.loai)+i("so","Số hợp đồng")+i("hdfrom","HĐLĐ có hiệu lực từ","date")+i("hdto","HĐLĐ hết hạn (nếu xác định thời hạn)","date")
-   +s("lan","Lần ký HĐ xác định thời hạn liên tiếp",[["1","Lần 1"],["2","Lần 2"]],r.lan||"1")+i("bhxh","Ngày bắt đầu đóng BHXH","date")
+   +s("lan","Lần ký HĐ xác định thời hạn liên tiếp",[["1","Lần 1"],["2","Lần 2"]],r.lan||"1")+i("bhxh","Ngày bắt đầu đóng BHXH","date")+s("bhdt","Sổ BHXH điện tử (VssID, VNeID mức 2)",LD_BH.map(x=>[x,x||"Chưa ghi"]),r.bhdt||"")+i("bhtang","Ngày nộp hồ sơ báo tăng lao động (giao dịch điện tử)","date")+s("hth","Hình thức HĐLĐ",LD_HT.map(x=>[x,x]),r.hth||LD_HT[0])+i("ecid","ID HĐLĐ trên nền tảng của Bộ Nội vụ (nếu là HĐ điện tử)")+i("ecky","Ngày ký điện tử cuối cùng","date")
    +`<label class="full">Ghi chú<textarea id="l_note" rows="3">${esc(r.note||"")}</textarea></label>`;
   ldlg.showModal()}
 $("ldcancel").onclick=()=>ldlg.close();
-$("lddel").onclick=()=>{if(!ldEdit||!confirm("Xóa hồ sơ lao động này?"))return;const L=LDD();L.splice(L.findIndex(x=>x.id===ldEdit),1);saveC();ldlg.close();render()};
-$("ldok").onclick=()=>{const g=k=>$("l_"+k).value.trim(),o={co:g("co"),name:g("name"),pos:g("pos"),st:g("st"),grp:g("grp"),tv1:g("tv1"),tvn:g("tvn").replace(/[^\d]/g,""),loai:g("loai"),so:g("so"),hdfrom:g("hdfrom"),hdto:g("hdto"),lan:g("lan"),bhxh:g("bhxh"),note:g("note")};
+$("lddel").onclick=()=>{if(ldEMode){if(!eEdit||!confirm("Xóa thiết lập này?"))return;const L=LDE();L.splice(L.findIndex(x=>x.id===eEdit),1);saveC();ldlg.close();render();return}if(!ldEdit||!confirm("Xóa hồ sơ lao động này?"))return;const L=LDD();L.splice(L.findIndex(x=>x.id===ldEdit),1);saveC();ldlg.close();render()};
+$("ldok").onclick=()=>{if(ldEMode){const g=k=>$("e_"+k).value.trim(),o={co:g("co"),econ:g("econ"),nen:g("nen"),cks:g("cks"),bhtk:g("bhtk"),bhcks:g("bhcks"),note:g("note")},L=LDE();
+    if(L.some(x=>x.id!==eEdit&&x.co===o.co)){alert("Pháp nhân này đã có thiết lập. Hãy sửa dòng đó.");return}
+    if(eEdit)Object.assign(L.find(x=>x.id===eEdit),o);else L.push({id:"le"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),...o});saveC();ldlg.close();render();return}
+  const g=k=>$("l_"+k).value.trim(),o={co:g("co"),name:g("name"),pos:g("pos"),st:g("st"),grp:g("grp"),tv1:g("tv1"),tvn:g("tvn").replace(/[^\d]/g,""),loai:g("loai"),so:g("so"),hdfrom:g("hdfrom"),hdto:g("hdto"),lan:g("lan"),bhxh:g("bhxh"),bhdt:g("bhdt"),bhtang:g("bhtang"),hth:g("hth"),ecid:g("ecid"),ecky:g("ecky"),note:g("note")};
   if(!o.name){$("l_name").focus();return}
   if(o.hdfrom&&o.hdto&&o.hdto<o.hdfrom){alert("Ngày hết hạn không thể trước ngày có hiệu lực.");return}
   const L=LDD();if(ldEdit)Object.assign(L.find(x=>x.id===ldEdit),o);else L.push({id:"ld"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),...o});saveC();ldlg.close();render()};
-function ldExport(){const H=[["name","Họ tên"],["pos","Chức danh"],["co","Pháp nhân"],["st","Tình trạng"],["loai","Loại HĐ"],["so","Số HĐ"],["hdfrom","Từ"],["hdto","Đến"],["lan","Lần ký"],["tv1","Bắt đầu thử việc"],["tvn","Số ngày thử việc"],["bhxh","Bắt đầu đóng BHXH"],["note","Ghi chú"]];
+function ldExport(){const H=[["name","Họ tên"],["pos","Chức danh"],["co","Pháp nhân"],["st","Tình trạng"],["loai","Loại HĐ"],["so","Số HĐ"],["hdfrom","Từ"],["hdto","Đến"],["lan","Lần ký"],["tv1","Bắt đầu thử việc"],["tvn","Số ngày thử việc"],["bhxh","Bắt đầu đóng BHXH"],["bhdt","Sổ BHXH điện tử"],["bhtang","Báo tăng lao động"],["hth","Hình thức HĐLĐ"],["ecid","ID HĐLĐ điện tử"],["ecky","Ngày ký điện tử"],["note","Ghi chú"]];
   const c=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"',txt="﻿"+[H.map(h=>c(h[1])).join(","),...LDD().map(r=>H.map(h=>c(r[h[0]])).join(","))].join("\r\n");
   const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([txt],{type:"text/csv"}));a.download="lao_dong_"+today()+".csv";document.body.appendChild(a);a.click();a.remove()}
 
@@ -4005,11 +4063,87 @@ function cdExport(){const H=[["co","Pháp nhân"],["st","Tình trạng CĐCS"],[
   const c=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"',txt="﻿"+[H.map(h=>c(h[1])).join(","),...CDD().map(r=>H.map(h=>c(r[h[0]])).join(","))].join("\r\n");
   const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([txt],{type:"text/csv"}));a.download="cong_doan_"+today()+".csv";document.body.appendChild(a);a.click();a.remove()}
 
+/* ---------- Tab con Người lao động nước ngoài ---------- */
+const NND=()=>{const p=CFG.prof=CFG.prof||{};if(!Array.isArray(p.nn))p.nn=[];return p.nn};
+const NN_VT=["Nhà quản lý","Giám đốc điều hành","Chuyên gia","Lao động kỹ thuật","Khác"];
+const NN_HT=["Hợp đồng lao động","Điều chuyển nội bộ doanh nghiệp","Thực hiện hợp đồng, dự án","Cung cấp dịch vụ","Chào bán dịch vụ","Cử đi làm việc có thời hạn tại hiện diện thương mại","Thành viên HĐQT hoặc chủ sở hữu công ty TNHH (góp vốn dưới 3 tỷ đồng)","Khác"];
+const NN_GP=["Chưa nộp hồ sơ","Đã nộp hồ sơ, chờ kết quả","Đã có giấy phép lao động","Đã có giấy xác nhận không thuộc diện cấp giấy phép","Miễn giấy phép (làm việc ngắn hạn dưới 90 ngày/năm)","Hết hạn hoặc đã thu hồi"];
+const NN_TT=["","Thị thực LĐ1","Thị thực LĐ2","Thẻ tạm trú","Khác"],NN_GH=["Chưa gia hạn","Đã gia hạn 1 lần"],NN_BH=["","Đã tham gia BHXH bắt buộc","Chưa tham gia","Không thuộc diện"];
+const NN_ST=["Đang làm việc","Đã nghỉ việc"];
+const nnHas=r=>r.gp==="Đã có giấy phép lao động"||r.gp==="Đã có giấy xác nhận không thuộc diện cấp giấy phép";
+function nnAlerts(r){const t0=today(),o=[],push=(h,t)=>o.push({h,t});if(r.st==="Đã nghỉ việc")return o;
+  if(r.gp==="Chưa nộp hồ sơ"||r.gp==="Đã nộp hồ sơ, chờ kết quả"){
+    if(r.dkbd){const d=dd(t0,r.dkbd);
+      if(d<=0)push(1,"Đã đến ngày dự kiến làm việc ("+fmt(r.dkbd)+") nhưng chưa có giấy phép lao động hoặc giấy xác nhận: không được bố trí làm việc khi chưa đủ giấy tờ (BLLĐ 2019, Điều 151*)");
+      else if(r.gp==="Chưa nộp hồ sơ"&&d<=25)push(1,"Còn "+d+" ngày đến ngày dự kiến làm việc nhưng chưa nộp hồ sơ: thời gian giải quyết 10 ngày làm việc kể từ khi đủ hồ sơ (NĐ 219/2025/NĐ-CP*)");}
+    if(r.lltp&&dd(r.lltp,t0)>180)push(0,"Phiếu lý lịch tư pháp cấp ngày "+fmt(r.lltp)+" đã quá 6 tháng, cần làm lại trước khi nộp hồ sơ (NĐ 219/2025/NĐ-CP*)");
+    if(r.ksk&&dd(r.ksk,t0)>365)push(0,"Giấy khám sức khỏe cấp ngày "+fmt(r.ksk)+" đã quá 12 tháng, cần kiểm tra thời hạn hiệu lực trước khi nộp hồ sơ*")}
+  if(nnHas(r)&&r.gpden){const d=dd(t0,r.gpden),m=r.gptu?dd(r.gptu,r.gpden):0;
+    if(m>740)push(1,"Thời hạn giấy phép "+Math.round(m/365*10)/10+" năm, vượt mức tối đa 2 năm (BLLĐ 2019, Điều 155*)");
+    if(d<0)push(1,"Giấy phép / giấy xác nhận đã hết hạn từ "+fmt(r.gpden)+": người lao động không được tiếp tục làm việc cho đến khi được cấp mới hoặc gia hạn*");
+    else if(r.gh==="Đã gia hạn 1 lần"){if(d<=90)push(1,"Còn "+d+" ngày hết hạn ("+fmt(r.gpden)+") và đã gia hạn 1 lần: không gia hạn tiếp, phải làm thủ tục cấp mới (BLLĐ 2019, Điều 155*)")}
+    else if(d<5)push(1,"Còn "+d+" ngày hết hạn ("+fmt(r.gpden)+"): dưới 5 ngày nên có thể không kịp gia hạn, cân nhắc cấp mới*");
+    else if(d<=45)push(1,"Còn "+d+" ngày hết hạn ("+fmt(r.gpden)+"): đang trong khung nộp hồ sơ gia hạn (từ 5 đến 45 ngày trước khi hết hạn theo NĐ 152/2020, cần đối chiếu NĐ 219/2025)*");
+    else if(d<=75)push(0,"Còn "+d+" ngày hết hạn ("+fmt(r.gpden)+"): chuẩn bị hồ sơ gia hạn*")}
+  if(nnHas(r)&&!r.hdky)push(0,"Chưa ghi ngày ký hợp đồng lao động bằng văn bản; sau khi được cấp giấy phép phải ký HĐLĐ bằng văn bản và gửi cơ quan đã cấp theo quy định*");
+  if(nnHas(r)&&r.bh==="Chưa tham gia")push(0,"Người lao động nước ngoài có giấy phép lao động thuộc diện tham gia BHXH bắt buộc (Luật BHXH 2024, Điều 2*)");
+  if(r.gp==="Miễn giấy phép (làm việc ngắn hạn dưới 90 ngày/năm)"){const n=+r.ngay||0;if(n>=90)push(1,"Đã làm việc "+n+" ngày trong năm dương lịch, đạt ngưỡng 90 ngày: không còn thuộc diện miễn, cần có giấy phép lao động (NĐ 219/2025/NĐ-CP*)");else if(n>=75)push(0,"Đã làm việc "+n+" ngày trong năm, gần ngưỡng 90 ngày của diện miễn giấy phép*")}
+  if(r.hcden){const d=dd(t0,r.hcden);if(d<0)push(1,"Hộ chiếu đã hết hạn từ "+fmt(r.hcden));else if(d<=90)push(0,"Hộ chiếu hết hạn trong "+d+" ngày ("+fmt(r.hcden)+"): cần gia hạn hộ chiếu trước khi nộp hồ sơ gia hạn giấy phép")}
+  if(r.ttden){const d=dd(t0,r.ttden);if(d<0)push(1,(r.tt||"Thị thực / thẻ tạm trú")+" đã hết hạn từ "+fmt(r.ttden)+": kiểm tra tình trạng cư trú hợp pháp");else if(d<=30)push(0,(r.tt||"Thị thực / thẻ tạm trú")+" hết hạn trong "+d+" ngày ("+fmt(r.ttden)+")")}
+  return o}
+const nnGaps=()=>NND().flatMap(r=>nnAlerts(r).map(a=>({c:r.co,h:a.h,k:"nn"+r.id,t:"Lao động nước ngoài "+r.name+": "+a.t})));
+const NN_RULES=[
+ ["Thời hạn giấy phép lao động","Giấy phép lao động có thời hạn tối đa 2 năm, được gia hạn 1 lần với thời hạn tối đa 2 năm. Giấy xác nhận không thuộc diện cấp giấy phép cũng gia hạn 1 lần, tối đa 2 năm.","BLLĐ 2019, Điều 155 (nguồn thứ cấp)*"],
+ ["Thẩm quyền","Ủy ban nhân dân cấp tỉnh cấp, cấp lại, gia hạn, thu hồi giấy phép lao động cho người làm việc cho người sử dụng lao động có trụ sở, chi nhánh, văn phòng đại diện hoặc địa điểm kinh doanh tại tỉnh đó. Làm việc ở nhiều tỉnh thì thuộc tỉnh nơi người sử dụng lao động có trụ sở chính.","NĐ 219/2025/NĐ-CP*"],
+ ["Quy trình và thời gian giải quyết","Báo cáo giải trình nhu cầu sử dụng lao động nước ngoài và đề nghị cấp giấy phép gộp thành một quy trình. Cơ quan xem xét chấp thuận nhu cầu và cấp giấy phép trong 10 ngày làm việc kể từ khi đủ hồ sơ (trước đây 5 ngày làm việc); từ chối thì trả lời bằng văn bản nêu lý do trong 3 ngày làm việc.","NĐ 219/2025/NĐ-CP (ban hành 07/8/2025, có hiệu lực cùng ngày; thay thế nội dung liên quan của NĐ 152/2020 và NĐ 70/2023)*"],
+ ["Hồ sơ đề nghị cấp giấy phép","Văn bản giải trình nhu cầu kèm đề nghị cấp giấy phép (Mẫu số 03 Phụ lục); giấy khám sức khỏe (trừ khi đã kết nối trên hệ thống y tế; giấy do nước ngoài cấp có hiệu lực không quá 12 tháng, chỉ dùng khi có điều ước hoặc thỏa thuận công nhận lẫn nhau); hộ chiếu còn hạn; phiếu lý lịch tư pháp hoặc văn bản xác nhận, hiệu lực không quá 6 tháng tính đến ngày nộp; 02 ảnh màu 4x6 cm nền trắng; giấy tờ chứng minh hình thức làm việc và chứng minh là nhà quản lý, giám đốc điều hành, chuyên gia hoặc lao động kỹ thuật.","NĐ 219/2025/NĐ-CP (nguồn thứ cấp, không có số Điều)*"],
+ ["Gia hạn giấy phép","Nộp hồ sơ khi giấy phép còn hạn ít nhất 5 ngày nhưng không quá 45 ngày; cơ quan gia hạn trong 5 ngày làm việc. Đây là quy định của NĐ 152/2020 theo bài hỏi đáp năm 2022, cần đối chiếu NĐ 219/2025 vì nghị định mới thay thế nội dung liên quan.","NĐ 152/2020/NĐ-CP, Điều 16 đến 18; NĐ 219/2025/NĐ-CP*"],
+ ["Trường hợp miễn giấy phép","Nhà quản lý, giám đốc điều hành, chuyên gia, lao động kỹ thuật vào làm việc ngắn hạn dưới 90 ngày trong một năm dương lịch thuộc diện miễn (NĐ 219/2025 mở rộng so với trước). Danh sách đầy đủ các trường hợp miễn chưa tra được từ nguồn đã đọc.","NĐ 219/2025/NĐ-CP*"],
+ ["Đăng tuyển lao động Việt Nam","Bỏ yêu cầu đăng tuyển với hầu hết hình thức làm việc, chỉ còn ba trường hợp: thực hiện hợp đồng lao động; tham gia gói thầu, dự án tại Việt Nam; làm việc với cơ quan đại diện ngoại giao hoặc tổ chức nước ngoài tại Việt Nam. Thời gian đăng tuyển không dưới 5 ngày (trước đây 15 ngày). Không phải cập nhật địa điểm làm việc trên giấy phép khi đổi nơi làm việc.","NĐ 219/2025/NĐ-CP (theo bản tin KPMG)*"],
+ ["Hợp đồng lao động và BHXH","Sau khi có giấy phép, hai bên ký HĐLĐ bằng văn bản và gửi cơ quan đã cấp. Người lao động nước ngoài có giấy phép lao động làm việc tại Việt Nam thuộc diện tham gia BHXH bắt buộc theo Luật BHXH 2024.","BLLĐ 2019; Luật BHXH 2024, Điều 2 (chưa đối chiếu nguyên văn)*"],
+ ["Nội dung chưa tra được","Báo cáo định kỳ về tình hình sử dụng lao động nước ngoài; thời điểm nộp hồ sơ cấp mới trước ngày làm việc (một nguồn ghi từ 10 đến 60 ngày, một nguồn ghi báo cáo giải trình trước 15 ngày, các nguồn chưa thống nhất); chế tài vi phạm. Cần đối chiếu NĐ 219/2025 và NĐ 283/2026.","Cần tra văn bản gốc"]
+];
+function rNnStats(){const L=NND(),A=L.filter(r=>r.st!=="Đã nghỉ việc"),t0=today();
+  const soon=A.filter(r=>nnHas(r)&&r.gpden&&dd(t0,r.gpden)>=0&&dd(t0,r.gpden)<=45).length,exp=A.filter(r=>nnHas(r)&&r.gpden&&r.gpden<t0).length,hard=A.filter(r=>nnAlerts(r).some(x=>x.h)).length;
+  $("nnstats").innerHTML=st(A.length,"Người lao động nước ngoài đang làm việc")+st(A.filter(nnHas).length,"Đã có giấy phép / xác nhận")+st(soon,"Giấy phép hết hạn trong 45 ngày")+st(exp,"Giấy phép đã hết hạn",exp?"late":"")+st(hard,"Hồ sơ cần xử lý")}
+function rNn(){rNnStats();const cos=[...new Set([...COS(),...NND().map(r=>r.co).filter(Boolean)])],old=$("nn_co")?$("nn_co").value:"",oq=$("nn_q")?$("nn_q").value:"";
+  $("nnbody").innerHTML=`<p class="tcnote">Sổ theo dõi người lao động nước ngoài: giấy phép lao động, gia hạn, hộ chiếu, thị thực hoặc thẻ tạm trú, hợp đồng lao động và BHXH. Không nhập số hộ chiếu hay thông tin cá nhân nhạy cảm vào đây nếu kho đồng bộ GitHub của bạn là công khai.</p>
+  <div class="tcbtn"><button class="primary" id="nn_add">Thêm người lao động nước ngoài</button><input id="nn_q" type="search" placeholder="Tìm theo tên, quốc tịch, chức danh…" value="${esc(oq)}"><select id="nn_co"><option value="">Mọi pháp nhân</option>${cos.map(c=>`<option${c===old?" selected":""}>${esc(c)}</option>`).join("")}</select><button id="nn_exp">Xuất CSV</button><button id="nn_task" title="Tạo công việc cho các cảnh báo nghiêm trọng">Tạo công việc từ cảnh báo</button></div><div id="nn_tbl"></div>
+  <h3 style="margin:18px 0 6px">Quy tắc cần nhớ</h3><div class="tcw" style="margin:0"><table class="m" style="min-width:760px"><thead><tr><th>Nội dung</th><th>Quy định</th><th>Căn cứ</th></tr></thead><tbody>${NN_RULES.map(x=>`<tr><td class="t"><b>${esc(x[0])}</b></td><td>${esc(x[1])}</td><td>${esc(x[2])}</td></tr>`).join("")}</tbody></table></div>${LEGEND}`;
+  nnTable();$("nn_add").onclick=()=>openNn(null);$("nn_q").oninput=nnTable;$("nn_co").onchange=nnTable;$("nn_exp").onclick=nnExport;$("nn_task").onclick=()=>mkTasks(nnGaps())}
+function nnTable(){const q=$("nn_q").value.toLowerCase().trim(),f=$("nn_co").value,act=r=>r.st!=="Đã nghỉ việc";
+  const rows=NND().filter(r=>(!f||r.co===f)&&(!q||Object.values(r).join(" ").toLowerCase().includes(q))).sort((a,b)=>(act(b)-act(a))||(nnAlerts(b).filter(x=>x.h).length-nnAlerts(a).filter(x=>x.h).length)||String(a.name).localeCompare(String(b.name),"vi"));
+  $("nn_tbl").innerHTML=rows.length?`<div class="tcw" style="margin:0"><table class="m"><thead><tr><th>Người lao động</th><th>Pháp nhân</th><th>Giấy phép lao động</th><th>Giấy tờ khác</th><th>Cảnh báo</th></tr></thead><tbody>${rows.map(r=>{const al=nnAlerts(r);
+    return `<tr data-id="${r.id}"${act(r)?"":' class="cl"'}><td class="t"><b>${esc(r.name)}</b>${r.qt?`<small>${esc(r.qt)}</small>`:""}${r.pos?`<small>${esc(r.pos)}${r.vt?" ("+esc(r.vt)+")":""}</small>`:""}${act(r)?"":"<small>Đã nghỉ việc</small>"}</td><td>${chip(r.co)}</td><td>${esc(r.gp)}${r.gpso?`<small>Số ${esc(r.gpso)}</small>`:""}${r.gpden?`<small>${r.gptu?fmt(r.gptu)+" đến ":"Hết hạn "}${fmt(r.gpden)}${r.gh==="Đã gia hạn 1 lần"?" (đã gia hạn 1 lần)":""}</small>`:""}</td><td>${r.hcden?"Hộ chiếu đến "+fmt(r.hcden):""}${r.ttden?`<small>${esc(r.tt||"Cư trú")} đến ${fmt(r.ttden)}</small>`:""}${r.bh?`<small>${esc(r.bh)}</small>`:""}${r.hdky?`<small>HĐLĐ ký ${fmt(r.hdky)}</small>`:""}</td><td>${al.length?al.map(a=>`<div class="ldal${a.h?" h":""}">${a.h?"⚠ ":""}${esc(a.t)}</div>`).join(""):'<span style="color:var(--ok)">Chưa có cảnh báo</span>'}</td></tr>`}).join("")}</tbody></table></div>`:'<div class="empty">Chưa có hồ sơ. Chọn “Thêm người lao động nước ngoài” để nhập.</div>'}
+$("nnbody").onclick=e=>{const tr=e.target.closest("#nn_tbl tr[data-id]");if(tr)openNn(tr.dataset.id)};
+let nnEdit=null;
+function openNn(id){nnEdit=id;const r=NND().find(x=>x.id===id)||{co:COS()[0]||"",vt:NN_VT[2],ht:NN_HT[0],gp:NN_GP[0],gh:NN_GH[0],st:NN_ST[0]};
+  $("nndt").textContent=(id?"Sửa":"Thêm")+" người lao động nước ngoài";$("nndel").style.display=id?"":"none";
+  const cos=[...new Set(COS())];if(r.co&&cos.indexOf(r.co)<0)cos.push(r.co);
+  const sl=(k,l,o,v)=>`<label>${l}<select id="n_${k}">${o.map(x=>`<option${x===v?" selected":""}>${esc(x)}</option>`).join("")}</select></label>`;
+  const i=(k,l,t,full)=>`<label${full?' class="full"':""}>${l}<input id="n_${k}" type="${t||"text"}" value="${esc(r[k]||"")}"></label>`;
+  $("nnform").innerHTML=sl("co","Pháp nhân sử dụng lao động",cos,r.co)+i("name","Họ tên")+i("qt","Quốc tịch")+i("pos","Chức danh")+sl("vt","Thuộc nhóm",NN_VT,r.vt)+sl("ht","Hình thức làm việc",NN_HT,r.ht)+sl("st","Tình trạng",NN_ST,r.st)
+   +i("dkbd","Ngày dự kiến bắt đầu làm việc","date")+sl("gp","Giấy phép lao động",NN_GP,r.gp)+i("gpso","Số giấy phép / giấy xác nhận")+i("gptu","Cấp / có hiệu lực từ","date")+i("gpden","Hết hạn ngày","date")+sl("gh","Gia hạn",NN_GH,r.gh)
+   +i("ngay","Số ngày đã làm việc trong năm dương lịch (nếu thuộc diện miễn)")+i("lltp","Ngày cấp phiếu lý lịch tư pháp","date")+i("ksk","Ngày cấp giấy khám sức khỏe","date")+i("hcden","Hộ chiếu hết hạn ngày","date")
+   +sl("tt","Thị thực / thẻ tạm trú",NN_TT,r.tt||"")+i("ttden","Thị thực / thẻ tạm trú hết hạn ngày","date")+i("hdky","Ngày ký hợp đồng lao động bằng văn bản","date")+sl("bh","BHXH",NN_BH,r.bh||"")
+   +`<label class="full">Ghi chú<textarea id="n_note" rows="3">${esc(r.note||"")}</textarea></label>`;
+  nndlg.showModal()}
+$("nncancel").onclick=()=>nndlg.close();
+$("nndel").onclick=()=>{if(!nnEdit||!confirm("Xóa hồ sơ này?"))return;const L=NND();L.splice(L.findIndex(x=>x.id===nnEdit),1);saveC();nndlg.close();render()};
+$("nnok").onclick=()=>{const g=k=>$("n_"+k).value.trim(),F=["co","name","qt","pos","vt","ht","st","dkbd","gp","gpso","gptu","gpden","gh","ngay","lltp","ksk","hcden","tt","ttden","hdky","bh","note"],o={};F.forEach(k=>o[k]=g(k));o.ngay=o.ngay.replace(/[^\d]/g,"");
+  if(!o.name){$("n_name").focus();return}
+  if(o.gptu&&o.gpden&&o.gpden<o.gptu){alert("Ngày hết hạn không thể trước ngày có hiệu lực.");return}
+  const L=NND();if(nnEdit)Object.assign(L.find(x=>x.id===nnEdit),o);else L.push({id:"nn"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),...o});saveC();nndlg.close();render()};
+function nnExport(){const H=[["name","Họ tên"],["qt","Quốc tịch"],["co","Pháp nhân"],["pos","Chức danh"],["vt","Nhóm"],["ht","Hình thức làm việc"],["st","Tình trạng"],["gp","Giấy phép lao động"],["gpso","Số GP"],["gptu","Từ"],["gpden","Hết hạn"],["gh","Gia hạn"],["hcden","Hộ chiếu đến"],["tt","Thị thực / thẻ"],["ttden","Thị thực / thẻ đến"],["hdky","Ký HĐLĐ"],["bh","BHXH"],["note","Ghi chú"]];
+  const c=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"',txt="﻿"+[H.map(h=>c(h[1])).join(","),...NND().map(r=>H.map(h=>c(r[h[0]])).join(","))].join("\r\n");
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([txt],{type:"text/csv"}));a.download="lao_dong_nuoc_ngoai_"+today()+".csv";document.body.appendChild(a);a.click();a.remove()}
+
 function render(){
   document.querySelectorAll("#nldsub [data-m]").forEach(b=>b.classList.toggle("on",b.dataset.m===mode));
-  $("nldwrap").hidden=mode!=="lao";$("cdwrap").hidden=mode!=="cd";$("tcwrap").hidden=mode!=="tc";
+  $("nldwrap").hidden=mode!=="lao";$("cdwrap").hidden=mode!=="cd";$("nnwrap").hidden=mode!=="nn";$("tcwrap").hidden=mode!=="tc";
   if(mode==="lao"){rLao();return}
   if(mode==="cd"){rCd();return}
+  if(mode==="nn"){rNn();return}
   render2()}
 function render2(){
   document.querySelectorAll("#tcsub [data-t]").forEach(b=>b.classList.toggle("on",b.dataset.t===cur));
@@ -4023,5 +4157,508 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 </script>
 
 
+
+<!-- ===== MODULE ĐẦU TƯ (DA KCN, DA CCN) ===== -->
+<style>#vinv{padding-bottom:48px}
+#vinv .stats{padding-top:12px}
+#vinv .tcsub{display:flex;gap:6px;flex-wrap:wrap;padding:6px 24px 4px}
+#vinv .tcsub button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:6px 16px;cursor:pointer}
+#vinv .tcsub button.on{background:var(--brand);border-color:var(--brand);color:var(--bg);font-weight:600}
+#vinv .tcgrid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(300px,1fr);gap:18px;align-items:start;padding:8px 24px}
+#vinv .tcmapbox{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px;overflow-x:auto}
+#vinv .tcbar{display:flex;gap:6px;margin-bottom:8px}
+#vinv .tcbar button{font-size:12.5px;padding:3px 10px}
+#vinv .mm{display:flex;align-items:stretch;min-width:560px}
+#vinv .mm-root{align-self:center;flex:none;width:128px;text-align:center;background:var(--brand);color:var(--bg);border-radius:16px;padding:14px 10px;font-weight:700;font-size:14px;line-height:1.3;margin-right:24px;position:relative}
+#vinv .mm-root small{display:block;font-weight:500;font-size:11px;opacity:.85;margin-top:4px}
+#vinv .mm-root::after{content:"";position:absolute;left:100%;top:50%;width:24px;border-top:2px solid var(--line)}
+#vinv .mm-l1{flex:1;min-width:0;border-left:2px solid var(--line)}
+#vinv .mm-b{position:relative;padding:7px 0 7px 22px}
+#vinv .mm-b::before{content:"";position:absolute;left:0;top:26px;width:20px;border-top:2px solid var(--line)}
+#vinv .mm-n1{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:13.5px;text-align:left;border:1px solid var(--k);border-left-width:5px;border-radius:10px;background:color-mix(in srgb,var(--k) 12%,var(--card));color:var(--ink);padding:6px 10px;cursor:pointer}
+#vinv .mm-n1 i{font-style:normal;color:var(--mute);font-weight:400;width:12px;text-align:center}
+#vinv .mm-l2{display:flex;flex-wrap:wrap;gap:6px;margin:7px 0 0 6px}
+#vinv .mm-n2{font-size:12.5px;border:1px solid color-mix(in srgb,var(--k) 55%,var(--line));background:var(--card);color:var(--ink);border-radius:999px;padding:3px 11px;cursor:pointer;text-align:left}
+#vinv .mm-n2:hover{background:color-mix(in srgb,var(--k) 14%,var(--card))}
+#vinv .mm-n2.on{background:var(--k);border-color:var(--k);color:#fff;font-weight:600}
+#vinv .tcdet{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;position:sticky;top:8px;max-height:calc(100vh - 24px);overflow:auto}
+#vinv .tcdet h3,#vinv .tcr h3{margin:0 0 8px;font-size:16px}
+#vinv h4{margin:14px 0 4px;font-size:12px;letter-spacing:.03em;text-transform:uppercase;color:var(--mute)}
+#vinv .tcdet p,#vinv .tcr p{margin:4px 0;line-height:1.6}
+#vinv ul,#vinv ol{margin:4px 0;padding-left:20px;line-height:1.55}
+#vinv li{margin:3px 0}
+#vinv .crumb{font-size:12px;color:var(--mute);margin-bottom:2px}
+#vinv ul.tcc{list-style:none;padding:0;display:flex;flex-direction:column;gap:3px}
+#vinv ul.tcc li{margin:0;padding:3px 9px;border-left:3px solid var(--brand);background:color-mix(in srgb,var(--brand) 7%,var(--card));font-size:13px}
+#vinv ul.tcc li.st{border-left-color:var(--warn)}
+#vinv .tcnote{font-size:12.5px;color:var(--mute)}
+#vinv .flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0}
+#vinv .flow span{border:1px solid var(--line);border-radius:10px;padding:5px 10px;font-size:12.5px;background:color-mix(in srgb,var(--brand) 6%,var(--card));text-align:center}
+#vinv .flow small{color:var(--mute)}
+#vinv .flow b{color:var(--mute)}
+#vinv .tcform{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin:8px 24px}
+#vinv .tcft{width:100%;border-collapse:collapse}
+#vinv .tcft th{text-align:left;font-weight:500;color:var(--mute);width:42%;padding:7px 10px 7px 0;vertical-align:middle;border-bottom:1px solid var(--line);font-size:13px}
+#vinv .tcft td{padding:5px 0;border-bottom:1px solid var(--line)}
+#vinv .tcft input,#vinv .tcft select{width:100%}
+#vinv .tcbtn{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+#vinv #tcres{margin:8px 24px}
+#vinv .tcr{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px}
+#vinv .tcrh{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+#vinv .meta{color:var(--mute);font-size:12.5px}
+#vinv .tca{padding:8px 12px;border-radius:8px;margin:6px 0;font-size:13.5px;line-height:1.55;border:1px solid var(--line)}
+#vinv .tca.bad{background:color-mix(in srgb,var(--seal) 10%,var(--card));border-color:color-mix(in srgb,var(--seal) 50%,var(--card))}
+#vinv .tca.wn{background:color-mix(in srgb,var(--warn) 12%,var(--card));border-color:color-mix(in srgb,var(--warn) 50%,var(--card))}
+#vinv .tca.info{background:color-mix(in srgb,var(--brand) 7%,var(--card))}
+#vinv .tc2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+#vinv table.tcrt{width:100%;border-collapse:collapse;margin:6px 0;font-size:13.5px}
+#vinv table.tcrt th,#vinv table.tcrt td{text-align:left;padding:6px 8px;border:1px solid var(--line);vertical-align:top}
+#vinv table.tcrt th{background:var(--bg);font-size:12.5px}
+#vinv table.tcrt tr.tot td{font-weight:700;background:color-mix(in srgb,var(--ok) 9%,var(--card))}
+#vinv .num{text-align:right}
+#vinv .nw{white-space:nowrap}
+#vinv b.bad{color:var(--seal)}
+#vinv b.wn{color:var(--warn)}
+#vinv .tcw{overflow-x:auto;margin:8px 24px}
+#vinv #tclog>.tcbtn,#vinv #tclaw>.tcnote,#vinv #tclaw>ul,#vinv #tclog>.empty{margin-left:24px;margin-right:24px}
+#vinv #tclaw>ul{padding-left:0}
+#vinv table.m tr.cl td{opacity:.55}
+#vinv table.m td small{display:block;color:var(--mute)}
+#vinv .chip{display:inline-block;padding:0 9px;border-radius:99px;font-weight:600;font-size:12.5px;line-height:1.7;color:var(--ink);background:color-mix(in srgb,var(--cc,var(--c9)) 14%,var(--card));border:1px solid color-mix(in srgb,var(--cc,var(--c9)) 55%,var(--card))}
+@media(max-width:1000px){#vinv .tcgrid{grid-template-columns:1fr}#vinv .tcdet{position:static;max-height:none}}
+@media(max-width:700px){#vinv .tc2{grid-template-columns:1fr}#vinv .tcsub,#vinv .tcgrid,#vinv .tcw{padding-left:12px;padding-right:12px;margin-left:0;margin-right:0}#vinv .tcform,#vinv #tcres{margin-left:12px;margin-right:12px}#vinv .tcft th{width:46%}
+ #vinv .mm{min-width:0;flex-direction:column}#vinv .mm-root{align-self:flex-start;margin:0 0 12px 0;width:auto}#vinv .mm-root::after{display:none}#vinv .mm-l1{margin-left:12px}}
+@media print{body.tcp header,body.tcp nav.tabs,body.tcp #vlist,body.tcp #vbud,body.tcp #vdash,body.tcp #vprof,body.tcp #vinv .tcsub,body.tcp #vinv .stats,body.tcp .noprint{display:none!important}body.tcp #vinv #tcres{margin:0}body.tcp #vinv .tcr{border:0}}
+#vinv #invstats{padding-top:12px}#vinv .ivbar{height:8px;border-radius:99px;background:var(--line);overflow:hidden;min-width:90px}#vinv .ivbar i{display:block;height:100%;background:var(--brand)}#vinv .ldal{margin:2px 0;font-size:12.5px;line-height:1.5}#vinv .ldal.h{color:var(--seal);font-weight:600}#invdlg .ivchk{display:grid;gap:4px;margin-top:4px}#invdlg .ivchk label{display:flex;gap:8px;align-items:center;font-weight:400}@media print{body.tcp #vinv{display:none!important}}@media print{body.ivp header,body.ivp nav.tabs,body.ivp #vlist,body.ivp #vbud,body.ivp #vdash,body.ivp #vprof,body.ivp #vtc,body.ivp #vinv .tcsub,body.ivp #vinv .stats,body.ivp #vinv .noprint{display:none!important}}#vinv table.m td small a{color:var(--brand)}#vinv .bad{color:var(--seal)}#vinv .wn1{color:var(--seal);font-weight:600}#vinv .dkp{color:var(--warn);font-weight:600}</style>
+<script>
+const INV={
+kcn:{nm:"DA đầu tư KCN",root:"Dự án đầu tư xây dựng và kinh doanh hạ tầng KCN",sub:"Luật Đầu tư 143/2025/QH15; NĐ 35/2022/NĐ-CP",
+ map:[
+ {id:"k1",t:"1. Điều kiện và quy hoạch",kids:[
+  {id:"k11",t:"Quy hoạch, danh mục KCN",n:"Dự án phải phù hợp quy hoạch vùng, quy hoạch tỉnh, danh mục KCN của địa phương và quy hoạch xây dựng KCN đã được phê duyệt.",
+   g:["Tra cứu quy hoạch tỉnh và danh mục KCN đã được phê duyệt tại địa phương dự kiến đầu tư.","Nếu chưa có trong danh mục: làm việc với UBND tỉnh và cơ quan quản lý KCN để đề xuất cập nhật hoặc điều chỉnh quy hoạch trước khi lập hồ sơ chủ trương.","Ghi rõ sự phù hợp quy hoạch trong đề xuất dự án (hồ sơ phải giải trình điều kiện)."],
+   h:["Không phù hợp quy hoạch hoặc không nằm trong danh mục thì hồ sơ chủ trương đầu tư không đáp ứng điều kiện thẩm định."],
+   o:["UBND tỉnh, cơ quan quản lý KCN của tỉnh"],c:["NĐ 35/2022/NĐ-CP, Điều 9*"]},
+  {id:"k12",t:"Quy mô và phân kỳ",n:"KCN trên 500 ha phải chia giai đoạn, mỗi giai đoạn không quá 500 ha (có ngưỡng riêng khi chuyển đất trồng lúa tùy vùng). Cụm liên kết ngành: tổng vốn các dự án tối thiểu 2 tỷ USD hoặc 45.000 tỷ đồng, giai đoạn đầu không quá 1.000 ha.",
+   g:["Lập phương án phân kỳ trong đề xuất dự án.","Mỗi giai đoạn có quyết định, chấp thuận chủ trương và Giấy chứng nhận đăng ký đầu tư riêng.","Giai đoạn sau chỉ triển khai khi giai đoạn trước lấp đầy tối thiểu 60% hoặc hoàn thành hạ tầng theo quy hoạch."],
+   h:["Triển khai giai đoạn sau khi giai đoạn trước chưa đạt điều kiện là không hợp lệ."],
+   o:["Cơ quan chấp thuận chủ trương, cơ quan đăng ký đầu tư"],c:["NĐ 35/2022/NĐ-CP, Điều 8, Điều 9*"]},
+  {id:"k13",t:"Lấp đầy, đất cho DNNVV, nhà ở người lao động",n:"Tỷ lệ lấp đầy bình quân các KCN trong tỉnh tối thiểu 60% (có ngoại lệ); dành tối thiểu 5 ha hoặc 3% diện tích đất công nghiệp cho nhóm doanh nghiệp ưu tiên (trừ một số loại hình KCN như sinh thái, hỗ trợ, chuyên ngành, công nghệ cao); có quy hoạch nhà ở và công trình dịch vụ cho người lao động.",
+   g:["Lấy số liệu tỷ lệ lấp đầy các KCN hiện hữu của tỉnh.","Bố trí quỹ đất cho doanh nghiệp nhỏ và vừa, khu nhà ở và dịch vụ cho người lao động trong đồ án quy hoạch.","Với KCN mở rộng: chứng minh lấp đầy hoặc hoàn thành hạ tầng, bảo vệ môi trường, dùng chung hạ tầng, đã đưa nhà ở và dịch vụ vào sử dụng."],
+   h:["Tỉnh chưa đạt tỷ lệ lấp đầy bình quân thì chưa đủ điều kiện đề xuất KCN mới, trừ trường hợp ngoại lệ."],
+   o:["Cơ quan quản lý KCN của tỉnh"],c:["NĐ 35/2022/NĐ-CP, Điều 9*"]},
+  {id:"k14",t:"Điều kiện về đất đai",n:"Có khả năng đáp ứng điều kiện chuyển mục đích sử dụng đất theo pháp luật về đất đai và lâm nghiệp.",
+   g:["Rà soát hiện trạng sử dụng đất, đất trồng lúa, đất rừng trong ranh dự án.","Làm việc với cơ quan tài nguyên và môi trường về kế hoạch sử dụng đất."],
+   h:["Không đủ điều kiện chuyển mục đích thì không thể giao hoặc cho thuê đất cho dự án."],
+   o:["Cơ quan tài nguyên và môi trường cấp tỉnh"],c:["NĐ 35/2022/NĐ-CP, Điều 9*","Luật Đất đai 2024*"]}]},
+ {id:"k2",t:"2. Chủ trương đầu tư, chọn nhà đầu tư",kids:[
+  {id:"k21",t:"Thẩm quyền chấp thuận chủ trương",n:"Theo Luật Đầu tư 2025, dự án xây dựng và kinh doanh kết cấu hạ tầng KCN, khu chế xuất, khu công nghệ số tập trung thuộc nhóm do Chủ tịch UBND cấp tỉnh chấp thuận chủ trương đầu tư. Luật Đầu tư 2020 (đã thay thế từ 01/3/2026) giao nhóm này cho Thủ tướng Chính phủ nên hồ sơ cũ có thể ghi khác.",
+   g:["Xác định dự án thuộc nhóm nào (vốn đầu tư công hay vốn khác).","Chuẩn bị hồ sơ trình Chủ tịch UBND tỉnh theo hướng dẫn hiện hành.","Không triển khai dự án trước khi có chấp thuận chủ trương."],
+   h:["Chấp thuận chủ trương phải được thực hiện trước khi nhà đầu tư thực hiện dự án (khoản 1 Điều 29)."],
+   o:["Chủ tịch UBND cấp tỉnh","Dự án trong khu kinh tế, KCN, khu công nghệ cao: Ban quản lý khu có thể có thẩm quyền theo khoản 4 Điều 25 với dự án thuộc nhóm của UBND tỉnh và phù hợp quy hoạch"],
+   c:["Luật Đầu tư 143/2025/QH15, khoản 14 Điều 24, khoản 3 và 4 Điều 25, khoản 1 Điều 29*"]},
+  {id:"k22",t:"Hồ sơ, thẩm định chủ trương",n:"Hồ sơ đề xuất dự án phải giải trình việc đáp ứng điều kiện Điều 9 NĐ 35/2022 (và khoản 1 Điều 10 nếu chấp thuận đồng thời nhà đầu tư). Thẩm định đối chiếu các điều kiện này; ý kiến của cơ quan liên quan có thể được sử dụng tiếp. Dự án vốn đầu tư công làm theo pháp luật đầu tư công, báo cáo nghiên cứu tiền khả thi phải giải trình điều kiện.",
+   g:["Lập đề xuất dự án đầu tư (hoặc báo cáo nghiên cứu tiền khả thi nếu vốn công), giải trình điều kiện Điều 9.","Nộp hồ sơ tại cơ quan có thẩm quyền, theo dõi lấy ý kiến các cơ quan liên quan.","Trong thời gian chờ nghị định hướng dẫn mới, Bộ Tài chính đề nghị địa phương tiếp tục áp dụng NĐ 31/2021 và các văn bản hướng dẫn Luật Đầu tư 2020 trong phạm vi còn phù hợp. Kiểm tra NĐ 96/2026/NĐ-CP trước khi nộp."],
+   h:["Hồ sơ thiếu giải trình điều kiện có thể bị yêu cầu bổ sung hoặc không được chấp thuận."],
+   o:["Cơ quan đăng ký đầu tư của tỉnh","Thời hạn thẩm định: chưa tra được theo Luật 2025"],
+   c:["NĐ 35/2022/NĐ-CP, Điều 8, Điều 10*","Luật Đầu tư 143/2025/QH15, khoản 5 Điều 25*","NĐ 31/2021/NĐ-CP; NĐ 96/2026/NĐ-CP (cần xác định văn bản đang áp dụng)*"]},
+  {id:"k23",t:"Lựa chọn nhà đầu tư",n:"Lựa chọn nhà đầu tư thực hiện sau khi có chấp thuận chủ trương (khoản 2 Điều 23), trừ trường hợp chấp thuận đồng thời nhà đầu tư (khoản 4 Điều 23). Nhà đầu tư giai đoạn trước được ưu tiên làm giai đoạn sau, trừ trường hợp phải đấu giá hoặc đấu thầu.",
+   g:["Xác định hình thức lựa chọn: chấp thuận đồng thời, đấu giá quyền sử dụng đất hoặc đấu thầu.","Đáp ứng điều kiện năng lực, kinh nghiệm theo hồ sơ mời."],
+   h:["Chọn nhà đầu tư không đúng trình tự có thể bị hủy kết quả."],
+   o:["UBND tỉnh, cơ quan tổ chức đấu giá hoặc đấu thầu"],c:["Luật Đầu tư 143/2025/QH15, Điều 23*","NĐ 35/2022/NĐ-CP, khoản 2 Điều 9*"]},
+  {id:"k24",t:"Bảo đảm thực hiện dự án",n:"Dự án đề nghị giao đất, cho thuê đất phải ký quỹ hoặc có bảo lãnh của ngân hàng để bảo đảm thực hiện (có các ngoại lệ).",
+   g:["Xác định mức ký quỹ theo quy định hiện hành.","Ký quỹ hoặc xin bảo lãnh ngân hàng trước khi nhận đất."],
+   h:["Chưa bảo đảm thực hiện dự án thì không đủ điều kiện được giao, cho thuê đất (cần đối chiếu ngoại lệ)."],
+   o:["Cơ quan đăng ký đầu tư, ngân hàng"],c:["Luật Đầu tư 143/2025/QH15, khoản 1 Điều 30*"]}]},
+ {id:"k3",t:"3. Đăng ký đầu tư, doanh nghiệp dự án",kids:[
+  {id:"k31",t:"Giấy chứng nhận đăng ký đầu tư",n:"Nhà đầu tư nước ngoài và tổ chức kinh tế thuộc khoản 1 Điều 20 phải thực hiện thủ tục cấp Giấy chứng nhận đăng ký đầu tư; nhà đầu tư trong nước nhìn chung không bắt buộc. Cơ quan cấp: Ban quản lý khu (dự án trong khu), Sở Tài chính (dự án ngoài khu), cơ quan nơi đặt văn phòng điều hành (dự án đa tỉnh hoặc vừa trong vừa ngoài khu).",
+   g:["Xác định mình thuộc diện bắt buộc hay tự nguyện.","Nộp hồ sơ tại cơ quan có thẩm quyền sau khi có chấp thuận chủ trương."],
+   h:["Dự án thuộc diện bắt buộc mà chưa có Giấy chứng nhận thì không được triển khai và không đủ cơ sở giao, cho thuê đất."],
+   o:["Ban quản lý khu hoặc Sở Tài chính"],c:["Luật Đầu tư 143/2025/QH15, Điều 26, Điều 27*"]},
+  {id:"k32",t:"Doanh nghiệp thực hiện dự án",n:"Thành lập tổ chức kinh tế thực hiện dự án hạ tầng. Theo bản tin về Luật Đầu tư 2025, nhà đầu tư nước ngoài có thể thành lập doanh nghiệp trước khi có dự án nếu đáp ứng điều kiện tiếp cận thị trường; Luật 2020 yêu cầu có dự án trước.",
+   g:["Chọn loại hình doanh nghiệp, vốn điều lệ phù hợp quy mô dự án.","Đăng ký doanh nghiệp, đăng ký ngành nghề kinh doanh bất động sản (kinh doanh hạ tầng KCN)."],
+   h:["Thiếu ngành nghề hoặc vốn chủ sở hữu theo yêu cầu có thể làm hồ sơ bị từ chối."],
+   o:["Cơ quan đăng ký kinh doanh"],c:["Luật Đầu tư 143/2025/QH15 (theo bản tin hethongphapluat.com)*","Luật Doanh nghiệp 2020*"]}]},
+ {id:"k4",t:"4. Thành lập, mở rộng KCN, quy hoạch chi tiết",kids:[
+  {id:"k41",t:"Quyết định thành lập, mở rộng KCN",n:"Thực hiện thủ tục thành lập hoặc mở rộng KCN theo NĐ 35/2022. Cơ quan quyết định và trình tự chưa tra được từ nguồn đã đọc, cần đối chiếu nguyên văn.",
+   g:["Tra Chương về thành lập, mở rộng KCN trong NĐ 35/2022 và nghị định sửa đổi, bổ sung (nếu có).","Làm việc với cơ quan đầu mối của tỉnh về hồ sơ và thời hạn."],
+   h:["Chưa có quyết định thành lập hoặc mở rộng thì chưa thể cho thuê, cho thuê lại đất trong KCN."],
+   o:["Chưa xác định được từ nguồn đã đọc"],c:["NĐ 35/2022/NĐ-CP (cần tra điều cụ thể)*"]},
+  {id:"k42",t:"Quy hoạch xây dựng chi tiết KCN",n:"KCN phải có quy hoạch xây dựng đã được phê duyệt (điều kiện Điều 9). Lập, thẩm định, phê duyệt theo pháp luật quy hoạch và xây dựng.",
+   g:["Thuê tư vấn lập đồ án quy hoạch chi tiết, lấy ý kiến các cơ quan.","Trình thẩm định, phê duyệt và công bố quy hoạch."],
+   h:["Xây dựng trước khi có quy hoạch được duyệt là vi phạm pháp luật xây dựng."],
+   o:["Cơ quan quản lý quy hoạch, xây dựng của tỉnh"],c:["NĐ 35/2022/NĐ-CP, Điều 9*","Luật Xây dựng; Luật Quy hoạch đô thị và nông thôn (cần xác định văn bản hiện hành)*"]}]},
+ {id:"k5",t:"5. Đất đai",kids:[
+  {id:"k51",t:"Giao đất, cho thuê đất",n:"Dự án hạ tầng KCN là dự án có sử dụng đất để xây dựng đồng bộ hạ tầng kỹ thuật rồi cho nhà đầu tư thuê, thuê lại đất. Thủ tục giao đất, cho thuê đất, chuyển mục đích theo Luật Đất đai 2024.",
+   g:["Lập hồ sơ giao đất hoặc cho thuê đất sau khi có chấp thuận chủ trương, quy hoạch được duyệt.","Hoàn thành ký quỹ nếu thuộc diện.","Nộp tiền sử dụng đất, tiền thuê đất theo thông báo của cơ quan thuế."],
+   h:["Sử dụng đất sai mục đích hoặc chậm tiến độ có thể bị xử phạt, thu hồi đất (cần đối chiếu Luật Đất đai 2024)."],
+   o:["UBND tỉnh, cơ quan tài nguyên và môi trường"],c:["NĐ 35/2022/NĐ-CP, khoản 12 Điều 2*","Luật Đất đai 2024*"]},
+  {id:"k52",t:"Giải phóng mặt bằng, bồi thường, tái định cư",n:"Thực hiện theo Luật Đất đai 2024 và quy định của UBND tỉnh. Chủ đầu tư phối hợp tổ chức làm nhiệm vụ bồi thường, hỗ trợ, tái định cư.",
+   g:["Lập kế hoạch thu hồi đất, thông báo, kiểm đếm.","Phê duyệt phương án bồi thường, chi trả, bàn giao mặt bằng."],
+   h:["Khiếu nại, khiếu kiện của người bị thu hồi đất làm chậm bàn giao mặt bằng và vi phạm tiến độ dự án."],
+   o:["UBND cấp có thẩm quyền, tổ chức làm nhiệm vụ bồi thường"],c:["Luật Đất đai 2024*"]},
+  {id:"k53",t:"Thời hạn dự án, tiến độ",n:"Thời hạn hoạt động của dự án không quá 70 năm trong khu kinh tế, không quá 50 năm ngoài khu kinh tế (một số trường hợp tới 70 năm). Không điều chỉnh tiến độ quá 24 tháng so với lần chấp thuận đầu tiên, trừ trường hợp luật quy định.",
+   g:["Ghi tiến độ thực tế, dự phòng trong hồ sơ chủ trương.","Theo dõi mốc 24 tháng khi xin điều chỉnh tiến độ."],
+   h:["Chậm tiến độ vượt mức cho phép có thể bị chấm dứt hoặc thu hồi theo luật đầu tư, đất đai."],
+   o:["Cơ quan chấp thuận chủ trương"],c:["Luật Đầu tư 143/2025/QH15, Điều 31, khoản 3 và 4 Điều 33*"]}]},
+ {id:"k6",t:"6. Môi trường",kids:[
+  {id:"k61",t:"Đánh giá tác động môi trường",n:"Xác định nhóm dự án theo phụ lục của NĐ 08/2022 và Điều 28 Luật Bảo vệ môi trường 2020; thực hiện đánh giá tác động môi trường (ĐTM) trước khi triển khai.",
+   g:["Xác định nhóm dự án, cơ quan thẩm định ĐTM.","Lập báo cáo ĐTM, tham vấn, trình thẩm định, nhận quyết định phê duyệt."],
+   h:["Xây dựng khi chưa có quyết định phê duyệt ĐTM bị xử phạt và có thể bị đình chỉ."],
+   o:["Cơ quan quản lý môi trường có thẩm quyền"],c:["Luật BVMT 2020, Điều 28, 30, 33 đến 37*","NĐ 08/2022/NĐ-CP, Điều 26*","TT 02/2022/TT-BTNMT*"]},
+  {id:"k62",t:"Giấy phép môi trường, xử lý nước thải",n:"Giấy phép môi trường theo Điều 39, 41 đến 43 Luật Bảo vệ môi trường 2020 và Điều 28, 29 NĐ 08/2022. Cần đối chiếu yêu cầu hệ thống xử lý nước thải tập trung của KCN theo NĐ 35/2022 và NĐ 08/2022.",
+   g:["Lập hồ sơ cấp giấy phép môi trường trước khi vận hành thử nghiệm.","Hoàn thành công trình xử lý nước thải tập trung và vận hành thử nghiệm theo quy định."],
+   h:["Vận hành khi chưa có giấy phép môi trường bị xử phạt, có thể bị đình chỉ."],
+   o:["Cơ quan quản lý môi trường có thẩm quyền"],c:["Luật BVMT 2020, Điều 39, 41 đến 43*","NĐ 08/2022/NĐ-CP, Điều 28, 29*"]}]},
+ {id:"k7",t:"7. Xây dựng, PCCC",kids:[
+  {id:"k71",t:"Thiết kế, giấy phép xây dựng",n:"Giấy phép xây dựng theo Luật Xây dựng 2014 (sửa đổi 2020) và NĐ 15/2021 theo nguồn đã đọc, trừ các trường hợp miễn. Cần kiểm tra Luật Xây dựng mới (nếu đã có hiệu lực) vì nguồn dẫn văn bản cũ.",
+   g:["Lập thiết kế, thẩm định thiết kế.","Xin giấy phép xây dựng nếu không thuộc diện miễn (xem khoản 2 Điều 89 Luật Xây dựng).","Kiểm tra Luật Xây dựng và nghị định hướng dẫn đang có hiệu lực."],
+   h:["Xây dựng không phép hoặc sai phép bị xử phạt, buộc tháo dỡ."],
+   o:["Cơ quan quản lý xây dựng, Ban quản lý khu (nếu có ủy quyền)"],c:["Luật Xây dựng 2014 (sửa đổi 2020), Điều 89, 91, 92, 102, 103*","NĐ 15/2021/NĐ-CP*"]},
+  {id:"k72",t:"Phòng cháy chữa cháy",n:"Thẩm duyệt thiết kế và nghiệm thu về PCCC theo NĐ 136/2020 (theo nguồn đã đọc, cần kiểm tra bản sửa đổi, thay thế).",
+   g:["Nộp hồ sơ thẩm duyệt thiết kế PCCC.","Nghiệm thu PCCC trước khi đưa công trình vào sử dụng."],
+   h:["Đưa vào sử dụng khi chưa nghiệm thu PCCC bị xử phạt và có thể bị đình chỉ."],
+   o:["Cơ quan Cảnh sát PCCC"],c:["NĐ 136/2020/NĐ-CP, Điều 5, 13, 14, 15*"]}]},
+ {id:"k8",t:"8. Thi công, vận hành, cho thuê",kids:[
+  {id:"k81",t:"Thi công, nghiệm thu hạ tầng",n:"Thi công hạ tầng kỹ thuật đồng bộ theo quy hoạch và giấy phép; nghiệm thu công trình hoàn thành, đưa vào sử dụng theo pháp luật xây dựng.",
+   g:["Lựa chọn nhà thầu, quản lý chất lượng, tiến độ.","Nghiệm thu từng hạng mục, hoàn thành hạ tầng theo quy hoạch được duyệt."],
+   h:["Hạ tầng chưa hoàn thành đồng bộ thì chưa thể cho thuê lại đất hoặc triển khai giai đoạn sau."],
+   o:["Cơ quan quản lý xây dựng"],c:["Luật Xây dựng và nghị định hướng dẫn về quản lý chất lượng công trình (cần tra)*"]},
+  {id:"k82",t:"Cho thuê lại đất, thu hút dự án thứ cấp",n:"Chủ đầu tư hạ tầng cho nhà đầu tư thuê, thuê lại đất. Phải dành đất cho DNNVV theo điều kiện. Cụm liên kết ngành: cam kết tiến độ thu hút dự án được ghi trong quyết định hoặc Giấy chứng nhận, vi phạm xử lý theo cam kết.",
+   g:["Lập kế hoạch thu hút và quỹ đất cho thuê.","Ký hợp đồng thuê, thuê lại đất với nhà đầu tư thứ cấp theo đúng quy hoạch và ngành nghề.","Theo dõi cam kết tiến độ thu hút (nếu là cụm liên kết ngành)."],
+   h:["Vi phạm cam kết thu hút dự án bị xử lý theo nội dung cam kết và pháp luật đầu tư."],
+   o:["Chủ đầu tư hạ tầng, Ban quản lý khu"],c:["NĐ 35/2022/NĐ-CP, Điều 9*"]},
+  {id:"k83",t:"Theo dõi lấp đầy, điều kiện giai đoạn sau",n:"Giai đoạn sau chỉ được quyết định khi giai đoạn trước đạt lấp đầy tối thiểu 60% hoặc hoàn thành hạ tầng theo quy hoạch đã duyệt.",
+   g:["Theo dõi tỷ lệ lấp đầy từng giai đoạn, báo cáo cơ quan quản lý.","Chuẩn bị hồ sơ giai đoạn sau khi gần đạt ngưỡng."],
+   h:["Không đạt ngưỡng thì không được triển khai giai đoạn sau."],
+   o:["Cơ quan chấp thuận chủ trương"],c:["NĐ 35/2022/NĐ-CP, Điều 8, 9*"]}]},
+ {id:"k9",t:"9. Điều chỉnh, kéo dài, chấm dứt",kids:[
+  {id:"k91",t:"Điều chỉnh chủ trương đầu tư",n:"Không điều chỉnh tiến độ quá 24 tháng so với lần chấp thuận đầu tiên, trừ trường hợp luật quy định (khoản 3, 4 Điều 33). Theo bản tin về Luật 2025, không còn phải điều chỉnh chủ trương chỉ vì tổng vốn thay đổi từ 20% trở lên hoặc đổi công nghệ đã được thẩm định.",
+   g:["Xác định nội dung điều chỉnh có thuộc diện phải điều chỉnh chủ trương không.","Nộp hồ sơ điều chỉnh theo hướng dẫn hiện hành."],
+   h:["Thay đổi nội dung bắt buộc mà không điều chỉnh có thể bị xử phạt hoặc chấm dứt dự án."],
+   o:["Cơ quan chấp thuận chủ trương, cơ quan đăng ký đầu tư"],c:["Luật Đầu tư 143/2025/QH15, Điều 33*"]},
+  {id:"k92",t:"Đổi tên KCN",n:"UBND cấp tỉnh quyết định đổi tên KCN theo đề nghị của Ban quản lý KCN, khu kinh tế hoặc nhà đầu tư hạ tầng.",
+   g:["Gửi đề nghị đổi tên kèm lý do tới cơ quan đầu mối của tỉnh."],
+   h:["Chưa có quyết định thì không được dùng tên mới trong hồ sơ, hợp đồng."],
+   o:["UBND cấp tỉnh"],c:["NĐ 35/2022/NĐ-CP, Điều 12 (theo nguồn thứ cấp)*"]},
+  {id:"k93",t:"Gia hạn, chấm dứt dự án",n:"Gia hạn thời hạn hoạt động theo khoản 5 Điều 31 (trừ các dự án nêu tại khoản đó). Điều kiện chấm dứt dự án chưa tra được từ nguồn đã đọc.",
+   g:["Theo dõi thời hạn dự án, nộp hồ sơ gia hạn trước hạn.","Tra các trường hợp chấm dứt, thu hồi trong Luật Đầu tư 2025 và Luật Đất đai 2024."],
+   h:["Hết thời hạn mà chưa gia hạn thì dự án chấm dứt và nghĩa vụ về đất, tài sản phát sinh."],
+   o:["Cơ quan đăng ký đầu tư"],c:["Luật Đầu tư 143/2025/QH15, khoản 5 Điều 31*"]}]}
+ ],
+ law:[
+  ["Luật Đầu tư 143/2025/QH15","Thay thế Luật Đầu tư 2020 từ 01/3/2026. Điều 24, 25 (thẩm quyền chấp thuận chủ trương), 23 (lựa chọn nhà đầu tư), 26, 27 (Giấy chứng nhận đăng ký đầu tư), 29, 30, 31, 33.","Đọc qua công cụ tóm tắt từ bản PDF trên Cổng thông tin điện tử Chính phủ, chưa đối chiếu nguyên văn."],
+  ["NĐ 35/2022/NĐ-CP","Quản lý KCN, khu kinh tế. Điều 8 (thủ tục đầu tư hạ tầng KCN), Điều 9 (điều kiện), Điều 10, Điều 12.","Đọc qua bài thứ cấp (Thư viện Pháp luật, đăng 2022). Cần kiểm tra bản sửa đổi, thay thế."],
+  ["NĐ 31/2021/NĐ-CP; NĐ 19/2025/NĐ-CP; TT 03/2021/TT-BKHĐT","Theo bài đọc được, Bộ Tài chính đề nghị tiếp tục áp dụng trong phạm vi còn phù hợp với Luật Đầu tư 2025 trong thời gian chờ nghị định thay thế.","Bài tổng hợp, không có số hiệu công văn."],
+  ["NĐ 96/2026/NĐ-CP","Một nguồn tổng hợp ghi là nghị định hướng dẫn một số điều của Luật Đầu tư 2025, áp dụng từ 31/3/2026.","Chưa đọc nội dung, cần kiểm tra."],
+  ["Luật Đất đai 2024","Giao đất, cho thuê đất, chuyển mục đích, bồi thường, thu hồi.","Chưa đọc nội dung."],
+  ["Luật Bảo vệ môi trường 2020; NĐ 08/2022/NĐ-CP; TT 02/2022/TT-BTNMT","ĐTM, giấy phép môi trường.","Bài thứ cấp, có thể đã sửa đổi."],
+  ["Luật Xây dựng; NĐ 15/2021/NĐ-CP; NĐ 136/2020/NĐ-CP","Giấy phép xây dựng, PCCC.","Bài thứ cấp dẫn văn bản cũ, cần kiểm tra văn bản mới."]
+ ]},
+ccn:{nm:"DA đầu tư CCN",root:"Dự án đầu tư hạ tầng kỹ thuật CCN",sub:"NĐ 32/2024/NĐ-CP; Luật Đầu tư 143/2025/QH15",
+ map:[
+ {id:"c1",t:"1. Điều kiện và quy hoạch",kids:[
+  {id:"c11",t:"Khái niệm, danh mục, quy hoạch",n:"CCN là khu vực sản xuất công nghiệp và dịch vụ cho sản xuất, có ranh giới địa lý xác định, không có dân cư sinh sống, chủ yếu thu hút doanh nghiệp nhỏ và vừa, hợp tác xã, cơ sở sản xuất. CCN phải nằm trong danh mục CCN của tỉnh và đất phù hợp quy hoạch, kế hoạch sử dụng đất của địa phương.",
+   g:["Tra danh mục CCN trong quy hoạch tỉnh và quy hoạch sử dụng đất của địa phương.","Nếu vị trí chưa có trong danh mục: kiến nghị UBND tỉnh bổ sung theo quy hoạch tỉnh."],
+   h:["CCN không có trong danh mục hoặc không phù hợp quy hoạch đất thì không thể thành lập."],
+   o:["UBND tỉnh, Sở Công Thương, UBND địa phương nơi có đất"],c:["NĐ 32/2024/NĐ-CP (theo bài luatvietnam.vn)*"]},
+  {id:"c12",t:"Điều kiện thành lập về lấp đầy",n:"Nếu địa phương đã có CCN, tỷ lệ lấp đầy bình quân phải trên 50%, hoặc tổng diện tích đất công nghiệp chưa cho thuê không vượt 100 ha.",
+   g:["Thu thập số liệu lấp đầy, đất công nghiệp chưa cho thuê của các CCN hiện hữu.","Nếu chưa đạt: xem xét địa điểm khác hoặc chờ lấp đầy."],
+   h:["Không đạt điều kiện thì hồ sơ thành lập không được chấp thuận."],
+   o:["Sở Công Thương"],c:["NĐ 32/2024/NĐ-CP (theo bài luatvietnam.vn)*"]},
+  {id:"c13",t:"Lưu ý chính quyền địa phương hai cấp",n:"Các nguồn đã đọc mô tả vai trò của UBND cấp huyện trong NĐ 32/2024. Từ 01/7/2025 chính quyền địa phương chỉ còn hai cấp nên đầu mối tiếp nhận hồ sơ cần xác định theo văn bản phân định thẩm quyền hiện hành. Một nguồn cho biết có dự thảo nghị định sửa đổi NĐ 32/2024, chưa rõ đã ban hành.",
+   g:["Hỏi Sở Công Thương và UBND cấp xã về đầu mối tiếp nhận hồ sơ.","Kiểm tra nghị định sửa đổi, bổ sung NĐ 32/2024 (nếu đã ban hành)."],
+   h:["Nộp hồ sơ sai đầu mối có thể bị trả lại, mất thời gian."],
+   o:["Sở Công Thương, UBND cấp xã"],c:["Dự thảo nghị định sửa đổi NĐ 32/2024 (vibonline.com.vn)*"]}]},
+ {id:"c2",t:"2. Đề xuất chủ đầu tư hạ tầng",kids:[
+  {id:"c21",t:"Hồ sơ đề nghị làm chủ đầu tư",n:"Gồm tờ trình của UBND cấp có thẩm quyền; văn bản đề nghị làm chủ đầu tư hạ tầng kỹ thuật CCN kèm báo cáo đầu tư và bản đồ ranh giới; bản sao giấy tờ pháp lý; chứng minh năng lực tài chính (ít nhất một trong: báo cáo tài chính 2 năm, cam kết hỗ trợ của công ty mẹ, cam kết hoặc bảo lãnh của tổ chức tín dụng, tài liệu khác); chứng minh kinh nghiệm (nếu có).",
+   g:["Lập báo cáo đầu tư và bản đồ ranh giới CCN.","Chuẩn bị chứng minh năng lực tài chính (ít nhất một hình thức).","Gửi văn bản đề nghị tới đầu mối tiếp nhận."],
+   h:["Hồ sơ thiếu chứng minh năng lực tài chính hoặc pháp lý bị yêu cầu bổ sung."],
+   o:["UBND địa phương nơi có đất (đầu mối cần xác định theo lưu ý hai cấp)"],c:["NĐ 32/2024/NĐ-CP, khoản 1 Điều 9*"]},
+  {id:"c22",t:"Thông báo nhận hồ sơ, lập hồ sơ gửi Sở",n:"Trong 5 ngày làm việc kể từ khi nhận văn bản đầu tiên, địa phương thông báo rộng rãi và nhận hồ sơ trong 15 ngày kể từ ngày thông báo. Trong 5 ngày làm việc sau khi kết thúc nhận hồ sơ, lập 02 bộ hồ sơ kèm tệp điện tử gửi Sở Công Thương.",
+   g:["Theo dõi thời gian thông báo 15 ngày để các nhà đầu tư khác có thể nộp hồ sơ.","Phối hợp địa phương hoàn thiện hồ sơ gửi Sở."],
+   h:["Có nhà đầu tư khác nộp hồ sơ thì phải qua bước lựa chọn chủ đầu tư."],
+   o:["UBND địa phương, Sở Công Thương"],c:["NĐ 32/2024/NĐ-CP, Điều 9 (theo bài xaydungchinhsach.chinhphu.vn)*"]},
+  {id:"c23",t:"Lựa chọn chủ đầu tư hạ tầng",n:"Việc lựa chọn chủ đầu tư hạ tầng kỹ thuật CCN thực hiện theo khoản 2 Điều 13 NĐ 32/2024. Hình thức lựa chọn (đấu giá, đấu thầu hay chỉ định) chưa tra được từ nguồn đã đọc.",
+   g:["Tra khoản 2 Điều 13 NĐ 32/2024 để biết hình thức và tiêu chí.","Chuẩn bị hồ sơ đáp ứng tiêu chí lựa chọn."],
+   h:["Không được chọn làm chủ đầu tư thì không thể thực hiện dự án hạ tầng CCN này."],
+   o:["UBND tỉnh quy định cách thông báo kết quả"],c:["NĐ 32/2024/NĐ-CP, khoản 2 Điều 13*"]}]},
+ {id:"c3",t:"3. Thẩm định, quyết định thành lập",kids:[
+  {id:"c31",t:"Sở Công Thương thẩm định",n:"Trong 25 ngày kể từ khi nhận đủ hồ sơ, Sở Công Thương thẩm định và báo cáo UBND tỉnh. Hồ sơ chưa đạt thì yêu cầu bổ sung, thời gian bổ sung không tính vào thời hạn thẩm định.",
+   g:["Theo dõi yêu cầu bổ sung, trả lời đúng hạn."],
+   h:["Chậm bổ sung kéo dài thời gian thẩm định."],
+   o:["Sở Công Thương: 25 ngày"],c:["NĐ 32/2024/NĐ-CP, Điều 9 (theo bài xaydungchinhsach.chinhphu.vn)*"]},
+  {id:"c32",t:"UBND tỉnh quyết định thành lập, mở rộng",n:"Trong 7 ngày làm việc kể từ khi nhận hồ sơ kèm báo cáo thẩm định, UBND tỉnh quyết định thành lập, mở rộng CCN và gửi Bộ Công Thương 01 bản. Nếu đổi tên hoặc vị trí trong địa giới địa phương và diện tích tăng không quá 5 ha so với quy hoạch đã duyệt, UBND tỉnh tự quyết định trong quyết định thành lập, mở rộng và cập nhật quy hoạch tỉnh kỳ tiếp theo.",
+   g:["Nhận quyết định thành lập, mở rộng CCN.","Lưu ý mở rộng quá 5 ha so với quy hoạch phải theo quy trình đầy đủ."],
+   h:["Chưa có quyết định thì chưa thể triển khai dự án hạ tầng CCN."],
+   o:["UBND tỉnh: 7 ngày làm việc"],c:["NĐ 32/2024/NĐ-CP, Điều 9 (theo bài xaydungchinhsach.chinhphu.vn)*"]},
+  {id:"c33",t:"Chủ trương đầu tư theo Luật Đầu tư 2025",n:"Theo bản Luật Đầu tư 2025 đã đọc qua công cụ tóm tắt, hạ tầng kỹ thuật CCN không thuộc diện chấp thuận chủ trương đầu tư (điểm b khoản 8 Điều 24). Cần đối chiếu nguyên văn trước khi dựa vào.",
+   g:["Đối chiếu điểm b khoản 8 Điều 24 Luật Đầu tư 143/2025/QH15.","Hỏi cơ quan đăng ký đầu tư của tỉnh về cách xử lý trong thực tế."],
+   h:["Hiểu sai diện chấp thuận chủ trương có thể làm thiếu hoặc thừa thủ tục."],
+   o:["Cơ quan đăng ký đầu tư của tỉnh"],c:["Luật Đầu tư 143/2025/QH15, Điều 24, 25*"]}]},
+ {id:"c4",t:"4. Đăng ký đầu tư, doanh nghiệp dự án",kids:[
+  {id:"c41",t:"Giấy chứng nhận đăng ký đầu tư",n:"Nhà đầu tư nước ngoài và tổ chức kinh tế thuộc khoản 1 Điều 20 phải thực hiện thủ tục cấp Giấy chứng nhận đăng ký đầu tư; nhà đầu tư trong nước nhìn chung không bắt buộc. Cơ quan cấp: Ban quản lý khu (trong khu), Sở Tài chính (ngoài khu).",
+   g:["Xác định thuộc diện bắt buộc hay không.","Nộp hồ sơ khi có quyết định thành lập CCN và xác định chủ đầu tư."],
+   h:["Thuộc diện bắt buộc mà chưa có giấy chứng nhận thì chưa thể triển khai dự án."],
+   o:["Sở Tài chính hoặc Ban quản lý khu"],c:["Luật Đầu tư 143/2025/QH15, Điều 26, 27*"]},
+  {id:"c42",t:"Doanh nghiệp thực hiện dự án",n:"Chủ đầu tư hạ tầng CCN có thể là doanh nghiệp, hợp tác xã hoặc tổ chức pháp nhân khác có năng lực xây dựng hạ tầng kỹ thuật.",
+   g:["Rà soát ngành nghề, vốn và năng lực của pháp nhân dự định làm chủ đầu tư."],
+   h:["Pháp nhân không đủ năng lực thì hồ sơ bị từ chối."],
+   o:["Cơ quan đăng ký kinh doanh"],c:["NĐ 32/2024/NĐ-CP (theo bài luatvietnam.vn)*"]}]},
+ {id:"c5",t:"5. Đất đai",kids:[
+  {id:"c51",t:"Giao đất, cho thuê đất, ký quỹ",n:"Thủ tục giao đất, cho thuê đất, chuyển mục đích theo Luật Đất đai 2024. Dự án xin giao đất, cho thuê đất phải ký quỹ hoặc bảo lãnh ngân hàng theo Luật Đầu tư 2025 (có ngoại lệ).",
+   g:["Lập hồ sơ giao hoặc cho thuê đất.","Ký quỹ hoặc xin bảo lãnh nếu thuộc diện.","Nộp tiền sử dụng, thuê đất."],
+   h:["Sử dụng đất sai mục đích, chậm tiến độ có thể bị xử phạt, thu hồi đất."],
+   o:["UBND cấp có thẩm quyền, cơ quan tài nguyên và môi trường"],c:["Luật Đất đai 2024*","Luật Đầu tư 143/2025/QH15, khoản 1 Điều 30*"]},
+  {id:"c52",t:"Giải phóng mặt bằng",n:"Thực hiện theo Luật Đất đai 2024 và quy định của địa phương.",
+   g:["Kiểm đếm, lập phương án bồi thường, hỗ trợ, tái định cư, bàn giao mặt bằng."],
+   h:["Vướng mắc đền bù làm chậm tiến độ và có nguy cơ vi phạm tiến độ dự án."],
+   o:["UBND cấp có thẩm quyền"],c:["Luật Đất đai 2024*"]},
+  {id:"c53",t:"Thời hạn dự án",n:"Thời hạn hoạt động của dự án ngoài khu kinh tế không quá 50 năm (một số trường hợp tới 70 năm theo Điều 31 Luật Đầu tư 2025).",
+   g:["Ghi thời hạn dự án trong hồ sơ, theo dõi gia hạn."],
+   h:["Hết thời hạn mà chưa gia hạn thì dự án chấm dứt."],
+   o:["Cơ quan đăng ký đầu tư"],c:["Luật Đầu tư 143/2025/QH15, Điều 31*"]}]},
+ {id:"c6",t:"6. Môi trường, xây dựng, PCCC",kids:[
+  {id:"c61",t:"ĐTM, giấy phép môi trường",n:"Thực hiện đánh giá tác động môi trường và xin giấy phép môi trường theo Luật Bảo vệ môi trường 2020 và NĐ 08/2022 (theo nguồn đã đọc, kèm hạng mục xử lý nước thải).",
+   g:["Xác định nhóm dự án, lập ĐTM, xin giấy phép môi trường trước khi vận hành."],
+   h:["Xây dựng, vận hành khi chưa có quyết định ĐTM hoặc giấy phép môi trường bị xử phạt."],
+   o:["Cơ quan quản lý môi trường"],c:["Luật BVMT 2020*","NĐ 08/2022/NĐ-CP*"]},
+  {id:"c62",t:"Quy hoạch chi tiết, giấy phép xây dựng, PCCC",n:"Lập quy hoạch chi tiết, xin giấy phép xây dựng (trừ trường hợp miễn), thẩm duyệt và nghiệm thu PCCC theo pháp luật xây dựng và PCCC; cần kiểm tra văn bản đang có hiệu lực.",
+   g:["Lập quy hoạch chi tiết CCN và trình phê duyệt.","Xin giấy phép xây dựng, thẩm duyệt thiết kế PCCC."],
+   h:["Xây dựng không phép, không nghiệm thu PCCC bị xử phạt và đình chỉ."],
+   o:["Cơ quan xây dựng, Cảnh sát PCCC"],c:["Luật Xây dựng; NĐ 136/2020/NĐ-CP (cần tra văn bản mới)*"]}]},
+ {id:"c7",t:"7. Vận hành và quản lý CCN",kids:[
+  {id:"c71",t:"Thi công, cho thuê đất, thu hút doanh nghiệp",n:"Xây dựng hạ tầng kỹ thuật đồng bộ, sau đó cho doanh nghiệp, hợp tác xã, cơ sở sản xuất thuê đất. Nội dung chi tiết về quản lý, vận hành, hỗ trợ doanh nghiệp và báo cáo định kỳ chưa tra được từ nguồn đã đọc.",
+   g:["Hoàn thành hạ tầng theo quy hoạch được duyệt.","Cho thuê đất, thu hút doanh nghiệp nhỏ và vừa; theo dõi tỷ lệ lấp đầy.","Tra các quy định quản lý, vận hành CCN trong NĐ 32/2024."],
+   h:["Tỷ lệ lấp đầy thấp ảnh hưởng điều kiện thành lập, mở rộng CCN khác trong địa phương."],
+   o:["Chủ đầu tư hạ tầng, đơn vị quản lý theo quyết định của tỉnh"],c:["NĐ 32/2024/NĐ-CP (cần tra điều cụ thể)*"]}]},
+ {id:"c8",t:"8. Điều chỉnh, mở rộng, chấm dứt",kids:[
+  {id:"c81",t:"Điều chỉnh, mở rộng CCN",n:"Mở rộng CCN thực hiện theo trình tự thành lập, mở rộng; trường hợp đổi tên, vị trí trong địa giới và diện tích tăng không quá 5 ha do UBND tỉnh quyết định.",
+   g:["Xác định mức điều chỉnh có thuộc diện UBND tỉnh tự quyết hay phải làm đầy đủ hồ sơ."],
+   h:["Mở rộng vượt mức cho phép mà không làm đủ thủ tục là vi phạm quy hoạch."],
+   o:["UBND tỉnh, Sở Công Thương"],c:["NĐ 32/2024/NĐ-CP, Điều 9 (theo bài xaydungchinhsach.chinhphu.vn)*"]},
+  {id:"c82",t:"Điều chỉnh chủ trương, gia hạn, chấm dứt",n:"Điều chỉnh, gia hạn, chấm dứt dự án theo Luật Đầu tư 2025 (Điều 31, 33). Điều kiện chấm dứt chưa tra được.",
+   g:["Theo dõi thời hạn dự án và tiến độ.","Tra Điều 31, 33 Luật Đầu tư 2025 khi cần điều chỉnh."],
+   h:["Chậm tiến độ vượt mức cho phép có thể bị chấm dứt dự án."],
+   o:["Cơ quan đăng ký đầu tư"],c:["Luật Đầu tư 143/2025/QH15, Điều 31, 33*"]}]}
+ ],
+ law:[
+  ["NĐ 32/2024/NĐ-CP","Quản lý, phát triển CCN. Điều 9 (hồ sơ, trình tự thành lập, mở rộng), khoản 2 Điều 13 (lựa chọn chủ đầu tư hạ tầng).","Đọc qua bài thứ cấp (xaydungchinhsach.chinhphu.vn, luatvietnam.vn), chưa có nguyên văn. Các bài mô tả vai trò UBND cấp huyện, nay cần xác định lại sau sắp xếp chính quyền hai cấp."],
+  ["Luật Đầu tư 143/2025/QH15","Điều 24, 25 (chủ trương), 26, 27 (Giấy chứng nhận đăng ký đầu tư), 30 (bảo đảm thực hiện), 31 (thời hạn), 33 (điều chỉnh). Hiệu lực 01/3/2026.","Đọc qua công cụ tóm tắt từ bản PDF Cổng thông tin điện tử Chính phủ, chưa đối chiếu nguyên văn."],
+  ["Dự thảo nghị định sửa đổi NĐ 32/2024/NĐ-CP","Một nguồn (vibonline.com.vn) nêu có dự thảo sửa đổi.","Chưa rõ đã ban hành, cần kiểm tra."],
+  ["Luật Đất đai 2024","Giao đất, cho thuê đất, bồi thường, thu hồi.","Chưa đọc nội dung."],
+  ["Luật BVMT 2020; NĐ 08/2022/NĐ-CP","ĐTM, giấy phép môi trường.","Bài thứ cấp."],
+  ["Luật Xây dựng; NĐ 136/2020/NĐ-CP","Giấy phép xây dựng, PCCC.","Bài thứ cấp dẫn văn bản cũ, cần kiểm tra văn bản mới."]
+ ]}
+};
+
+(function(){
+function boot(){
+const tptc=document.getElementById("tptc");
+if(!tptc){console.error("Module Đầu tư: không tìm thấy thanh tab");return}
+const nav=tptc.parentNode,vtc=document.getElementById("vtc");
+const P2=n=>String(n).padStart(2,"0"),isoD=d=>d.getFullYear()+"-"+P2(d.getMonth()+1)+"-"+P2(d.getDate());
+const dd=(a,b)=>Math.round((new Date(b+"T00:00:00")-new Date(a+"T00:00:00"))/864e5);
+const st=(n,l,c="")=>`<div class="stat ${c}"><b>${n}</b><span>${l}</span></div>`;
+const chip=c=>c?`<span class="chip" style="--cc:var(--c${Math.max(0,COS().findIndex(x=>x===c))%6})">${esc(c)}</span>`:"";
+const star=s=>/\*\s*$/.test(s);
+const clist=a=>a&&a.length?`<ul class="tcc">${a.map(x=>`<li${star(x)?' class="st"':""}>${esc(x)}</li>`).join("")}</ul>`:"";
+const ulist=a=>a&&a.length?`<ul>${a.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:"";
+const olist=a=>a&&a.length?`<ol>${a.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>`:"";
+const LEGEND=`<p class="tcnote">Dấu * ở cuối căn cứ: chưa đối chiếu được nguyên văn, cần kiểm tra lại trước khi dùng chính thức.</p>`;
+const IV=()=>{const p=CFG.prof=CFG.prof||{};if(!Array.isArray(p.inv))p.inv=[];return p.inv};
+const IW_ST=["Chưa làm","Đang làm","Chờ cơ quan","Vướng mắc","Hoàn thành"];
+const COLS=["--c0","--c1","--c2","--c3","--c4","--c5"],IV_ST=["Đang chuẩn bị","Đang triển khai","Tạm dừng","Hoàn thành"];
+
+const tab=document.createElement("button");tab.id="tpinv";tab.textContent="Đầu tư";nav.appendChild(tab);
+const vinv=document.createElement("div");vinv.id="vinv";vinv.hidden=true;
+vinv.innerHTML=`<nav class="tcsub" id="invk"><button data-k="kcn">DA đầu tư KCN</button><button data-k="ccn">DA đầu tư CCN</button></nav>
+<section class="stats" id="invstats"></section>
+<nav class="tcsub" id="invv"><button data-v="map">Sơ đồ các bước</button><button data-v="trk">Theo dõi dự án</button><button data-v="wk">Công việc</button><button data-v="rp">Báo cáo tiến độ</button><button data-v="law">Căn cứ pháp lý</button></nav>
+<div id="invmapw" class="tcgrid"><div class="tcmapbox"><div class="tcbar"><button id="inv_open">Mở tất cả</button><button id="inv_shut">Thu gọn tất cả</button></div><div id="invmap"></div></div><aside id="invdet" class="tcdet"></aside></div>
+<div id="invtrk" hidden></div><div id="invwk" hidden></div><div id="invrp" hidden></div><div id="invlaw" hidden></div>`;
+(vtc||document.getElementById("vprof")||nav).after(vinv);
+const dlg=document.createElement("dialog");dlg.id="invdlg";
+dlg.innerHTML=`<h2 id="invdt">Dự án đầu tư</h2><div class="grid" id="invform"></div><div class="foot"><button id="invdel" style="margin-right:auto;color:var(--seal)">Xóa</button><button id="invcancel">Đóng</button><button class="primary" id="invok">Lưu</button></div>`;
+document.body.appendChild(dlg);
+const wdlg=document.createElement("dialog");wdlg.id="invwdlg";
+wdlg.innerHTML=`<h2 id="invwdt">Công việc của dự án</h2><div class="grid" id="invwform"></div><div class="foot"><button id="invwdel" style="margin-right:auto;color:var(--seal)">Xóa</button><button id="invwcancel">Đóng</button><button class="primary" id="invwok">Lưu</button></div>`;
+document.body.appendChild(wdlg);
+
+let pj="",rpFrom="",rpTo="";
+let kind="kcn",view="map",curNode=null;const closed={kcn:new Set(),ccn:new Set()};
+const D=()=>INV[kind];
+const hideInv=()=>{vinv.hidden=true;tab.classList.remove("on")};
+[...nav.querySelectorAll("button")].forEach(b=>{if(b!==tab)b.addEventListener("click",hideInv)});
+tab.onclick=()=>{["vlist","vbud","vdash","vprof","vtc"].forEach(i=>{const e=document.getElementById(i);if(e)e.hidden=true});
+  nav.querySelectorAll("button").forEach(b=>b.classList.remove("on"));vinv.hidden=false;tab.classList.add("on");render()};
+$("invk").onclick=e=>{const b=e.target.closest("[data-k]");if(b){kind=b.dataset.k;curNode=null;render()}};
+$("invv").onclick=e=>{const b=e.target.closest("[data-v]");if(b){view=b.dataset.v;render()}};
+
+/* ---------- Sơ đồ tư duy ---------- */
+function rMap(){const d=D(),cl=closed[kind];
+  $("invmap").innerHTML=`<div class="mm"><div class="mm-root">${esc(d.root)}<small>${esc(d.sub)}</small></div><div class="mm-l1">${d.map.map((b,i)=>`<div class="mm-b" style="--k:var(${COLS[i%6]})"><button class="mm-n1" data-b="${b.id}">${esc(b.t)}<i>${cl.has(b.id)?"+":"−"}</i></button>${cl.has(b.id)?"":`<div class="mm-l2">${b.kids.map(k=>`<button class="mm-n2" data-n="${k.id}">${esc(k.t)}</button>`).join("")}</div>`}</div>`).join("")}</div></div>`;
+  if(curNode&&findNode(curNode))showNode(curNode,true);else rDet0()}
+function rDet0(){const d=D();
+  $("invdet").innerHTML=`<h3>Cách dùng</h3><p>Bấm vào từng nhánh trong sơ đồ để xem nội dung quy định, cách thực hiện, cơ quan và thời hạn, rủi ro nếu bỏ sót và căn cứ pháp lý. Muốn gắn tiến độ cho dự án cụ thể, chuyển sang tab "Theo dõi dự án".</p>
+  <h3>Các bước chính</h3><ol>${d.map.map(b=>`<li>${esc(b.t.replace(/^\d+\.\s*/,""))}</li>`).join("")}</ol>
+  <p class="tcnote">Mọi căn cứ có dấu * chưa đối chiếu được nguyên văn. Luật Đầu tư 2020 đã được thay bằng Luật Đầu tư 143/2025/QH15 từ 01/3/2026 nên cần kiểm tra văn bản hướng dẫn đang áp dụng trước khi nộp hồ sơ.</p>`}
+function findNode(id){for(const b of D().map)for(const k of b.kids)if(k.id===id)return{b,k}}
+function showNode(id,keep){const f=findNode(id);if(!f)return;curNode=id;const{b,k}=f;
+  $("invdet").innerHTML=`<div class="crumb">${esc(b.t)}</div><h3>${esc(k.t)}</h3>
+  <h4>Nội dung quy định</h4><p>${esc(k.n)}</p>
+  <h4>Cách thực hiện</h4>${olist(k.g)}
+  <h4>Cơ quan, thời hạn</h4>${ulist(k.o)}
+  <h4>Rủi ro nếu không thực hiện đúng</h4>${ulist(k.h)}
+  <h4>Căn cứ pháp lý</h4>${clist(k.c)}${(k.c||[]).some(star)?LEGEND:""}`;
+  document.querySelectorAll("#invmap .mm-n2").forEach(x=>x.classList.toggle("on",x.dataset.n===id));
+  if(!keep&&window.innerWidth<1000)$("invdet").scrollIntoView({behavior:"smooth",block:"start"})}
+$("invmap").onclick=e=>{const n=e.target.closest("[data-n]");if(n){showNode(n.dataset.n);return}
+  const b=e.target.closest("[data-b]");if(b){const i=b.dataset.b,cl=closed[kind];cl.has(i)?cl.delete(i):cl.add(i);rMap()}};
+$("inv_open").onclick=()=>{closed[kind].clear();rMap()};
+$("inv_shut").onclick=()=>{D().map.forEach(b=>closed[kind].add(b.id));rMap()};
+
+/* ---------- Theo dõi dự án ---------- */
+const Wk=r=>Array.isArray(r.works)?r.works:(r.works=[]);
+const openW=w=>w.st!=="Hoàn thành";
+function stageInfo(r){const map=INV[r.kind].map,W=Wk(r),t0=today();
+  const rows=map.map(b=>{const ws=W.filter(w=>w.step===b.id),dn=ws.filter(w=>!openW(w)).length,op=ws.length-dn,ov=ws.filter(w=>openW(w)&&w.due&&w.due<t0).length,manual=(r.done||[]).includes(b.id),complete=manual||(ws.length>0&&op===0);
+    const status=complete?"Hoàn thành":op>0?(ws.some(w=>w.st!=="Chưa làm")?"Đang thực hiện":"Chưa bắt đầu"):"Chưa có công việc";return{b,total:ws.length,dn,op,ov,complete,status}});
+  let cur=rows.find(x=>!x.complete&&x.op>0)||(!W.length&&r.step?rows.find(x=>x.b.id===r.step):null)||rows.find(x=>!x.complete)||null;
+  return{rows,cur,done:rows.filter(x=>x.complete).length,pct:Math.round(rows.filter(x=>x.complete).length/map.length*100)}}
+const wTitle=w=>w.title||"(chưa đặt tên)";
+function invAlerts(r){const o=[],push=(h,t)=>o.push({h,t}),t0=today(),map=INV[r.kind].map;
+  if(r.st==="Hoàn thành"||r.st==="Tạm dừng")return o;
+  if(r.han){const d=dd(t0,r.han);if(d<0)push(1,"Việc tiếp theo đã quá hạn "+(-d)+" ngày ("+fmt(r.han)+")"+(r.next?": "+r.next:""));else if(d<=14)push(0,"Việc tiếp theo đến hạn trong "+d+" ngày ("+fmt(r.han)+")"+(r.next?": "+r.next:""))}
+  const si=stageInfo(r);
+  if(!si.cur)push(0,Wk(r).length?"Tất cả các bước đã hoàn thành, cân nhắc chuyển tình trạng dự án sang Hoàn thành":"Chưa có công việc hoặc bước hiện tại");
+  Wk(r).filter(openW).forEach(w=>{const al=o.length;
+    if(w.due){const d=dd(t0,w.due);if(d<0)o.push({h:1,w:1,t:"Công việc \""+wTitle(w)+"\" quá hạn "+(-d)+" ngày ("+fmt(w.due)+")"});else if(d<=7)o.push({h:0,w:1,t:"Công việc \""+wTitle(w)+"\" đến hạn trong "+d+" ngày ("+fmt(w.due)+")"})}
+    if(w.st==="Vướng mắc")o.push({h:1,w:1,t:"Công việc \""+wTitle(w)+"\" đang vướng mắc"+(w.note?": "+w.note:"")})});
+  return o}
+function rStats(){const L=IV().filter(r=>r.kind===kind),t0=today(),W=L.flatMap(r=>Wk(r).map(w=>({...w,_r:r}))),ov=W.filter(w=>openW(w)&&w.due&&w.due<t0).length;
+  $("invstats").innerHTML=st(L.length,D().nm)+st(L.filter(r=>r.st==="Đang triển khai").length,"Đang triển khai")+st(L.filter(r=>r.st==="Đang chuẩn bị").length,"Đang chuẩn bị")+st(W.filter(openW).length,"Công việc đang mở")+st(ov,"Công việc quá hạn",ov?"late":"")+st(L.filter(r=>r.st==="Hoàn thành").length,"Hoàn thành")}
+function rTrk(){const L=IV().filter(r=>r.kind===kind),map=D().map;
+  $("invtrk").innerHTML=`<div class="tcbtn" style="margin:0 24px 10px;align-items:center"><button class="primary" id="iv_add">Thêm dự án ${kind==="kcn"?"KCN":"CCN"}</button><button id="iv_exp">Xuất CSV</button><button id="iv_task" title="Tạo công việc cho các việc quá hạn">Tạo công việc từ cảnh báo</button></div>`+(L.length?`<div class="tcw"><table class="m"><thead><tr><th>Dự án</th><th>Giai đoạn hiện tại</th><th>Tiến độ các bước</th><th>Công việc</th><th>Việc tiếp theo</th><th>Tình trạng</th><th>Cảnh báo</th></tr></thead><tbody>${[...L].sort((a,b)=>(IV_ST.indexOf(a.st)===3)-(IV_ST.indexOf(b.st)===3)||String(a.han||"9").localeCompare(String(b.han||"9"))).map(r=>{const al=invAlerts(r),si=stageInfo(r),dn=si.done,b=si.cur&&si.cur.b,W=Wk(r),wo=W.filter(openW).length,wov=W.filter(w=>openW(w)&&w.due&&w.due<today()).length;
+   return `<tr data-id="${r.id}"${r.st==="Hoàn thành"?' class="cl"':""}><td class="t"><b>${esc(r.name)}</b>${r.co?`<small>${esc(r.co)}</small>`:""}${r.addr?`<small>${esc(r.addr)}</small>`:""}${r.ha?`<small>${esc(r.ha)} ha</small>`:""}</td><td>${b?esc(b.t):'<span style="color:var(--mute)">Chưa xác định</span>'}${si.cur?`<small>${esc(si.cur.status)}</small>`:""}</td><td><div class="ivbar"><i style="width:${si.pct}%"></i></div><small>${dn}/${map.length} bước (${si.pct}%)</small></td><td class="num">${W.length?wo+" đang mở / "+W.length:"Chưa có"}${wov?`<small class="bad">${wov} quá hạn</small>`:""}<small><a href="#" data-wk="${r.id}">Mở công việc</a></small></td><td>${esc(r.next||"")}${r.han?`<small>Hạn ${fmt(r.han)}</small>`:""}</td><td>${esc(r.st)}</td><td>${al.length?al.map(a=>`<div class="ldal${a.h?" h":""}">${a.h?"⚠ ":""}${esc(a.t)}</div>`).join(""):'<span style="color:var(--ok)">Chưa có cảnh báo</span>'}</td></tr>`}).join("")}</tbody></table></div>`:`<div class="empty" style="margin:0 24px">Chưa có dự án ${kind==="kcn"?"KCN":"CCN"}. Chọn "Thêm dự án" để theo dõi tiến độ theo các bước trong sơ đồ.</div>`);
+  $("iv_add").onclick=()=>openIv(null);$("iv_exp").onclick=ivExport;$("iv_task").onclick=mkTasks}
+$("invtrk").onclick=e=>{const a=e.target.closest("[data-wk]");if(a){e.preventDefault();pj=a.dataset.wk;view="wk";render();return}const tr=e.target.closest("tr[data-id]");if(tr)openIv(tr.dataset.id)};
+let ivEdit=null;
+function openIv(id){ivEdit=id;const r=IV().find(x=>x.id===id)||{kind,co:COS()[0]||"",st:IV_ST[0],done:[]},map=INV[r.kind].map;
+  $("invdt").textContent=(id?"Sửa":"Thêm")+" dự án "+(r.kind==="kcn"?"KCN":"CCN");$("invdel").style.display=id?"":"none";
+  const cos=[...new Set(COS())];if(r.co&&cos.indexOf(r.co)<0)cos.push(r.co);
+  const pn=[...new Set(((CFG.prof&&CFG.prof.prj)||[]).map(p=>p.name).filter(Boolean))];
+  const i=(k,l,t,full)=>`<label${full?' class="full"':""}>${l}<input id="v_${k}" type="${t||"text"}" value="${esc(r[k]||"")}"></label>`;
+  $("invform").innerHTML=`<label>Pháp nhân<select id="v_co">${cos.map(c=>`<option${c===r.co?" selected":""}>${esc(c)}</option>`).join("")}</select></label>`
+   +`<label>Tên dự án<input id="v_name" list="v_pn" value="${esc(r.name||"")}"><datalist id="v_pn">${pn.map(n=>`<option value="${esc(n)}">`).join("")}</datalist></label>`+i("addr","Địa điểm")+i("ha","Diện tích (ha)")
+   +`<label>Bước hiện tại<select id="v_step"><option value="">Chưa chọn</option>${map.map(b=>`<option value="${b.id}"${b.id===r.step?" selected":""}>${esc(b.t)}</option>`).join("")}</select></label>`
+   +`<label>Tình trạng<select id="v_st">${IV_ST.map(x=>`<option${x===r.st?" selected":""}>${esc(x)}</option>`).join("")}</select></label>`
+   +i("next","Việc tiếp theo")+i("han","Hạn việc tiếp theo","date")
+   +`<label class="full">Các bước đã hoàn thành (đánh dấu tay nếu không tạo công việc cho bước đó)<div class="ivchk">${map.map(b=>`<label><input type="checkbox" value="${b.id}"${(r.done||[]).includes(b.id)?" checked":""}> ${esc(b.t)}</label>`).join("")}</div></label>`
+   +`<label class="full">Ghi chú<textarea id="v_note" rows="3">${esc(r.note||"")}</textarea></label>`;
+  dlg.dataset.kind=r.kind;dlg.showModal()}
+$("invcancel").onclick=()=>dlg.close();
+$("invdel").onclick=()=>{if(!ivEdit||!confirm("Xóa dự án này khỏi danh sách theo dõi? Công việc đã đồng bộ sang tab Công việc vẫn được giữ."))return;const L=IV();L.splice(L.findIndex(x=>x.id===ivEdit),1);saveC();dlg.close();render()};
+$("invok").onclick=()=>{const g=k=>$("v_"+k).value.trim(),o={kind:dlg.dataset.kind||kind,co:g("co"),name:g("name"),addr:g("addr"),ha:g("ha"),step:g("step"),st:g("st"),next:g("next"),han:g("han"),note:g("note"),done:[...$("invform").querySelectorAll(".ivchk input:checked")].map(x=>x.value)};
+  if(!o.name){$("v_name").focus();return}
+  const L=IV();if(ivEdit)Object.assign(L.find(x=>x.id===ivEdit),o);else L.push({id:"iv"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),works:[],...o});saveC();dlg.close();render()};
+function ivExport(){const L=IV().filter(r=>r.kind===kind),map=D().map,H=[["name","Dự án"],["co","Pháp nhân"],["addr","Địa điểm"],["ha","Diện tích (ha)"],["st","Tình trạng"],["next","Việc tiếp theo"],["han","Hạn"],["note","Ghi chú"]];
+  const c=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"',txt="﻿"+[[...H.map(h=>c(h[1])),c("Bước hiện tại"),c("Số bước hoàn thành")].join(","),...L.map(r=>[...H.map(h=>c(r[h[0]])),c((map.find(b=>b.id===r.step)||{}).t||""),c((r.done||[]).length+"/"+map.length)].join(","))].join("\r\n");
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([txt],{type:"text/csv"}));a.download="du_an_dau_tu_"+kind+"_"+today()+".csv";document.body.appendChild(a);a.click();a.remove()}
+function gaps(){return IV().flatMap(r=>invAlerts(r).map(a=>({c:r.co,h:a.h,w:a.w,k:"iv"+r.id,t:(r.kind==="kcn"?"DA KCN ":"DA CCN ")+r.name+": "+a.t})))}
+window.__invGaps=gaps;
+function mkTasks(){let n=0;gaps().filter(g=>g.h&&!g.w&&IV().find(r=>"iv"+r.id===g.k).kind===kind).forEach(g=>{const key=g.k+"|"+g.t.replace(/\d+/g,"#").slice(0,70);
+    if(tasks.some(t=>t.src===key&&t.st!=="Hoàn thành"))return;
+    tasks.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),title:g.t.slice(0,140),co:g.c,type:"Pháp lý đầu tư",pri:"1",st:"Mới",recv:today(),due:"",src:key,note:"Tạo từ cảnh báo tab Đầu tư: "+g.t});n++});
+  save();alert(n?"Đã tạo "+n+" công việc mới trong tab Công việc.":"Không có cảnh báo quá hạn mới (các việc đã có sẽ không tạo lại).")}
+
+
+/* ---------- Công việc thực tế của dự án ---------- */
+function selProj(){const L=IV().filter(r=>r.kind===kind);if(pj&&!L.some(r=>r.id===pj))pj="";return L}
+function rWk(){const L=selProj(),r=L.find(x=>x.id===pj)||(pj=(L[0]||{}).id||"",L[0]);
+  if(!r){$("invwk").innerHTML=`<div class="empty" style="margin:0 24px">Chưa có dự án ${kind==="kcn"?"KCN":"CCN"}. Thêm dự án ở tab "Theo dõi dự án" trước, rồi quay lại để ghi công việc thực tế.</div>`;return}
+  const map=D().map,si=stageInfo(r),W=Wk(r),t0=today();
+  const stT=x=>x.status==="Hoàn thành"?'<span style="color:var(--ok);font-weight:600">Hoàn thành</span>':x.status==="Đang thực hiện"?'<span class="dkp">Đang thực hiện</span>':`<span style="color:var(--mute)">${esc(x.status)}</span>`;
+  $("invwk").innerHTML=`<div class="tcbtn" style="margin:0 24px 10px;align-items:center"><select id="iw_p">${L.map(x=>`<option value="${x.id}"${x.id===r.id?" selected":""}>${esc(x.name)}</option>`).join("")}</select><button class="primary" id="iw_add">Thêm công việc</button>${W.length?"":'<button id="iw_seed">Tạo danh sách công việc mẫu từ sơ đồ</button>'}</div>
+  <div class="tcw"><div class="tca info"><b>Giai đoạn hiện tại:</b> ${si.cur?esc(si.cur.b.t)+" ("+esc(si.cur.status)+")":"Tất cả các bước đã hoàn thành"}. Tiến độ ${si.done}/${map.length} bước (${si.pct}%). ${W.length?`Công việc: ${W.filter(w=>!openW(w)).length}/${W.length} hoàn thành.`:"Chưa có công việc nào, bấm Thêm công việc hoặc tạo danh sách mẫu."}</div></div>
+  <div class="tcw">${si.rows.map((x,i)=>{const ws=W.filter(w=>w.step===x.b.id);
+    return `<h3 class="hsh" style="margin:14px 0 6px">${esc(x.b.t)} ${stT(x)}${x.total?` <small style="color:var(--mute)">(${x.dn}/${x.total})</small>`:""}</h3>`+(ws.length?`<table class="m"><thead><tr><th>Công việc</th><th>Cơ quan, đối tác</th><th>Phụ trách</th><th>Bắt đầu</th><th>Hạn</th><th>Tình trạng</th><th>Kết quả, ghi chú</th></tr></thead><tbody>${ws.sort((a,b)=>(openW(b)-openW(a))||String(a.due||"9").localeCompare(String(b.due||"9"))).map(w=>{const d=w.due?dd(t0,w.due):null;
+      return `<tr data-w="${w.id}"${openW(w)?"":' class="cl"'}><td class="t"><b>${esc(wTitle(w))}</b>${w.tid?"<small>Đã đồng bộ sang tab Công việc</small>":""}</td><td>${esc(w.org||"")}</td><td>${esc(w.who||"")}</td><td>${w.start?fmt(w.start):""}</td><td>${w.due?fmt(w.due)+(openW(w)&&d<0?` <span class="wn1">quá hạn ${-d} ngày</span>`:openW(w)&&d<=7?` <span class="dkp">còn ${d} ngày</span>`:""):""}</td><td>${w.st==="Vướng mắc"?'<span class="wn1">Vướng mắc</span>':esc(w.st)}${w.done?`<small>Xong ${fmt(w.done)}</small>`:""}</td><td>${esc(w.res||"")}${w.note?`<small>${esc(w.note)}</small>`:""}</td></tr>`}).join("")}</tbody></table>`:'<p class="tcnote" style="margin:0 0 4px">Chưa có công việc ở bước này.</p>')}).join("")}</div>`;
+  $("iw_p").onchange=()=>{pj=$("iw_p").value;render()};$("iw_add").onclick=()=>openWd(null,r.id);
+  const sd=$("iw_seed");if(sd)sd.onclick=()=>{const W2=Wk(r);D().map.forEach(b=>b.kids.forEach(k=>W2.push({id:"w"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),step:b.id,title:"Thực hiện: "+k.t,org:(k.o&&k.o[0])||"",who:"",start:"",due:"",done:"",st:"Chưa làm",res:"",note:"",sync:false,tid:""})));saveC();render()}}
+$("invwk").onclick=e=>{const tr=e.target.closest("tr[data-w]");if(tr)openWd(tr.dataset.w,pj)};
+let wEdit=null,wProj=null;
+function openWd(id,rid){wEdit=id;wProj=rid;const r=IV().find(x=>x.id===rid);if(!r)return;const w=Wk(r).find(x=>x.id===id)||{step:(stageInfo(r).cur||{b:{id:INV[r.kind].map[0].id}}).b.id,st:"Chưa làm",sync:true};
+  $("invwdt").textContent=(id?"Sửa":"Thêm")+" công việc: "+r.name;$("invwdel").style.display=id?"":"none";
+  const map=INV[r.kind].map,sug=b=>(b.kids||[]).map(k=>k.t);
+  const i=(k,l,t,full)=>`<label${full?' class="full"':""}>${l}<input id="w_${k}" type="${t||"text"}" value="${esc(w[k]||"")}"></label>`;
+  $("invwform").innerHTML=`<label>Bước trong sơ đồ<select id="w_step">${map.map(b=>`<option value="${b.id}"${b.id===w.step?" selected":""}>${esc(b.t)}</option>`).join("")}</select></label>`
+   +`<label>Tình trạng<select id="w_st">${IW_ST.map(x=>`<option${x===w.st?" selected":""}>${esc(x)}</option>`).join("")}</select></label>`
+   +`<label class="full">Công việc<input id="w_title" list="w_sug" value="${esc(w.title||"")}"><datalist id="w_sug">${sug(map.find(b=>b.id===w.step)||map[0]).map(t=>`<option value="${esc(t)}">`).join("")}</datalist></label>`
+   +i("org","Cơ quan, đối tác")+i("who","Người phụ trách")+i("start","Ngày bắt đầu","date")+i("due","Hạn hoàn thành","date")+i("done","Ngày hoàn thành","date")
+   +i("res","Kết quả, số văn bản, ngày nhận kết quả",null,true)
+   +`<label class="full">Ghi chú, vướng mắc<textarea id="w_note" rows="3">${esc(w.note||"")}</textarea></label>`
+   +`<label class="full" style="flex-direction:row;display:flex;gap:8px;align-items:center;font-weight:400"><input type="checkbox" id="w_sync"${w.sync?" checked":""}> Đồng bộ sang tab Công việc (tạo công việc gắn với dự án, cập nhật theo tình trạng)</label>`;
+  $("w_step").onchange=()=>{const b=map.find(x=>x.id===$("w_step").value);$("w_sug").innerHTML=sug(b).map(t=>`<option value="${esc(t)}">`).join("")};
+  wdlg.showModal()}
+const TSK={ "Chưa làm":"Mới","Đang làm":"Đang xử lý","Chờ cơ quan":"Đang xử lý","Vướng mắc":"Đang xử lý","Hoàn thành":"Hoàn thành"};
+function syncWorkTask(r,w){const stt=TSK[w.st]||"Mới",b=INV[r.kind].map.find(x=>x.id===w.step),o={title:"Dự án "+r.name+": "+wTitle(w),co:r.co,type:"Pháp lý đầu tư",st:stt,due:w.due||"",done:stt==="Hoàn thành"?(w.done||today()):"",proj:r.name,note:"Đồng bộ từ tab Đầu tư"+(b?" - "+b.t:"")+(w.res?". Kết quả: "+w.res:"")+(w.note?". "+w.note:"")};
+  let t=w.tid&&tasks.find(x=>x.id===w.tid);
+  if(w.sync){if(t){const keep={pri:t.pri,who:t.who||w.who||""};Object.assign(t,o,keep)}else{t={id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),who:w.who||"",pri:"2",recv:w.start||today(),...o};tasks.push(t);w.tid=t.id}save()}
+  else if(w.tid){w.tid=""}}
+$("invwcancel").onclick=()=>wdlg.close();
+$("invwdel").onclick=()=>{if(!wEdit||!confirm("Xóa công việc này?"))return;const r=IV().find(x=>x.id===wProj),W=Wk(r),i=W.findIndex(x=>x.id===wEdit),w=W[i];if(w&&w.tid&&confirm("Xóa luôn công việc đã đồng bộ trong tab Công việc?")){const k=tasks.findIndex(t=>t.id===w.tid);if(k>=0){tasks.splice(k,1);save()}}W.splice(i,1);saveC();wdlg.close();render()};
+$("invwok").onclick=()=>{const g=k=>$("w_"+k).value.trim(),r=IV().find(x=>x.id===wProj);if(!r)return;
+  const o={step:g("step"),st:g("st"),title:g("title"),org:g("org"),who:g("who"),start:g("start"),due:g("due"),done:g("done"),res:g("res"),note:g("note"),sync:$("w_sync").checked};
+  if(!o.title){$("w_title").focus();return}
+  if(o.st==="Hoàn thành"&&!o.done)o.done=today();if(o.st!=="Hoàn thành")o.done="";
+  const W=Wk(r);let w;if(wEdit){w=W.find(x=>x.id===wEdit);Object.assign(w,o)}else{w={id:"w"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),tid:"",...o};W.push(w)}
+  syncWorkTask(r,w);saveC();wdlg.close();render()};
+
+/* ---------- Báo cáo tiến độ ---------- */
+function rRp(){const L=selProj();if(!rpFrom){const d=new Date();d.setDate(d.getDate()-30);rpFrom=isoD(d)}if(!rpTo)rpTo=today();
+  const sel=pj==="__all"?"__all":(L.some(x=>x.id===pj)?pj:"__all");
+  const head=`<div class="tcbtn noprint" style="margin:0 24px 10px;align-items:center"><select id="rp_p"><option value="__all"${sel==="__all"?" selected":""}>Tất cả dự án ${kind==="kcn"?"KCN":"CCN"}</option>${L.map(x=>`<option value="${x.id}"${x.id===sel?" selected":""}>${esc(x.name)}</option>`).join("")}</select><label style="display:flex;gap:6px;align-items:center;font-weight:400">Kỳ báo cáo từ <input type="date" id="rp_f" value="${rpFrom}"></label><label style="display:flex;gap:6px;align-items:center;font-weight:400">đến <input type="date" id="rp_t" value="${rpTo}"></label><button class="primary" id="rp_print">In / Xuất PDF</button></div>`;
+  let body="";
+  if(!L.length)body=`<div class="empty" style="margin:0 24px">Chưa có dự án để báo cáo.</div>`;
+  else if(sel==="__all")body=rpAll(L);else body=rpOne(L.find(x=>x.id===sel));
+  $("invrp").innerHTML=head+`<div id="rp_doc" class="tcw">${body}</div>`;
+  $("rp_p").onchange=()=>{pj=$("rp_p").value;render()};$("rp_f").onchange=()=>{rpFrom=$("rp_f").value;render()};$("rp_t").onchange=()=>{rpTo=$("rp_t").value;render()};
+  $("rp_print").onclick=()=>{document.body.classList.add("ivp");const f=()=>{document.body.classList.remove("ivp");window.removeEventListener("afterprint",f)};window.addEventListener("afterprint",f);setTimeout(()=>window.print(),80)}}
+const wRows=(list,r)=>list.length?`<table class="m"><thead><tr><th>Công việc</th><th>Giai đoạn</th><th>Cơ quan</th><th>Phụ trách</th><th>Hạn</th><th>Tình trạng</th></tr></thead><tbody>${list.map(w=>{const b=INV[r.kind].map.find(x=>x.id===w.step);return `<tr><td class="t"><b>${esc(wTitle(w))}</b>${w.note?`<small>${esc(w.note)}</small>`:""}</td><td>${b?esc(b.t):""}</td><td>${esc(w.org||"")}</td><td>${esc(w.who||"")}</td><td>${w.due?fmt(w.due):""}</td><td>${esc(w.st)}${w.done?`<small>Xong ${fmt(w.done)}</small>`:""}</td></tr>`}).join("")}</tbody></table>`:'<p class="tcnote" style="margin:0 0 4px">Không có.</p>';
+function rpOne(r){const si=stageInfo(r),W=Wk(r),t0=today(),map=INV[r.kind].map,lim=isoD(new Date(Date.now()+30*864e5));
+  const open=W.filter(openW),late=open.filter(w=>(w.due&&w.due<t0)||w.st==="Vướng mắc"),plan=open.filter(w=>w.due&&w.due>=t0&&w.due<=lim).sort((a,b)=>a.due.localeCompare(b.due)),doneP=W.filter(w=>!openW(w)&&w.done&&w.done>=rpFrom&&w.done<=rpTo);
+  const stT=x=>x.status==="Hoàn thành"?'<span style="color:var(--ok);font-weight:600">Hoàn thành</span>':x.status==="Đang thực hiện"?'<span class="dkp">Đang thực hiện</span>':`<span style="color:var(--mute)">${esc(x.status)}</span>`;
+  return `<div class="tcr"><h3>BÁO CÁO TIẾN ĐỘ ${r.kind==="kcn"?"DỰ ÁN ĐẦU TƯ HẠ TẦNG KCN":"DỰ ÁN ĐẦU TƯ HẠ TẦNG CCN"}</h3>
+  <p><b>${esc(r.name)}</b>${r.co?" | Pháp nhân: "+esc(r.co):""}${r.addr?" | Địa điểm: "+esc(r.addr):""}${r.ha?" | Diện tích: "+esc(r.ha)+" ha":""}</p>
+  <p class="meta">Kỳ báo cáo: ${fmt(rpFrom)} đến ${fmt(rpTo)} | Ngày lập: ${fmt(t0)} | Tình trạng dự án: ${esc(r.st)}</p>
+  <h4>1. Giai đoạn hiện tại và tiến độ chung</h4>
+  <div class="tca info">Giai đoạn hiện tại: <b>${si.cur?esc(si.cur.b.t):"Tất cả các bước đã hoàn thành"}</b>${si.cur?" ("+esc(si.cur.status)+")":""}. Đã hoàn thành ${si.done}/${map.length} bước (${si.pct}%). Công việc: ${W.length-open.length}/${W.length} hoàn thành, ${open.length} đang mở${late.length?`, <b class="bad">${late.length} quá hạn hoặc vướng mắc</b>`:""}.${r.next?` Việc tiếp theo: ${esc(r.next)}${r.han?" (hạn "+fmt(r.han)+")":""}.`:""}</div>
+  <h4>2. Tiến độ theo giai đoạn</h4><table class="tcrt"><thead><tr><th>Giai đoạn</th><th>Tình trạng</th><th>Công việc xong / tổng</th><th>Quá hạn</th></tr></thead><tbody>${si.rows.map(x=>`<tr><td>${esc(x.b.t)}</td><td>${stT(x)}</td><td>${x.total?x.dn+"/"+x.total:"-"}</td><td>${x.ov||"-"}</td></tr>`).join("")}</tbody></table>
+  <h4>3. Công việc đã hoàn thành trong kỳ (${doneP.length})</h4>${wRows(doneP,r)}
+  <h4>4. Công việc quá hạn hoặc vướng mắc (${late.length})</h4>${wRows(late,r)}
+  <h4>5. Kế hoạch 30 ngày tới (${plan.length})</h4>${wRows(plan,r)}
+  <h4>6. Kiến nghị, ghi chú</h4><p>${r.note?esc(r.note):"Không có."}</p></div>`}
+function rpAll(L){const t0=today(),lim=isoD(new Date(Date.now()+30*864e5));
+  const rows=L.map(r=>{const si=stageInfo(r),W=Wk(r),open=W.filter(openW),late=open.filter(w=>(w.due&&w.due<t0)||w.st==="Vướng mắc"),nx=open.filter(w=>w.due&&w.due>=t0).sort((a,b)=>a.due.localeCompare(b.due))[0],dn=W.filter(w=>!openW(w)&&w.done&&w.done>=rpFrom&&w.done<=rpTo).length;return{r,si,W,open,late,nx,dn}});
+  return `<div class="tcr"><h3>BÁO CÁO TỔNG HỢP TIẾN ĐỘ CÁC ${kind==="kcn"?"DỰ ÁN ĐẦU TƯ HẠ TẦNG KCN":"DỰ ÁN ĐẦU TƯ HẠ TẦNG CCN"}</h3>
+  <p class="meta">Kỳ báo cáo: ${fmt(rpFrom)} đến ${fmt(rpTo)} | Ngày lập: ${fmt(t0)} | ${L.length} dự án</p>
+  <table class="tcrt"><thead><tr><th>Dự án</th><th>Giai đoạn hiện tại</th><th>Tiến độ</th><th>Công việc mở</th><th>Quá hạn / vướng</th><th>Xong trong kỳ</th><th>Hạn gần nhất</th><th>Tình trạng</th></tr></thead><tbody>${rows.map(x=>`<tr><td class="t"><b>${esc(x.r.name)}</b>${x.r.co?`<small>${esc(x.r.co)}</small>`:""}</td><td>${x.si.cur?esc(x.si.cur.b.t):"Hoàn thành tất cả"}</td><td>${x.si.done}/${INV[x.r.kind].map.length} (${x.si.pct}%)</td><td>${x.open.length}</td><td>${x.late.length?`<b class="bad">${x.late.length}</b>`:"0"}</td><td>${x.dn}</td><td>${x.nx?fmt(x.nx.due)+"<small>"+esc(wTitle(x.nx))+"</small>":""}</td><td>${esc(x.r.st)}</td></tr>`).join("")}</tbody></table>
+  <h4>Công việc quá hạn hoặc vướng mắc</h4>${rows.some(x=>x.late.length)?rows.filter(x=>x.late.length).map(x=>`<p style="margin:8px 0 2px"><b>${esc(x.r.name)}</b></p>${wRows(x.late,x.r)}`).join(""):'<p class="tcnote">Không có.</p>'}</div>`}
+
+/* ---------- Căn cứ pháp lý ---------- */
+function rLaw(){$("invlaw").innerHTML=`<div class="tcw"><table class="m" style="min-width:760px"><thead><tr><th>Văn bản</th><th>Nội dung</th><th>Mức đối chiếu</th></tr></thead><tbody>${D().law.map(r=>`<tr><td class="t"><b>${esc(r[0])}</b></td><td>${esc(r[1])}</td><td>${esc(r[2])}</td></tr>`).join("")}</tbody></table></div>
+  <p class="tcnote" style="margin:8px 24px">Các nguồn đã tra đều là bài tổng hợp hoặc bản tóm tắt, chưa phải văn bản gốc. Cần đối chiếu trên Cơ sở dữ liệu quốc gia về văn bản pháp luật trước khi dùng cho hồ sơ chính thức. Chưa tra được: thủ tục thành lập, mở rộng KCN, hình thức lựa chọn chủ đầu tư hạ tầng CCN, quy định quản lý, vận hành CCN, các nghị định sửa đổi sau 2025.</p>`}
+
+function render(){
+  document.querySelectorAll("#invk [data-k]").forEach(b=>b.classList.toggle("on",b.dataset.k===kind));
+  document.querySelectorAll("#invv [data-v]").forEach(b=>b.classList.toggle("on",b.dataset.v===view));
+  $("invmapw").hidden=view!=="map";$("invtrk").hidden=view!=="trk";$("invwk").hidden=view!=="wk";$("invrp").hidden=view!=="rp";$("invlaw").hidden=view!=="law";
+  rStats();if(view==="map")rMap();else if(view==="trk")rTrk();else if(view==="wk")rWk();else if(view==="rp")rRp();else rLaw()}
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot();
+})();
+
+</script>
 </body>
 </html>
