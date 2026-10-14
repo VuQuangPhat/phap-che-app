@@ -4470,7 +4470,9 @@ const ulist=a=>a&&a.length?`<ul>${a.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`
 const olist=a=>a&&a.length?`<ol>${a.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>`:"";
 const LEGEND=`<p class="tcnote">Dấu * ở cuối căn cứ: chưa đối chiếu được nguyên văn, cần kiểm tra lại trước khi dùng chính thức.</p>`;
 const IV=()=>{const p=CFG.prof=CFG.prof||{};if(!Array.isArray(p.inv))p.inv=[];return p.inv};
-const IW_ST=["Chưa làm","Đang làm","Chờ cơ quan","Vướng mắc","Hoàn thành"];
+const IW_ST=["Chưa làm","Đang chuẩn bị hồ sơ","Đã nộp","Cần bổ sung hồ sơ","Vướng mắc","Hoàn thành"];
+const IW_PH=["Chuẩn bị hồ sơ","Đã nộp","Bổ sung, thẩm định","Có kết quả"];
+const MAPX={kcn:{k1:"c1",k2:"c2",k3:"c4",k4:"c3",k5:"c5",k6:"c6",k7:"c6",k8:"c7",k9:"c8"},ccn:{c1:"k1",c2:"k2",c3:"k4",c4:"k3",c5:"k5",c6:"k6",c7:"k8",c8:"k9"}};
 const COLS=["--c0","--c1","--c2","--c3","--c4","--c5"],IV_ST=["Đang chuẩn bị","Đang triển khai","Tạm dừng","Hoàn thành"];
 
 const tab=document.createElement("button");tab.id="tpinv";tab.textContent="Đầu tư";nav.appendChild(tab);
@@ -4522,10 +4524,18 @@ $("inv_open").onclick=()=>{closed[kind].clear();rMap()};
 $("inv_shut").onclick=()=>{D().map.forEach(b=>closed[kind].add(b.id));rMap()};
 
 /* ---------- Theo dõi dự án ---------- */
-const Wk=r=>Array.isArray(r.works)?r.works:(r.works=[]);
+const kidOf=(kd,id)=>{for(const b of INV[kd].map){const k=(b.kids||[]).find(x=>x.id===id);if(k)return k}return null};
+const kidByTitle=(kd,t)=>{for(const b of INV[kd].map){const k=(b.kids||[]).find(x=>x.t===t);if(k)return k}return null};
+const mkCl=k=>((k&&k.g)||[]).map(t=>({t,d:false}));
+const Wk=r=>{if(!Array.isArray(r.works))r.works=[];r.works.forEach(w=>{
+  if(w.st==="Đang làm")w.st="Đang chuẩn bị hồ sơ";else if(w.st==="Chờ cơ quan")w.st="Đã nộp";
+  if(!Array.isArray(w.cl)){const m=/^Thực hiện: (.*)$/.exec(w.title||""),k=m&&kidByTitle(r.kind,m[1]);if(k){w.title=k.t;w.node=k.id;w.cl=mkCl(k)}else w.cl=[]}});return r.works};
+const phase=w=>w.st==="Hoàn thành"?4:w.st==="Cần bổ sung hồ sơ"?3:w.st==="Đã nộp"?2:w.st==="Đang chuẩn bị hồ sơ"?1:(w.ngay?2:0);
+const phaseHtml=w=>{const n=phase(w);return `<span class="gts">${IW_PH.map((l,i)=>`<i class="${i+1<n||n===4?"dn":i+1===n?"cur":""}">${i+1}. ${l}</i>`).join("")}</span>`};
+const clTxt=w=>(w.cl&&w.cl.length)?(w.cl.filter(x=>x.d).length+"/"+w.cl.length+" việc con"):"";
 const openW=w=>w.st!=="Hoàn thành";
 function stageInfo(r){const map=INV[r.kind].map,W=Wk(r),t0=today();
-  const rows=map.map(b=>{const ws=W.filter(w=>w.step===b.id),dn=ws.filter(w=>!openW(w)).length,op=ws.length-dn,ov=ws.filter(w=>openW(w)&&w.due&&w.due<t0).length,manual=(r.done||[]).includes(b.id),complete=manual||(ws.length>0&&op===0);
+  const rows=map.map(b=>{const ws=W.filter(w=>w.step===b.id),dn=ws.filter(w=>!openW(w)).length,op=ws.length-dn,ov=ws.filter(w=>openW(w)&&w.due&&w.due<t0).length,manual=(r.done||[]).includes(b.id),complete=ws.length?op===0:manual;
     const status=complete?"Hoàn thành":op>0?(ws.some(w=>w.st!=="Chưa làm")?"Đang thực hiện":"Chưa bắt đầu"):"Chưa có công việc";return{b,total:ws.length,dn,op,ov,complete,status}});
   let cur=rows.find(x=>!x.complete&&x.op>0)||(!W.length&&r.step?rows.find(x=>x.b.id===r.step):null)||rows.find(x=>!x.complete)||null;
   return{rows,cur,done:rows.filter(x=>x.complete).length,pct:Math.round(rows.filter(x=>x.complete).length/map.length*100)}}
@@ -4537,7 +4547,8 @@ function invAlerts(r){const o=[],push=(h,t)=>o.push({h,t}),t0=today(),map=INV[r.
   if(!si.cur)push(0,Wk(r).length?"Tất cả các bước đã hoàn thành, cân nhắc chuyển tình trạng dự án sang Hoàn thành":"Chưa có công việc hoặc bước hiện tại");
   Wk(r).filter(openW).forEach(w=>{const al=o.length;
     if(w.due){const d=dd(t0,w.due);if(d<0)o.push({h:1,w:1,t:"Công việc \""+wTitle(w)+"\" quá hạn "+(-d)+" ngày ("+fmt(w.due)+")"});else if(d<=7)o.push({h:0,w:1,t:"Công việc \""+wTitle(w)+"\" đến hạn trong "+d+" ngày ("+fmt(w.due)+")"})}
-    if(w.st==="Vướng mắc")o.push({h:1,w:1,t:"Công việc \""+wTitle(w)+"\" đang vướng mắc"+(w.note?": "+w.note:"")})});
+    if(w.st==="Vướng mắc")o.push({h:1,w:1,t:"Công việc \""+wTitle(w)+"\" đang vướng mắc"+(w.note?": "+w.note:"")});
+    if((w.st==="Đã nộp"||w.st==="Cần bổ sung hồ sơ")&&w.hen){const d=dd(t0,w.hen);if(d<0)o.push({h:1,w:1,t:"Hồ sơ \""+wTitle(w)+"\" đã quá hẹn trả kết quả "+(-d)+" ngày ("+fmt(w.hen)+"), cần theo dõi cơ quan"});else if(d<=3)o.push({h:0,w:1,t:"Hồ sơ \""+wTitle(w)+"\" đến hẹn trả kết quả trong "+d+" ngày ("+fmt(w.hen)+")"})}});
   return o}
 function rStats(){const L=IV().filter(r=>r.kind===kind),t0=today(),W=L.flatMap(r=>Wk(r).map(w=>({...w,_r:r}))),ov=W.filter(w=>openW(w)&&w.due&&w.due<t0).length;
   $("invstats").innerHTML=st(L.length,D().nm)+st(L.filter(r=>r.st==="Đang triển khai").length,"Đang triển khai")+st(L.filter(r=>r.st==="Đang chuẩn bị").length,"Đang chuẩn bị")+st(W.filter(openW).length,"Công việc đang mở")+st(ov,"Công việc quá hạn",ov?"late":"")+st(L.filter(r=>r.st==="Hoàn thành").length,"Hoàn thành")}
@@ -4554,13 +4565,20 @@ function openIv(id){ivEdit=id;const r=IV().find(x=>x.id===id)||{kind,co:COS()[0]
   const i=(k,l,t,full)=>`<label${full?' class="full"':""}>${l}<input id="v_${k}" type="${t||"text"}" value="${esc(r[k]||"")}"></label>`;
   $("invform").innerHTML=(id?`<label class="full">Loại dự án (đổi nếu nhập nhầm)<select id="v_kind"><option value="kcn"${r.kind==="kcn"?" selected":""}>DA đầu tư KCN</option><option value="ccn"${r.kind==="ccn"?" selected":""}>DA đầu tư CCN</option></select></label>`:"")+`<label>Pháp nhân<select id="v_co">${cos.map(c=>`<option${c===r.co?" selected":""}>${esc(c)}</option>`).join("")}</select></label>`
    +`<label>Tên dự án<input id="v_name" list="v_pn" value="${esc(r.name||"")}"><datalist id="v_pn">${pn.map(n=>`<option value="${esc(n)}">`).join("")}</datalist></label>`+i("addr","Địa điểm")+i("ha","Diện tích (ha)")
-   +`<label>Bước hiện tại<select id="v_step"><option value="">Chưa chọn</option>${map.map(b=>`<option value="${b.id}"${b.id===r.step?" selected":""}>${esc(b.t)}</option>`).join("")}</select></label>`
+   +`<label>Bước hiện tại (chọn bước thì các bước trước tự đánh dấu hoàn thành; nếu đã có công việc thì tự tính theo công việc)<select id="v_step"><option value="">Chưa chọn</option>${map.map(b=>`<option value="${b.id}"${b.id===r.step?" selected":""}>${esc(b.t)}</option>`).join("")}</select></label>`
    +`<label>Tình trạng<select id="v_st">${IV_ST.map(x=>`<option${x===r.st?" selected":""}>${esc(x)}</option>`).join("")}</select></label>`
    +i("next","Việc tiếp theo")+i("han","Hạn việc tiếp theo","date")
    +`<label class="full">Các bước đã hoàn thành (đánh dấu tay nếu không tạo công việc cho bước đó)<div class="ivchk">${map.map(b=>`<label><input type="checkbox" value="${b.id}"${(r.done||[]).includes(b.id)?" checked":""}> ${esc(b.t)}</label>`).join("")}</div></label>`
    +`<label class="full">Ghi chú<textarea id="v_note" rows="3">${esc(r.note||"")}</textarea></label>`;
   dlg.dataset.kind=r.kind;
-  const kd=$("v_kind");if(kd)kd.onchange=()=>{const m2=INV[kd.value].map;$("v_step").innerHTML='<option value="">Chưa chọn</option>'+m2.map(b=>`<option value="${b.id}">${esc(b.t)}</option>`).join("");$("invform").querySelector(".ivchk").innerHTML=m2.map(b=>`<label><input type="checkbox" value="${b.id}"> ${esc(b.t)}</label>`).join("")};
+  const stepSel=$("v_step"),chk=()=>[...$("invform").querySelectorAll(".ivchk input")];
+  stepSel.onchange=()=>{const ids=INV[$("v_kind")?$("v_kind").value:r.kind].map.map(b=>b.id),i=ids.indexOf(stepSel.value);if(i>=0)chk().forEach(c=>{c.checked=ids.indexOf(c.value)<i})};
+  const kd=$("v_kind");if(kd)kd.onchange=()=>{const old=chk().filter(c=>c.checked).map(c=>c.value),os=stepSel.value,mx=MAPX[r.kind]||{},m2=INV[kd.value].map;
+    if(kd.value===r.kind){}
+    stepSel.innerHTML='<option value="">Chưa chọn</option>'+m2.map(b=>`<option value="${b.id}">${esc(b.t)}</option>`).join("");
+    $("invform").querySelector(".ivchk").innerHTML=m2.map(b=>`<label><input type="checkbox" value="${b.id}"> ${esc(b.t)}</label>`).join("");
+    if(kd.value!==r.kind){const nm=new Set(old.map(x=>mx[x]).filter(Boolean));chk().forEach(c=>{c.checked=nm.has(c.value)});stepSel.value=mx[os]||""}
+    else{const nm=new Set(r.done||[]);chk().forEach(c=>{c.checked=nm.has(c.value)});stepSel.value=r.step||""}};
   dlg.showModal()}
 $("invcancel").onclick=()=>dlg.close();
 $("invdel").onclick=()=>{if(!ivEdit||!confirm("Xóa dự án này khỏi danh sách theo dõi? Công việc đã đồng bộ sang tab Công việc vẫn được giữ."))return;const L=IV();L.splice(L.findIndex(x=>x.id===ivEdit),1);saveC();dlg.close();render()};
@@ -4569,8 +4587,8 @@ $("invok").onclick=()=>{const g=k=>$("v_"+k).value.trim(),o={kind:dlg.dataset.ki
   const L=IV();
   if(ivEdit){const old=L.find(x=>x.id===ivEdit),kd=$("v_kind");
     if(kd&&kd.value!==old.kind){const nk=kd.value,nm=INV[nk].map,om=INV[old.kind].map;
-      if(!confirm("Chuyển dự án sang "+(nk==="kcn"?"KCN":"CCN")+"? Sơ đồ các bước của hai loại khác nhau: các bước đánh dấu hoàn thành ở form này được giữ theo lựa chọn bạn vừa đánh dấu, công việc đã nhập được chuyển về bước đầu tiên của sơ đồ mới (tên bước cũ ghi vào ghi chú công việc) để bạn xếp lại."))return;
-      const first=nm[0].id;Wk(old).forEach(w=>{if(!nm.some(b=>b.id===w.step)){const ob=om.find(b=>b.id===w.step);w.note=(w.note?w.note+" | ":"")+"Bước cũ: "+(ob?ob.t:w.step);w.step=first}});
+      if(!confirm("Chuyển dự án sang "+(nk==="kcn"?"KCN":"CCN")+"? Công việc và các bước được chuyển sang bước tương ứng của sơ đồ mới (ví dụ Môi trường sang Môi trường, xây dựng, PCCC); bạn nên rà lại sau khi chuyển."))return;
+      const mx=MAPX[old.kind]||{},first=nm[0].id;Wk(old).forEach(w=>{const ob=om.find(b=>b.id===w.step);w.step=mx[w.step]||first;w.node=""});
       o.kind=nk;o.done=o.done.filter(x=>nm.some(b=>b.id===x));if(!nm.some(b=>b.id===o.step))o.step="";
       Object.assign(old,o);kind=nk;curNode=null;saveC();dlg.close();render();return}
     Object.assign(old,o)}
@@ -4588,44 +4606,65 @@ function mkTasks(){let n=0;gaps().filter(g=>g.h&&!g.w&&IV().find(r=>"iv"+r.id===
 
 /* ---------- Công việc thực tế của dự án ---------- */
 function selProj(){const L=IV().filter(r=>r.kind===kind);if(pj&&!L.some(r=>r.id===pj))pj="";return L}
+const newWid=()=>"w"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 function rWk(){const L=selProj(),r=L.find(x=>x.id===pj)||(pj=(L[0]||{}).id||"",L[0]);
   if(!r){$("invwk").innerHTML=`<div class="empty" style="margin:0 24px">Chưa có dự án ${kind==="kcn"?"KCN":"CCN"}. Thêm dự án ở tab "Theo dõi dự án" trước, rồi quay lại để ghi công việc thực tế.</div>`;return}
   const map=D().map,si=stageInfo(r),W=Wk(r),t0=today();
-  const stT=x=>x.status==="Hoàn thành"?'<span style="color:var(--ok);font-weight:600">Hoàn thành</span>':x.status==="Đang thực hiện"?'<span class="dkp">Đang thực hiện</span>':`<span style="color:var(--mute)">${esc(x.status)}</span>`;
-  $("invwk").innerHTML=`<div class="tcbtn" style="margin:0 24px 10px;align-items:center"><select id="iw_p">${L.map(x=>`<option value="${x.id}"${x.id===r.id?" selected":""}>${esc(x.name)}</option>`).join("")}</select><button class="primary" id="iw_add">Thêm công việc</button>${W.length?"":'<button id="iw_seed">Tạo danh sách công việc mẫu từ sơ đồ</button>'}</div>
-  <div class="tcw"><div class="tca info"><b>Giai đoạn hiện tại:</b> ${si.cur?esc(si.cur.b.t)+" ("+esc(si.cur.status)+")":"Tất cả các bước đã hoàn thành"}. Tiến độ ${si.done}/${map.length} bước (${si.pct}%). ${W.length?`Công việc: ${W.filter(w=>!openW(w)).length}/${W.length} hoàn thành.`:"Chưa có công việc nào, bấm Thêm công việc hoặc tạo danh sách mẫu."}</div></div>
-  <div class="tcw">${si.rows.map((x,i)=>{const ws=W.filter(w=>w.step===x.b.id);
-    return `<h3 class="hsh" style="margin:14px 0 6px">${esc(x.b.t)} ${stT(x)}${x.total?` <small style="color:var(--mute)">(${x.dn}/${x.total})</small>`:""}</h3>`+(ws.length?`<table class="m"><thead><tr><th>Công việc</th><th>Cơ quan, đối tác</th><th>Phụ trách</th><th>Bắt đầu</th><th>Hạn</th><th>Tình trạng</th><th>Kết quả, ghi chú</th></tr></thead><tbody>${ws.sort((a,b)=>(openW(b)-openW(a))||String(a.due||"9").localeCompare(String(b.due||"9"))).map(w=>{const d=w.due?dd(t0,w.due):null;
-      return `<tr data-w="${w.id}"${openW(w)?"":' class="cl"'}><td class="t"><b>${esc(wTitle(w))}</b>${w.tid?"<small>Đã đồng bộ sang tab Công việc</small>":""}</td><td>${esc(w.org||"")}</td><td>${esc(w.who||"")}</td><td>${w.start?fmt(w.start):""}</td><td>${w.due?fmt(w.due)+(openW(w)&&d<0?` <span class="wn1">quá hạn ${-d} ngày</span>`:openW(w)&&d<=7?` <span class="dkp">còn ${d} ngày</span>`:""):""}</td><td>${w.st==="Vướng mắc"?'<span class="wn1">Vướng mắc</span>':esc(w.st)}${w.done?`<small>Xong ${fmt(w.done)}</small>`:""}</td><td>${esc(w.res||"")}${w.note?`<small>${esc(w.note)}</small>`:""}</td></tr>`}).join("")}</tbody></table>`:'<p class="tcnote" style="margin:0 0 4px">Chưa có công việc ở bước này.</p>')}).join("")}</div>`;
+  const stT=x=>x.status==="Hoàn thành"?'<span style="color:var(--ok);font-weight:600">Hoàn thành</span>'+(x.total?"":'<small style="color:var(--mute)"> (đánh dấu tay, chưa có công việc chi tiết)</small>'):x.status==="Đang thực hiện"?'<span class="dkp">Đang thực hiện</span>':`<span style="color:var(--mute)">${esc(x.status)}</span>`;
+  $("invwk").innerHTML=`<div class="tcbtn" style="margin:0 24px 10px;align-items:center"><select id="iw_p">${L.map(x=>`<option value="${x.id}"${x.id===r.id?" selected":""}>${esc(x.name)}</option>`).join("")}</select><button class="primary" id="iw_add">Thêm công việc tự nhập</button>${W.length?"":'<button id="iw_seed">Tạo toàn bộ thủ tục mẫu từ sơ đồ</button>'}</div>
+  <div class="tcw"><div class="tca info"><b>Giai đoạn hiện tại:</b> ${si.cur?esc(si.cur.b.t)+" ("+esc(si.cur.status)+")":"Tất cả các bước đã hoàn thành"}. Tiến độ ${si.done}/${map.length} bước (${si.pct}%). ${W.length?`Công việc: ${W.filter(w=>!openW(w)).length}/${W.length} hoàn thành. Một bước chỉ hoàn thành khi mọi công việc trong bước đó có tình trạng Hoàn thành.`:"Chưa có công việc nào. Chọn thủ tục từ danh mục ở từng bước hoặc tạo toàn bộ thủ tục mẫu."}</div></div>
+  <div class="tcw">${si.rows.map(x=>{const ws=W.filter(w=>w.step===x.b.id),kids=x.b.kids||[];
+    return `<h3 class="hsh" style="margin:14px 0 6px;display:flex;gap:10px;flex-wrap:wrap;align-items:center"><span>${esc(x.b.t)} ${stT(x)}${x.total?` <small style="color:var(--mute)">(${x.dn}/${x.total})</small>`:""}</span><select class="iw_ns" data-b="${x.b.id}" style="font-weight:400;font-size:12px"><option value="">+ Thêm thủ tục từ danh mục</option>${kids.map(k=>`<option value="${k.id}">${esc(k.t)}</option>`).join("")}<option value="__new">Công việc khác (tự nhập)</option></select></h3>`+(ws.length?`<table class="m"><thead><tr><th>Thủ tục, công việc</th><th>Cơ quan</th><th>Tiến trình hồ sơ</th><th>Ngày nộp</th><th>Mã hồ sơ</th><th>Hẹn trả</th><th>Kết quả</th><th>Hạn nội bộ</th><th>Tình trạng</th></tr></thead><tbody>${ws.sort((a,b)=>(openW(b)-openW(a))||String(a.due||"9").localeCompare(String(b.due||"9"))).map(w=>{const d=w.due?dd(t0,w.due):null,h=w.hen?dd(t0,w.hen):null;
+      return `<tr data-w="${w.id}"${openW(w)?"":' class="cl"'}><td class="t"><b>${esc(wTitle(w))}</b>${w.nd?`<small>${esc(w.nd)}</small>`:""}${w.who?`<small>Phụ trách: ${esc(w.who)}</small>`:""}${w.tid?"<small>Đã đồng bộ sang tab Công việc</small>":""}</td><td>${esc(w.org||"")}</td><td>${phaseHtml(w)}${clTxt(w)?`<small>${clTxt(w)}</small>`:""}</td><td>${w.ngay?fmt(w.ngay):""}</td><td>${esc(w.so||"")}</td><td>${w.hen?fmt(w.hen)+(openW(w)&&w.ngay&&h<0?` <span class="wn1">quá hẹn ${-h} ngày</span>`:""):""}</td><td>${w.done?fmt(w.done):""}${w.res?`<small>${esc(w.res)}</small>`:""}</td><td>${w.due?fmt(w.due)+(openW(w)&&d<0?` <span class="wn1">quá hạn ${-d} ngày</span>`:openW(w)&&d<=7?` <span class="dkp">còn ${d} ngày</span>`:""):""}</td><td>${w.st==="Vướng mắc"?'<span class="wn1">Vướng mắc</span>':esc(w.st)}${w.note?`<small>${esc(w.note)}</small>`:""}</td></tr>`}).join("")}</tbody></table>`:'<p class="tcnote" style="margin:0 0 4px">Chưa có công việc ở bước này.</p>')}).join("")}</div>`;
   $("iw_p").onchange=()=>{pj=$("iw_p").value;render()};$("iw_add").onclick=()=>openWd(null,r.id);
-  const sd=$("iw_seed");if(sd)sd.onclick=()=>{const W2=Wk(r);D().map.forEach(b=>b.kids.forEach(k=>W2.push({id:"w"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),step:b.id,title:"Thực hiện: "+k.t,org:(k.o&&k.o[0])||"",who:"",start:"",due:"",done:"",st:"Chưa làm",res:"",note:"",sync:false,tid:""})));saveC();render()}}
-$("invwk").onclick=e=>{const tr=e.target.closest("tr[data-w]");if(tr)openWd(tr.dataset.w,pj)};
+  document.querySelectorAll("#invwk .iw_ns").forEach(sel=>sel.onchange=()=>{const v=sel.value;if(!v)return;openWd(null,r.id,{step:sel.dataset.b,node:v==="__new"?"":v});sel.value=""});
+  const sd=$("iw_seed");if(sd)sd.onclick=()=>{const W2=Wk(r);D().map.forEach(b=>b.kids.forEach(k=>W2.push({id:newWid(),step:b.id,node:k.id,title:k.t,org:(k.o&&k.o[0])||"",who:"",start:"",due:"",ngay:"",so:"",hen:"",done:"",nd:"",st:"Chưa làm",res:"",note:"",cl:mkCl(k),sync:false,tid:""})));saveC();render()}}
+$("invwk").onclick=e=>{if(e.target.closest("select"))return;const tr=e.target.closest("tr[data-w]");if(tr)openWd(tr.dataset.w,pj)};
 let wEdit=null,wProj=null;
-function openWd(id,rid){wEdit=id;wProj=rid;const r=IV().find(x=>x.id===rid);if(!r)return;const w=Wk(r).find(x=>x.id===id)||{step:(stageInfo(r).cur||{b:{id:INV[r.kind].map[0].id}}).b.id,st:"Chưa làm",sync:true};
+function clRow(t,d){return `<div class="clr" style="display:flex;gap:6px;align-items:center;margin:3px 0"><input type="checkbox" class="cld"${d?" checked":""}><input type="text" class="clt" value="${esc(t)}" style="flex:1"><button type="button" class="clx" title="Xóa việc con">×</button></div>`}
+function openWd(id,rid,pre){wEdit=id;wProj=rid;const r=IV().find(x=>x.id===rid);if(!r)return;pre=pre||{};
+  let w=Wk(r).find(x=>x.id===id);
+  if(!w){const k=pre.node?kidOf(r.kind,pre.node):null;w={step:pre.step||(stageInfo(r).cur||{b:{id:INV[r.kind].map[0].id}}).b.id,node:pre.node||"",title:k?k.t:"",org:k&&k.o?k.o[0]:"",st:"Chưa làm",cl:mkCl(k),sync:true}}
   $("invwdt").textContent=(id?"Sửa":"Thêm")+" công việc: "+r.name;$("invwdel").style.display=id?"":"none";
   const map=INV[r.kind].map,sug=b=>(b.kids||[]).map(k=>k.t);
   const i=(k,l,t,full)=>`<label${full?' class="full"':""}>${l}<input id="w_${k}" type="${t||"text"}" value="${esc(w[k]||"")}"></label>`;
   $("invwform").innerHTML=`<label>Bước trong sơ đồ<select id="w_step">${map.map(b=>`<option value="${b.id}"${b.id===w.step?" selected":""}>${esc(b.t)}</option>`).join("")}</select></label>`
    +`<label>Tình trạng<select id="w_st">${IW_ST.map(x=>`<option${x===w.st?" selected":""}>${esc(x)}</option>`).join("")}</select></label>`
-   +`<label class="full">Công việc<input id="w_title" list="w_sug" value="${esc(w.title||"")}"><datalist id="w_sug">${sug(map.find(b=>b.id===w.step)||map[0]).map(t=>`<option value="${esc(t)}">`).join("")}</datalist></label>`
-   +i("org","Cơ quan, đối tác")+i("who","Người phụ trách")+i("start","Ngày bắt đầu","date")+i("due","Hạn hoàn thành","date")+i("done","Ngày hoàn thành","date")
-   +i("res","Kết quả, số văn bản, ngày nhận kết quả",null,true)
+   +`<label class="full">Thủ tục, công việc<input id="w_title" list="w_sug" value="${esc(w.title||"")}"><datalist id="w_sug">${sug(map.find(b=>b.id===w.step)||map[0]).map(t=>`<option value="${esc(t)}">`).join("")}</datalist></label>`
+   +`<label class="full">Nội dung đề nghị, hồ sơ nộp<textarea id="w_nd" rows="2" placeholder="VD: Hồ sơ đề xuất chủ trương đầu tư dự án ...">${esc(w.nd||"")}</textarea></label>`
+   +i("org","Cơ quan tiếp nhận, đối tác")+i("who","Người phụ trách")
+   +i("start","Ngày bắt đầu chuẩn bị","date")+i("due","Hạn nội bộ hoàn thành","date")
+   +i("ngay","Ngày nộp hồ sơ","date")+i("so","Mã hồ sơ, số biên nhận")+i("hen","Ngày hẹn trả kết quả","date")
+   +i("done","Ngày nhận kết quả","date")+i("res","Số, ký hiệu văn bản kết quả (QĐ, GCN, giấy phép)",null,true)
+   +`<div class="full"><b style="font-size:12px">Các việc con (tick khi xong)</b><div id="w_cl">${(w.cl||[]).map(x=>clRow(x.t,x.d)).join("")}</div><div style="display:flex;gap:6px;margin-top:4px"><input type="text" id="w_cln" placeholder="Thêm việc con, bấm Enter" style="flex:1"><button type="button" id="w_cla">Thêm</button></div></div>`
    +`<label class="full">Ghi chú, vướng mắc<textarea id="w_note" rows="3">${esc(w.note||"")}</textarea></label>`
    +`<label class="full" style="flex-direction:row;display:flex;gap:8px;align-items:center;font-weight:400"><input type="checkbox" id="w_sync"${w.sync?" checked":""}> Đồng bộ sang tab Công việc (tạo công việc gắn với dự án, cập nhật theo tình trạng)</label>`;
   $("w_step").onchange=()=>{const b=map.find(x=>x.id===$("w_step").value);$("w_sug").innerHTML=sug(b).map(t=>`<option value="${esc(t)}">`).join("")};
+  /* tự chuyển tình trạng theo dữ liệu nhập */
+  const stSel=$("w_st"),setSt=v=>{stSel.value=v};
+  $("w_ngay").onchange=()=>{if($("w_ngay").value&&["Chưa làm","Đang chuẩn bị hồ sơ"].includes(stSel.value))setSt("Đã nộp")};
+  $("w_done").onchange=()=>{if($("w_done").value)setSt("Hoàn thành");else if(stSel.value==="Hoàn thành")setSt($("w_ngay").value?"Đã nộp":"Đang chuẩn bị hồ sơ")};
+  stSel.onchange=()=>{if(stSel.value==="Hoàn thành"&&!$("w_done").value)$("w_done").value=today();if(stSel.value==="Đã nộp"&&!$("w_ngay").value)$("w_ngay").value=today();if(stSel.value!=="Hoàn thành")$("w_done").value=""};
+  const cl=$("w_cl");
+  cl.onchange=e=>{if(e.target.classList.contains("cld")&&stSel.value==="Chưa làm"&&e.target.checked)setSt("Đang chuẩn bị hồ sơ")};
+  cl.onclick=e=>{const x=e.target.closest(".clx");if(x)x.closest(".clr").remove()};
+  const add=()=>{const v=$("w_cln").value.trim();if(!v)return;cl.insertAdjacentHTML("beforeend",clRow(v,false));$("w_cln").value=""};
+  $("w_cla").onclick=add;$("w_cln").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();add()}};
   wdlg.showModal()}
-const TSK={ "Chưa làm":"Mới","Đang làm":"Đang xử lý","Chờ cơ quan":"Đang xử lý","Vướng mắc":"Đang xử lý","Hoàn thành":"Hoàn thành"};
-function syncWorkTask(r,w){const stt=TSK[w.st]||"Mới",b=INV[r.kind].map.find(x=>x.id===w.step),o={title:"Dự án "+r.name+": "+wTitle(w),co:r.co,type:"Pháp lý đầu tư",st:stt,due:w.due||"",done:stt==="Hoàn thành"?(w.done||today()):"",proj:r.name,note:"Đồng bộ từ tab Đầu tư"+(b?" - "+b.t:"")+(w.res?". Kết quả: "+w.res:"")+(w.note?". "+w.note:"")};
+const TSK={"Chưa làm":"Mới","Đang chuẩn bị hồ sơ":"Đang xử lý","Đã nộp":"Chờ phản hồi","Cần bổ sung hồ sơ":"Đang xử lý","Vướng mắc":"Đang xử lý","Hoàn thành":"Hoàn thành"};
+function syncWorkTask(r,w){const stt=TSK[w.st]||"Mới",b=INV[r.kind].map.find(x=>x.id===w.step),o={title:"Dự án "+r.name+": "+wTitle(w),co:r.co,type:"Pháp lý đầu tư",st:stt,due:w.due||w.hen||"",done:stt==="Hoàn thành"?(w.done||today()):"",proj:r.name,note:"Đồng bộ từ tab Đầu tư"+(b?" - "+b.t:"")+(w.ngay?". Nộp "+fmt(w.ngay):"")+(w.so?", mã hồ sơ "+w.so:"")+(w.hen?", hẹn trả "+fmt(w.hen):"")+(w.res?". Kết quả: "+w.res:"")+(w.note?". "+w.note:"")};
   let t=w.tid&&tasks.find(x=>x.id===w.tid);
   if(w.sync){if(t){const keep={pri:t.pri,who:t.who||w.who||""};Object.assign(t,o,keep)}else{t={id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),who:w.who||"",pri:"2",recv:w.start||today(),...o};tasks.push(t);w.tid=t.id}save()}
   else if(w.tid){w.tid=""}}
 $("invwcancel").onclick=()=>wdlg.close();
 $("invwdel").onclick=()=>{if(!wEdit||!confirm("Xóa công việc này?"))return;const r=IV().find(x=>x.id===wProj),W=Wk(r),i=W.findIndex(x=>x.id===wEdit),w=W[i];if(w&&w.tid&&confirm("Xóa luôn công việc đã đồng bộ trong tab Công việc?")){const k=tasks.findIndex(t=>t.id===w.tid);if(k>=0){tasks.splice(k,1);save()}}W.splice(i,1);saveC();wdlg.close();render()};
 $("invwok").onclick=()=>{const g=k=>$("w_"+k).value.trim(),r=IV().find(x=>x.id===wProj);if(!r)return;
-  const o={step:g("step"),st:g("st"),title:g("title"),org:g("org"),who:g("who"),start:g("start"),due:g("due"),done:g("done"),res:g("res"),note:g("note"),sync:$("w_sync").checked};
+  const o={step:g("step"),st:g("st"),title:g("title"),nd:g("nd"),org:g("org"),who:g("who"),start:g("start"),due:g("due"),ngay:g("ngay"),so:g("so"),hen:g("hen"),done:g("done"),res:g("res"),note:g("note"),sync:$("w_sync").checked,
+    cl:[...document.querySelectorAll("#w_cl .clr")].map(x=>({t:x.querySelector(".clt").value.trim(),d:x.querySelector(".cld").checked})).filter(x=>x.t)};
   if(!o.title){$("w_title").focus();return}
+  if(o.done&&o.st!=="Hoàn thành")o.st="Hoàn thành";
   if(o.st==="Hoàn thành"&&!o.done)o.done=today();if(o.st!=="Hoàn thành")o.done="";
-  const W=Wk(r);let w;if(wEdit){w=W.find(x=>x.id===wEdit);Object.assign(w,o)}else{w={id:"w"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),tid:"",...o};W.push(w)}
+  const W=Wk(r);let w;if(wEdit){w=W.find(x=>x.id===wEdit);Object.assign(w,o)}else{w={id:newWid(),tid:"",node:"",...o};W.push(w)}
   syncWorkTask(r,w);saveC();wdlg.close();render()};
 
 /* ---------- Báo cáo tiến độ ---------- */
@@ -4638,9 +4677,9 @@ function rRp(){const L=selProj();if(!rpFrom){const d=new Date();d.setDate(d.getD
   $("invrp").innerHTML=head+`<div id="rp_doc" class="tcw">${body}</div>`;
   $("rp_p").onchange=()=>{pj=$("rp_p").value;render()};$("rp_f").onchange=()=>{rpFrom=$("rp_f").value;render()};$("rp_t").onchange=()=>{rpTo=$("rp_t").value;render()};
   $("rp_print").onclick=()=>{document.body.classList.add("ivp");const f=()=>{document.body.classList.remove("ivp");window.removeEventListener("afterprint",f)};window.addEventListener("afterprint",f);setTimeout(()=>window.print(),80)}}
-const wRows=(list,r)=>list.length?`<table class="m"><thead><tr><th>Công việc</th><th>Giai đoạn</th><th>Cơ quan</th><th>Phụ trách</th><th>Hạn</th><th>Tình trạng</th></tr></thead><tbody>${list.map(w=>{const b=INV[r.kind].map.find(x=>x.id===w.step);return `<tr><td class="t"><b>${esc(wTitle(w))}</b>${w.note?`<small>${esc(w.note)}</small>`:""}</td><td>${b?esc(b.t):""}</td><td>${esc(w.org||"")}</td><td>${esc(w.who||"")}</td><td>${w.due?fmt(w.due):""}</td><td>${esc(w.st)}${w.done?`<small>Xong ${fmt(w.done)}</small>`:""}</td></tr>`}).join("")}</tbody></table>`:'<p class="tcnote" style="margin:0 0 4px">Không có.</p>';
+const wRows=(list,r)=>list.length?`<table class="m"><thead><tr><th>Công việc</th><th>Giai đoạn</th><th>Cơ quan</th><th>Phụ trách</th><th>Ngày nộp, mã hồ sơ</th><th>Hẹn trả</th><th>Hạn nội bộ</th><th>Tình trạng</th></tr></thead><tbody>${list.map(w=>{const b=INV[r.kind].map.find(x=>x.id===w.step);return `<tr><td class="t"><b>${esc(wTitle(w))}</b>${w.note?`<small>${esc(w.note)}</small>`:""}</td><td>${b?esc(b.t):""}</td><td>${esc(w.org||"")}</td><td>${esc(w.who||"")}</td><td>${w.ngay?fmt(w.ngay):""}${w.so?`<small>${esc(w.so)}</small>`:""}</td><td>${w.hen?fmt(w.hen):""}</td><td>${w.due?fmt(w.due):""}</td><td>${esc(w.st)}${w.done?`<small>Xong ${fmt(w.done)}${w.res?", "+esc(w.res):""}</small>`:""}</td></tr>`}).join("")}</tbody></table>`:'<p class="tcnote" style="margin:0 0 4px">Không có.</p>';
 function rpOne(r){const si=stageInfo(r),W=Wk(r),t0=today(),map=INV[r.kind].map,lim=isoD(new Date(Date.now()+30*864e5));
-  const open=W.filter(openW),late=open.filter(w=>(w.due&&w.due<t0)||w.st==="Vướng mắc"),plan=open.filter(w=>w.due&&w.due>=t0&&w.due<=lim).sort((a,b)=>a.due.localeCompare(b.due)),doneP=W.filter(w=>!openW(w)&&w.done&&w.done>=rpFrom&&w.done<=rpTo);
+  const open=W.filter(openW),late=open.filter(w=>(w.due&&w.due<t0)||w.st==="Vướng mắc"),plan=open.filter(w=>w.due&&w.due>=t0&&w.due<=lim).sort((a,b)=>a.due.localeCompare(b.due)),doneP=W.filter(w=>!openW(w)&&w.done&&w.done>=rpFrom&&w.done<=rpTo),wait=open.filter(w=>w.st==="Đã nộp"||w.st==="Cần bổ sung hồ sơ");
   const stT=x=>x.status==="Hoàn thành"?'<span style="color:var(--ok);font-weight:600">Hoàn thành</span>':x.status==="Đang thực hiện"?'<span class="dkp">Đang thực hiện</span>':`<span style="color:var(--mute)">${esc(x.status)}</span>`;
   return `<div class="tcr"><h3>BÁO CÁO TIẾN ĐỘ ${r.kind==="kcn"?"DỰ ÁN ĐẦU TƯ HẠ TẦNG KCN":"DỰ ÁN ĐẦU TƯ HẠ TẦNG CCN"}</h3>
   <p><b>${esc(r.name)}</b>${r.co?" | Pháp nhân: "+esc(r.co):""}${r.addr?" | Địa điểm: "+esc(r.addr):""}${r.ha?" | Diện tích: "+esc(r.ha)+" ha":""}</p>
@@ -4649,9 +4688,10 @@ function rpOne(r){const si=stageInfo(r),W=Wk(r),t0=today(),map=INV[r.kind].map,l
   <div class="tca info">Giai đoạn hiện tại: <b>${si.cur?esc(si.cur.b.t):"Tất cả các bước đã hoàn thành"}</b>${si.cur?" ("+esc(si.cur.status)+")":""}. Đã hoàn thành ${si.done}/${map.length} bước (${si.pct}%). Công việc: ${W.length-open.length}/${W.length} hoàn thành, ${open.length} đang mở${late.length?`, <b class="bad">${late.length} quá hạn hoặc vướng mắc</b>`:""}.${r.next?` Việc tiếp theo: ${esc(r.next)}${r.han?" (hạn "+fmt(r.han)+")":""}.`:""}</div>
   <h4>2. Tiến độ theo giai đoạn</h4><table class="tcrt"><thead><tr><th>Giai đoạn</th><th>Tình trạng</th><th>Công việc xong / tổng</th><th>Quá hạn</th></tr></thead><tbody>${si.rows.map(x=>`<tr><td>${esc(x.b.t)}</td><td>${stT(x)}</td><td>${x.total?x.dn+"/"+x.total:"-"}</td><td>${x.ov||"-"}</td></tr>`).join("")}</tbody></table>
   <h4>3. Công việc đã hoàn thành trong kỳ (${doneP.length})</h4>${wRows(doneP,r)}
-  <h4>4. Công việc quá hạn hoặc vướng mắc (${late.length})</h4>${wRows(late,r)}
-  <h4>5. Kế hoạch 30 ngày tới (${plan.length})</h4>${wRows(plan,r)}
-  <h4>6. Kiến nghị, ghi chú</h4><p>${r.note?esc(r.note):"Không có."}</p></div>`}
+  <h4>4. Hồ sơ đã nộp, đang chờ kết quả (${wait.length})</h4>${wRows(wait,r)}
+  <h4>5. Công việc quá hạn hoặc vướng mắc (${late.length})</h4>${wRows(late,r)}
+  <h4>6. Kế hoạch 30 ngày tới (${plan.length})</h4>${wRows(plan,r)}
+  <h4>7. Kiến nghị, ghi chú</h4><p>${r.note?esc(r.note):"Không có."}</p></div>`}
 function rpAll(L){const t0=today(),lim=isoD(new Date(Date.now()+30*864e5));
   const rows=L.map(r=>{const si=stageInfo(r),W=Wk(r),open=W.filter(openW),late=open.filter(w=>(w.due&&w.due<t0)||w.st==="Vướng mắc"),nx=open.filter(w=>w.due&&w.due>=t0).sort((a,b)=>a.due.localeCompare(b.due))[0],dn=W.filter(w=>!openW(w)&&w.done&&w.done>=rpFrom&&w.done<=rpTo).length;return{r,si,W,open,late,nx,dn}});
   return `<div class="tcr"><h3>BÁO CÁO TỔNG HỢP TIẾN ĐỘ CÁC ${kind==="kcn"?"DỰ ÁN ĐẦU TƯ HẠ TẦNG KCN":"DỰ ÁN ĐẦU TƯ HẠ TẦNG CCN"}</h3>
