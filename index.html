@@ -597,7 +597,7 @@ const rcl=c=>{const i=COS().indexOf(c);return i<0?"":"rc"+(i%6)};
 function migrate(){tasks.forEach(t=>{if(t.co==="FG")t.co="FGC";if(!TYPES.includes(t.type))t.type=TMAP[t.type]||"Khác"});budget.forEach(x=>{if(x.kind==="Thu")x.kind="Tạm ứng";if(x.kind==="Chi"&&!VOU.includes(x.voucher))x.voucher="Có chứng từ"})}
 migrate();
 const store=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){alert("Không lưu được vào trình duyệt. Hãy dùng Sao lưu JSON.")}if(k===KEY||k===KB||k===KC)ghSchedule()};
-const save=()=>store(KEY,tasks),saveB=()=>store(KB,budget),saveC=()=>store(KC,CFG);
+const save=()=>store(KEY,tasks),saveB=()=>store(KB,budget),saveC=()=>{try{window.__onSaveC&&window.__onSaveC()}catch(e){console.error(e)}store(KC,CFG)};
 (()=>{const LEG=["tando","haison","tandohaison"],n=x=>String(x).replace(/[đĐ]/g,"d").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"");
   if(Array.isArray(CFG.proj)){const keep=CFG.proj.filter(p=>!LEG.includes(n(p)));DEF.proj.forEach(d=>{if(!keep.some(p=>n(p)===n(d)))keep.push(d)});CFG.proj=keep}})();
 const late=t=>t.st!=="Hoàn thành"&&t.due&&t.due<today();
@@ -1485,6 +1485,7 @@ const SEC={
        {k:"hen",l:"Ngày hẹn trả kết quả",t:"date"},
        {k:"kq",l:"Ngày nhận kết quả",t:"date"},
        {k:"nd",l:"Nội dung đề nghị (VD: tăng vốn lên 580 tỷ; đổi NĐDPL sang ông ...)",full:1},
+       {k:"mv",l:"Giá trị mới sau thay đổi (tự cập nhật Pháp nhân khi có kết quả: vốn điều lệ mới VD 580 tỷ, địa chỉ trụ sở mới, tên mới)",full:1},
        {k:"buoc",l:"Bước giải thể (chỉ dùng cho thủ tục giải thể)",t:"sel",o:GTB},
        {k:"note",l:"Ghi chú",t:"area",full:1}]},
   mt:{lab:"Cuộc họp",one:"cuộc họp",req:["co","loai","ngay"],
@@ -2060,6 +2061,37 @@ const hsDueTxt=h=>{const x=hsDue(h);if(!x)return"";if(!x.due)return'<small class
   const t0=today(),fin=h.st==="Đã nộp"||h.st==="Đã có kết quả"||h.st==="Cần bổ sung hồ sơ",n=dDiff(t0,x.due);
   if(fin)return fmt(x.due)+(h.ngay&&h.ngay>x.due?' <span class="wn1">nộp trễ</span>':"");
   return fmt(x.due)+(n<0?' <span class="wn1">quá hạn '+(-n)+" ngày</span>":n<=3?' <span class="wn1">còn '+n+" ngày</span>":n<=10?' <span class="dkp">còn '+n+" ngày</span>":"")};
+/* Tự cập nhật Pháp nhân, Chức vụ (NĐDPL), CSHHL khi hồ sơ nộp Sở TC đổi tình trạng (chỉ khi tình trạng hồ sơ thay đổi, lỗi thì sửa tay ở tab gốc) */
+const entToast=m=>{try{let e=document.getElementById("enttoast");if(!e){e=document.createElement("div");e.id="enttoast";e.style.cssText="position:fixed;right:16px;bottom:16px;max-width:420px;background:#1f2a44;color:#fff;padding:10px 14px;border-radius:8px;font-size:12.5px;line-height:1.5;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,.25)";document.body.appendChild(e)}
+  e.innerHTML=m;e.style.display="block";clearTimeout(e._t);e._t=setTimeout(()=>{e.style.display="none"},9000)}catch(x){}};
+const parseVnMoney=t=>{const m=String(t||"").match(/([\d][\d.,\s]*)\s*(tỷ|ty|triệu|trieu)?/i);if(!m)return null;
+  const u=(m[2]||"").toLowerCase(),raw=m[1].trim();let v;
+  if(u){v=parseFloat(raw.replace(/\s/g,"").replace(/\./g,"").replace(",","."));if(isNaN(v))return null;v*=/^t/.test(u)?1e9:1e6}
+  else{v=parseInt(raw.replace(/[.,\s]/g,""),10);if(isNaN(v))return null}
+  return Math.round(v)};
+function hsEnt(){
+  const d=PD();let ch=false;const isN=p=>/nddpl|daidienphapluat/.test(norm(p.role)),msgs=[];
+  (d.hs||[]).forEach(h=>{const prev=h._ent;if(prev===h.st)return;h._ent=h.st;ch=true;
+    if(!["Đã nộp","Cần bổ sung hồ sơ","Đã có kết quả"].includes(h.st))return;
+    const g=(HSI.find(i=>i.t===h.tt)||{}).g,fin=h.st==="Đã có kết quả",nv=fin?"Đã đăng ký":"Đang thực hiện đăng ký",
+      fresh=fin&&prev!==undefined&&prev!=="Đã có kết quả",out=[],
+      set=x=>{if(x.dk==="Chưa đăng ký"||(fin&&x.dk==="Đang thực hiện đăng ký")){x.dk=nv;return true}return false};
+    if(g==="dd"){const L=(d.pos||[]).filter(p=>same(p.co,h.co)&&isN(p));let n=0;L.forEach(p=>{if(set(p))n++});if(n)out.push("Chức vụ NĐDPL: "+nv)}
+    if(g==="nd"||g==="dd"||g==="cn")(d.co||[]).filter(x=>same(x.code,h.co)).forEach(x=>{
+      if(set(x))out.push("Pháp nhân: "+nv);
+      if(fresh&&(g==="nd"||g==="dd")){
+        x.lan=(parseInt(x.lan,10)||0)+1;out.push("lần đăng ký thay đổi "+x.lan);
+        if(h.kq){x.ngay=h.kq;out.push("ngày cấp "+fmt(h.kq))}
+        if(g==="nd"&&h.mv){
+          if(/vốn điều lệ/i.test(h.tt)){const v=parseVnMoney(h.mv);if(v){x.vdl=v;out.push("vốn điều lệ "+money(v))}}
+          else if(/trụ sở/i.test(h.tt)){x.addr=h.mv;out.push("địa chỉ trụ sở")}
+          else if(/tên doanh nghiệp/i.test(h.tt)){x.name=h.mv;out.push("tên doanh nghiệp")}}}});
+    if(g==="bo")(d.bo||[]).filter(x=>same(x.co,h.co)).forEach(x=>{if(set(x)){out.push("CSHHL "+x.name+": "+nv);if(fin&&!x.ngay)x.ngay=h.ngay||h.kq||""}});
+    if(out.length&&prev!==undefined)msgs.push("<b>"+esc(h.co)+"</b> – "+esc(h.tt)+": "+out.map(esc).join("; "))});
+  if(msgs.length)entToast("Đã tự cập nhật theo hồ sơ nộp Sở TC (nếu sai, sửa tay ở tab Pháp nhân, Chức vụ, CSHHL):<br>"+msgs.join("<br>"));
+  return ch}
+window.__onSaveC=hsEnt;
+setTimeout(()=>{try{if(hsEnt())saveC()}catch(e){console.error(e)}},400);
 function hsGaps(){
   const d=PD(),t0=today(),out=[],isN=p=>/nddpl|daidienphapluat/.test(norm(p.role));
   const grpOf=h=>(HSI.find(i=>i.t===h.tt)||{}).g;
@@ -2072,6 +2104,7 @@ function hsGaps(){
     if(g==="dd"&&d.pos.some(p=>same(p.co,h.co)&&isN(p)&&p.dk==="Đang thực hiện đăng ký"))out.push({c:h.co,t:"Hồ sơ thay đổi NĐDPL đã có kết quả: cập nhật trạng thái đăng ký ở tab Chức vụ"});
     if(g==="nd"&&d.co.some(x=>same(x.code,h.co)&&x.dk==="Đang thực hiện đăng ký"))out.push({c:h.co,t:"Hồ sơ thay đổi nội dung ĐKDN đã có kết quả: cập nhật trạng thái đăng ký ở tab Pháp nhân"});
     if(g==="bo"&&d.bo.some(x=>same(x.co,h.co)&&x.dk==="Đang thực hiện đăng ký"))out.push({c:h.co,t:"Hồ sơ CSHHL đã có kết quả: cập nhật trạng thái kê khai ở tab CSHHL"})});
+  d.hs.filter(h=>h.st==="Đã có kết quả"&&grpOf(h)==="dd"&&h.kq&&dDiff(h.kq,t0)<=60).forEach(h=>{const L=d.pos.filter(p=>same(p.co,h.co)&&isN(p)&&activeP(p,t0));if(L.length>1)out.push({c:h.co,h:0,soft:1,t:"Sau hồ sơ thay đổi NĐDPL ("+fmt(h.kq)+") vẫn có "+L.length+" NĐDPL đang hiệu lực ("+L.map(p=>p.name).join(", ")+"): nếu có người đã thôi giữ chức thì nhập 'Hiệu lực đến' ở tab Chức vụ"})});
   d.hs.filter(h=>h.st==="Đã nộp"&&h.hen&&h.hen<t0&&!h.kq).forEach(h=>out.push({c:h.co,t:"Hồ sơ \""+h.tt+"\" đã quá hẹn trả kết quả ("+fmt(h.hen)+")"}));
   d.hs.filter(h=>h.st==="Cần bổ sung hồ sơ").forEach(h=>out.push({c:h.co,t:"Hồ sơ \""+h.tt+"\" cần bổ sung"}));
   d.hs.filter(h=>!h.tid||!tasks.some(t=>t.id===h.tid)).forEach(h=>out.push({c:h.co,t:"Hồ sơ \""+h.tt+"\" chưa liên kết công việc: bấm Đồng bộ công việc",soft:1}));
