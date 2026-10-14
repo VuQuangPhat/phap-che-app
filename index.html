@@ -1411,12 +1411,15 @@ const SEC={
     key:o=>[o.co,o.loai,o.ten].map(norm).join("|"),
     f:[{k:"co",l:"Pháp nhân chủ quản",list:"p_codes"},
        {k:"loai",l:"Loại đơn vị",t:"sel",o:DV_L},
-       {k:"ten",l:"Tên chi nhánh, VPĐD, địa điểm kinh doanh",full:1},
-       {k:"ma",l:"Mã số (chi nhánh, VPĐD, địa điểm kinh doanh)"},
+       {k:"ten",l:"Tên chi nhánh, VPĐD, địa điểm kinh doanh (chỉ nhập phần sau tên công ty, VD: VĂN PHÒNG ĐẠI DIỆN TẠI THÀNH PHỐ HỒ CHÍ MINH)",full:1},
+       {k:"ma",l:"Mã số (chỉ nhập phần sau mã số doanh nghiệp, VD: 001; app tự ghép thành 1101841924-001)"},
        {k:"st",l:"Tình trạng",t:"sel",o:DV_S},
        {k:"addr",l:"Địa chỉ",full:1},
        {k:"qd",l:"Quyết định thành lập (số, ngày)"},
-       {k:"ngay",l:"Ngày cấp giấy chứng nhận hoạt động hoặc giấy xác nhận",t:"date"},
+       {k:"ngaylan1",l:"Đăng ký lần đầu (ngày)",t:"date"},
+       {k:"lan",l:"Đăng ký thay đổi lần thứ (để trống hoặc 0: chưa thay đổi)"},
+       {k:"ngay",l:"Ngày đăng ký thay đổi gần nhất (hoặc ngày cấp giấy nếu chưa thay đổi)",t:"date"},
+       {k:"ls",l:"Các lần thay đổi (mỗi dòng: lần, ngày, nội dung thay đổi)",t:"area",full:1},
        {k:"nguoi",l:"Người đứng đầu",list:"p_names"},
        {k:"cqdk",l:"Cơ quan đăng ký (VD: Phòng Đăng ký kinh doanh, Sở Tài chính tỉnh ...)"},
        {k:"nganh",l:"Ngành, nghề hoạt động (nếu có)",full:1},
@@ -1504,7 +1507,7 @@ const SEC={
        {k:"nm",l:"Người đại diện mới (chọn từ Nhân sự; chỉ dùng cho thay đổi NĐDPL, tự cập nhật Chức vụ khi có kết quả)",list:"p_names"},
        {k:"nc",l:"Người đại diện cũ thôi giữ chức (nếu có)",list:"p_names"},
        {k:"bn",l:"Cá nhân CSHHL liên quan (chỉ dùng cho kê khai CSHHL; nhiều người cách nhau dấu chấm phẩy)",full:1},
-       {k:"dvn",l:"Tên chi nhánh, VPĐD, địa điểm kinh doanh liên quan (chỉ dùng cho nhóm chi nhánh; tự cập nhật tab Chi nhánh, VPĐD)",full:1},
+       {k:"dvn",l:"Tên chi nhánh, VPĐD, địa điểm kinh doanh liên quan (chỉ nhập phần sau tên công ty, VD: VĂN PHÒNG ĐẠI DIỆN TẠI THÀNH PHỐ HỒ CHÍ MINH; tự cập nhật tab Chi nhánh, VPĐD)",full:1},
        {k:"dvl",l:"Loại đơn vị phụ thuộc (để trống: tự nhận theo tên thủ tục)",t:"sel",o:["",...DV_L]},
        {k:"mv",l:"Giá trị mới sau thay đổi (tự cập nhật Pháp nhân khi có kết quả: vốn điều lệ mới VD 580 tỷ, địa chỉ trụ sở mới, tên mới)",full:1},
        {k:"buoc",l:"Bước giải thể (chỉ dùng cho thủ tục giải thể)",t:"sel",o:GTB},
@@ -1869,7 +1872,7 @@ function rDv(r,all){
   const L=[...r].sort((a,b)=>ci(a.co)-ci(b.co)||DV_L.indexOf(a.loai)-DV_L.indexOf(b.loai)||String(a.ten).localeCompare(String(b.ten),"vi"));
   const stT=x=>x.st==="Đang hoạt động"?'<span style="color:var(--ok);font-weight:600">Đang hoạt động</span>':x.st==="Đã chấm dứt"?'<span style="color:var(--mute)">Đã chấm dứt'+(x.ngayct?" "+fmt(x.ngayct):"")+'</span>':'<span class="dkp">'+esc(x.st||"")+'</span>';
   $("plist").innerHTML=`<table class="m"><thead><tr><th>Pháp nhân</th><th>Loại</th><th>Tên, địa chỉ</th><th>Mã số</th><th>Giấy chứng nhận, quyết định</th><th>Người đứng đầu</th><th>Tình trạng</th></tr></thead><tbody>`+
-  L.map(x=>`<tr data-id="${x.id}"${x.st==="Đã chấm dứt"?' class="cl"':""}><td>${chip(x.co)}</td><td>${esc(x.loai||"")}</td><td class="t"><b>${esc(x.ten)}</b>${x.addr?`<small>${esc(x.addr)}</small>`:""}${x.nganh?`<small class="s">${esc(x.nganh)}</small>`:""}</td><td>${esc(x.ma||"")}</td><td>${x.ngay?fmt(x.ngay):""}${x.qd?`<small class="s">${esc(x.qd)}</small>`:""}${x.cqdk?`<small class="s">${esc(x.cqdk)}</small>`:""}</td><td>${esc(x.nguoi||"")}</td><td>${stT(x)}</td></tr>`).join("")+"</tbody></table>"}
+  L.map(x=>`<tr data-id="${x.id}"${x.st==="Đã chấm dứt"?' class="cl"':""}><td>${chip(x.co)}</td><td>${esc(x.loai||"")}</td><td class="t"><b>${esc(x.ten)}</b>${x.addr?`<small>${esc(x.addr)}</small>`:""}${x.nganh?`<small class="s">${esc(x.nganh)}</small>`:""}</td><td>${x.ma?esc(((((PD().co||[]).find(c=>same(c.code,x.co))||{}).msdn)||"")+"-"+x.ma):""}</td><td>${x.ngaylan1?"Lần đầu "+fmt(x.ngaylan1):""}${+x.lan?`<small class="s">Thay đổi lần ${esc(x.lan)}${x.ngay?", "+fmt(x.ngay):""}</small>`:(!x.ngaylan1&&x.ngay?fmt(x.ngay):"")}${x.qd?`<small class="s">${esc(x.qd)}</small>`:""}${x.cqdk?`<small class="s">${esc(x.cqdk)}</small>`:""}</td><td>${esc(x.nguoi||"")}</td><td>${stT(x)}</td></tr>`).join("")+"</tbody></table>"}
 function rPpl(r,all){
   const t0=today(),P=PD().pos,isN=p=>/nddpl|daidienphapluat/.test(norm(p.role));
   const posOf=n=>P.filter(p=>same(p.name,n)).sort((a,b)=>ci(a.co)-ci(b.co)||(activeP(b,t0)-activeP(a,t0))||String(b.from||"").localeCompare(String(a.from||"")));
@@ -2099,8 +2102,12 @@ const parseVnMoney=t=>{const m=String(t||"").match(/([\d][\d.,\s]*)\s*(tỷ|ty|t
   else{v=parseInt(raw.replace(/[.,\s]/g,""),10);if(isNaN(v))return null}
   return Math.round(v)};
 function hsOpenDd(c){return(PD().hs||[]).filter(h=>same(h.co,c)&&(HSI.find(i=>i.t===h.tt)||{}).g==="dd"&&h.nm&&h.st!=="Đã có kết quả").sort((a,b)=>String(b.ngay||"").localeCompare(String(a.ngay||"")))[0]||null}
+/* chỉ giữ phần tên sau dấu gạch ngang: "CÔNG TY ... - VĂN PHÒNG ĐẠI DIỆN TẠI TP.HCM" -> "VĂN PHÒNG ĐẠI DIỆN TẠI TP.HCM" */
+const dvName=t=>{t=String(t||"").trim();const a=t.split(/\s+[-–—]\s+/);return a.length>1?a[a.length-1].trim():t};
 function hsEnt(){
-  const d=PD();let ch=false;const isN=p=>/nddpl|daidienphapluat/.test(norm(p.role)),msgs=[];
+  const d=PD();let ch=false;
+  (d.dv||[]).forEach(x=>{const n=dvName(x.ten);if(n!==x.ten){x.ten=n;ch=true}if(x.ma&&/[-–]/.test(x.ma)){const m=String(x.ma).trim().split(/\s*[-–]\s*/).pop();if(m!==x.ma){x.ma=m;ch=true}}});
+  (d.hs||[]).forEach(h=>{if(h.dvn){const n=dvName(h.dvn);if(n!==h.dvn){h.dvn=n;ch=true}}});const isN=p=>/nddpl|daidienphapluat/.test(norm(p.role)),msgs=[];
   /* hồ sơ đổi NĐDPL còn mở và đã chọn người mới: bảo đảm có dòng Chức vụ để điền sẵn vào Mẫu 13 */
   (d.hs||[]).forEach(h=>{if(!h.nm||h.st==="Đã có kết quả"||(HSI.find(i=>i.t===h.tt)||{}).g!=="dd")return;
     if(!d.ppl.some(x=>same(x.name,h.nm))){d.ppl.push({id:uid(),name:h.nm});ch=true}
@@ -2131,7 +2138,8 @@ function hsEnt(){
       d.dv=d.dv||[];let r=d.dv.find(x=>same(x.co,h.co)&&same(x.ten,h.dvn));
       if(!r&&isNew){r={id:uid(),co:h.co,loai:h.dvl||(ab?"Chi nhánh ở nước ngoài":"Chi nhánh"),ten:h.dvn,ma:"",st:"Đang đăng ký thành lập",addr:"",qd:"",ngay:"",nguoi:"",cqdk:"",nganh:"",ngayct:"",note:"Tự tạo từ hồ sơ nộp Sở TC"};d.dv.push(r);out.push("tạo '"+h.dvn+"' ở tab Chi nhánh, VPĐD")}
       if(r){const before=r.st;
-        if(isNew){if(fin){r.st="Đang hoạt động";if(!r.ngay&&h.kq)r.ngay=h.kq}else if(r.st!=="Đang hoạt động")r.st="Đang đăng ký thành lập"}
+        if(/Thay đổi/.test(h.tt)){if(fin&&fresh){r.lan=(+r.lan||0)+1;if(h.kq)r.ngay=h.kq;r.ls=(r.ls?r.ls+"\n":"")+"Lần "+r.lan+(h.kq?", "+fmt(h.kq):"")+": "+(h.mv||"thay đổi nội dung");out.push("'"+h.dvn+"': thay đổi lần "+r.lan)}}
+        else if(isNew){if(fin){r.st="Đang hoạt động";if(!r.ngaylan1&&h.kq)r.ngaylan1=h.kq;if(!r.ngay&&h.kq)r.ngay=h.kq}else if(r.st!=="Đang hoạt động")r.st="Đang đăng ký thành lập"}
         else if(isTerm){if(fin){r.st="Đã chấm dứt";r.ngayct=h.kq||today()}else r.st="Đang chấm dứt"}
         if(r.st!==before)out.push("'"+h.dvn+"': "+r.st)}}
     if(g==="bo"){
