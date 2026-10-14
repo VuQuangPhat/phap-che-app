@@ -602,6 +602,7 @@ const save=()=>store(KEY,tasks),saveB=()=>store(KB,budget),saveC=()=>store(KC,CF
   if(Array.isArray(CFG.proj)){const keep=CFG.proj.filter(p=>!LEG.includes(n(p)));DEF.proj.forEach(d=>{if(!keep.some(p=>n(p)===n(d)))keep.push(d)});CFG.proj=keep}})();
 const late=t=>t.st!=="Hoàn thành"&&t.due&&t.due<today();
 const hsOf=t=>{const P=CFG.prof||{};return(P.hs||[]).find(h=>h.tid===t.id)||(P.nq||[]).find(h=>h.tid===t.id)||(P.ct||[]).find(h=>h.tid===t.id)};
+const isInvTask=t=>((CFG.prof||{}).inv||[]).some(r=>(r.works||[]).some(w=>w.tid===t.id));
 const hsNote=t=>{const P=CFG.prof||{},h=(P.hs||[]).find(x=>x.tid===t.id);if(h)return "Hồ sơ nộp Sở TC: "+(h.st||"");const n=(P.nq||[]).find(x=>x.tid===t.id);if(n)return "Nghị quyết"+(n.so?" "+n.so:"")+": "+(n.st||"");const c=(P.ct||[]).find(x=>x.tid===t.id);return c?"Hợp đồng: "+(c.st||""):""};
 const opts=(el,arr,all)=>{const v=el.value;el.innerHTML=(all?`<option value="">${all}</option>`:"")+arr.map(a=>`<option value="${esc(a)}">${esc(a)}</option>`).join("");if([...el.options].some(o=>o.value===v))el.value=v};
 function initSel(){
@@ -637,19 +638,48 @@ function renderList(){
 }
 function open_(id){
   editId=id;const t=tasks.find(x=>x.id===id)||{co:COS()[0],type:TYPES[0],pri:"2",st:"Mới",recv:today()};
-  $("dt").textContent=id?(hsOf(t)?"Sửa công việc (đồng bộ từ tab Hồ sơ nộp Sở TC hoặc Họp HĐQT, sửa tại tab gốc để không bị ghi đè)":"Sửa công việc"):"Thêm công việc";$("del").style.display=id?"":"none";
+  $("dt").textContent=id?(hsOf(t)||isInvTask(t)?"Sửa công việc (đồng bộ hai chiều: tình trạng, hạn và ngày hoàn thành được cập nhật ngược về hồ sơ gốc; nội dung khác sửa tại tab gốc)":"Sửa công việc"):"Thêm công việc";$("del").style.display=id?"":"none";
   ["title","co","type","proj","hd","party","pri","st","recv","due","done","who","note"].forEach(k=>$("f_"+k).value=t[k]==null?"":t[k]);
   $("dlg").showModal();
 }
 $("add").onclick=()=>open_(null);
 $("cancel").onclick=()=>$("dlg").close();
+/* Đồng bộ ngược: sửa công việc ở tab Công việc thì cập nhật lại hồ sơ nguồn (Hồ sơ nộp Sở TC, Nghị quyết, Hợp đồng, Đầu tư) */
+function backSync(t,prev){
+  const P=CFG.prof||{},stC=t.st!==prev.st,dueC=(t.due||"")!==(prev.due||""),doneC=t.st==="Hoàn thành"&&(t.done||"")!==(prev.done||"");let hit=false;
+  const h=(P.hs||[]).find(x=>x.tid===t.id);
+  if(h){hit=true;
+    if(stC){const m={"Hoàn thành":"Đã có kết quả","Chờ phản hồi":"Đã nộp","Mới":"Đang soạn"};
+      if(m[t.st])h.st=m[t.st];else if(t.st==="Đang xử lý"&&["Đang soạn","Đã nộp","Đã có kết quả"].includes(h.st))h.st="Chờ ký";
+      if(h.st==="Đã nộp"&&!h.ngay)h.ngay=today();
+      if(h.st!=="Đã có kết quả")h.kq=""}
+    if((stC||doneC)&&t.st==="Hoàn thành")h.kq=t.done||today();
+    if(dueC&&["Đã nộp","Cần bổ sung hồ sơ","Đã có kết quả"].includes(h.st))h.hen=t.due||""}
+  const n=!hit&&(P.nq||[]).find(x=>x.tid===t.id);
+  if(n){hit=true;
+    if(stC){const m={"Hoàn thành":"Đã hoàn thành","Đang xử lý":"Đang thực hiện","Mới":"Chưa thực hiện"};if(m[t.st]&&!(t.st==="Hoàn thành"&&n.st==="Hủy"))n.st=m[t.st];if(n.st!=="Đã hoàn thành")n.kq=""}
+    if((stC||doneC)&&t.st==="Hoàn thành")n.kq=t.done||today();
+    if(dueC)n.han=t.due||""}
+  const c=!hit&&(P.ct||[]).find(x=>x.tid===t.id);
+  if(c){hit=true;
+    if(stC){const m={"Hoàn thành":"Đã trả ý kiến","Đang xử lý":"Đang review","Mới":"Chờ review"};if(m[t.st]&&!(t.st==="Hoàn thành"&&c.st==="Đã ký"))c.st=m[t.st];if(!["Đã trả ý kiến","Đã ký"].includes(c.st))c.kq=""}
+    if((stC||doneC)&&t.st==="Hoàn thành")c.kq=t.done||today();
+    if(dueC)c.hen=t.due||""}
+  if(!hit)(P.inv||[]).forEach(r=>(r.works||[]).forEach(w=>{if(w.tid!==t.id)return;hit=true;
+    if(stC){const m={"Hoàn thành":"Hoàn thành","Chờ phản hồi":"Đã nộp","Mới":"Chưa làm"};
+      if(m[t.st])w.st=m[t.st];else if(t.st==="Đang xử lý"&&["Chưa làm","Đã nộp"].includes(w.st))w.st="Đang chuẩn bị hồ sơ";
+      if(w.st==="Đã nộp"&&!w.ngay)w.ngay=today();if(w.st!=="Hoàn thành")w.done=""}
+    if((stC||doneC)&&t.st==="Hoàn thành")w.done=t.done||today();
+    if(dueC)w.due=t.due||""}));
+  if(hit){saveC();try{document.dispatchEvent(new CustomEvent("phapche-backsync"))}catch(e){}}
+}
 $("save").onclick=()=>{
   const g=k=>$("f_"+k).value.trim();
   if(!g("title")){$("f_title").focus();return}
   const o={title:g("title"),co:g("co"),type:g("type"),proj:g("proj"),hd:g("hd"),party:g("party"),pri:g("pri"),st:g("st"),recv:g("recv"),due:g("due"),done:g("done"),who:g("who"),note:g("note")};
   if(o.due&&o.recv&&o.due<o.recv){alert("Hạn xử lý không thể trước ngày nhận.");return}
   if(o.st!=="Hoàn thành")o.done="";else if(!o.done)o.done=today();
-  if(editId)Object.assign(tasks.find(x=>x.id===editId),o);else tasks.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),...o});
+  if(editId){const tk=tasks.find(x=>x.id===editId),prev={st:tk.st,due:tk.due,done:tk.done};Object.assign(tk,o);try{backSync(tk,prev)}catch(e){console.error(e)}}else tasks.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),...o});
   save();$("dlg").close();render();
 };
 $("del").onclick=()=>{if(confirm("Xóa công việc này?")){tasks=tasks.filter(x=>x.id!==editId);save();$("dlg").close();render()}};
