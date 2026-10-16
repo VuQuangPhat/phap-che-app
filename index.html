@@ -1404,6 +1404,11 @@ const gtN=x=>{const m=String(x&&x.buoc||"").match(/(\d)\/3/);return m?+m[1]:(x&&
 const GTL=["Công bố","Thanh lý, chốt nghĩa vụ","Nộp hồ sơ"];
 const gtStep=x=>{if(!/Giải thể doanh nghiệp/.test(x.tt||""))return"";const n=gtN(x);return `<span class="gts">${GTL.map((l,i)=>`<i class="${i+1<n?"dn":i+1===n?"cur":""}">${i+1}. ${l}</i>`).join("")}${n<3&&x.st!=="Đã có kết quả"?`<button class="gtn" data-gtnext="${x.id}" title="Chuyển sang bước ${n+1}/3">Sang bước ${n+1}</button>`:""}</span>`};
 const MAS=["Nháp","Đang dùng","Chờ cập nhật","Hết hiệu lực"];
+const PLL=["Quyền sử dụng đất (GCN)","Hợp đồng thuê / thuê lại đất","Quyết định giao đất, cho thuê đất","Chuyển nhượng QSDĐ, tài sản gắn liền với đất","Quy hoạch, chấp thuận chủ trương","Giấy chứng nhận đăng ký đầu tư","Giấy phép xây dựng","Thẩm duyệt, nghiệm thu PCCC","Môi trường (ĐTM, giấy phép, đăng ký)","Nghiệm thu, hoàn công, đăng ký tài sản trên đất","Nghĩa vụ tài chính về đất","Khác"];
+const PLS=["Đã có, đang hiệu lực","Đang xin / đang thực hiện","Chưa có","Cần gia hạn / cấp lại / điều chỉnh","Đã hết hiệu lực","Không áp dụng"];
+const PLG=[["Đất (GCN, thuê đất hoặc chuyển nhượng)",[0,1,2,3]],["Quy hoạch, chủ trương",[4,5]],["Giấy phép xây dựng",[6]],["PCCC",[7]],["Môi trường",[8]],["Nghiệm thu, hoàn công",[9]]];
+const VAYL=["Vay trung dài hạn","Hạn mức tín dụng / bảo lãnh","Vay theo dự án đầu tư","Vay hợp vốn","Bảo lãnh cho bên khác","Khác"],VAYS=["Đã có chủ trương, chưa ký hợp đồng","Đang hiệu lực","Hết hạn, chờ gia hạn hoặc tất toán","Đã tất toán"],VAYD=["","Đã đăng ký","Chưa đăng ký","Không áp dụng"];
+const PLU=["","Cao","Trung bình","Thấp"];
 const CPL=["Giấy phép / điều kiện kinh doanh","Báo cáo định kỳ với cơ quan nhà nước","Hồ sơ nội bộ cần lưu giữ, cập nhật","Đăng ký, gia hạn khác"],CPK=["Một lần","Hàng tháng","Hàng quý","6 tháng","Hàng năm","Khác"],CPS=["Đang theo dõi","Đang thực hiện","Đã hoàn thành","Ngừng áp dụng"];
 const DV_L=["Chi nhánh","Văn phòng đại diện","Địa điểm kinh doanh","Chi nhánh ở nước ngoài","Văn phòng đại diện ở nước ngoài"],DV_S=["Đang hoạt động","Đang đăng ký thành lập","Đang chấm dứt","Tạm ngừng","Đã chấm dứt"];
 const UQ_PRE={hd:{t:"ký kết hợp đồng, giao dịch",get pv(){return UQ_PV},l:"Ký kết hợp đồng, giao dịch"},nd:{t:"thực hiện quyền và nghĩa vụ của người đại diện theo pháp luật",pv:"Thay mặt và nhân danh Bên A thực hiện các quyền và nghĩa vụ của người đại diện theo pháp luật của Công ty, cụ thể:\n1. Đại diện Công ty trong quan hệ với cơ quan nhà nước, tổ chức tín dụng, ngân hàng, cơ quan thuế, hải quan, bảo hiểm và các tổ chức, cá nhân khác; ký các đơn từ, văn bản, tài liệu, báo cáo, chứng từ phát sinh trong hoạt động của Công ty.\n2. Ký kết, thực hiện, sửa đổi, bổ sung, thanh lý các hợp đồng, giao dịch của Công ty trong phạm vi thẩm quyền của người đại diện theo pháp luật theo quy định của pháp luật, Điều lệ và quy chế nội bộ của Công ty.\n3. Điều hành, tổ chức thực hiện các nghị quyết, quyết định của Đại hội đồng cổ đông, Hội đồng quản trị.\n4. Đại diện Công ty tham gia tố tụng, giải quyết tranh chấp, khiếu nại, tố cáo (nếu có văn bản ủy quyền riêng cho từng vụ việc).\n5. Ký tên, sử dụng con dấu của Công ty đối với các văn bản thuộc phạm vi ủy quyền.",l:"Thực hiện quyền và nghĩa vụ của người đại diện theo pháp luật",lim:"Những nội dung thuộc thẩm quyền của Đại hội đồng cổ đông, Hội đồng quản trị; việc thay đổi người đại diện theo pháp luật, sửa đổi Điều lệ, tăng, giảm vốn điều lệ, góp vốn, chuyển nhượng, thế chấp tài sản có giá trị lớn và các giao dịch phải được cơ quan có thẩm quyền của Công ty thông qua thì chỉ được thực hiện khi có nghị quyết hoặc quyết định tương ứng. Bên B không được ủy quyền lại cho người khác. Việc ủy quyền này không làm thay đổi người đại diện theo pháp luật của Công ty đã đăng ký; Bên A vẫn chịu trách nhiệm theo quy định của pháp luật với tư cách người đại diện theo pháp luật."}};
@@ -1608,6 +1613,7 @@ const SEC={
     key:o=>norm(o.name),
     f:[{k:"name",l:"Tên dự án",list:"projs"},
        {k:"code",l:"Mã dự án"},
+       {k:"co",l:"Pháp nhân chủ đầu tư (mã công ty, để lọc theo công ty)",list:"p_codes"},
        {k:"gd",l:"Số giai đoạn (để trống: Nam Hà 2 mặc định 3; dự án khác không chia)",t:"int"},
        {k:"owner",l:"Chủ đầu tư"},
        {k:"nddpl",l:"NĐDPL / người điều hành dự án"},
@@ -1618,6 +1624,51 @@ const SEC={
        {k:"dk",l:"Đăng ký điều chỉnh GCNĐKĐT với cơ quan đăng ký",t:"sel",o:DKS},
        {k:"dknd",l:"Nội dung đăng ký điều chỉnh (VD: điều chỉnh tiến độ, vốn đầu tư)",full:1},
        {k:"note",l:"Ghi chú, vấn đề pháp lý đang theo dõi",t:"area",full:1}]},
+  pl:{lab:"Pháp lý đất đai, dự án",one:"hạng mục pháp lý đất đai, dự án",req:["co","loai"],
+    key:o=>[o.co,o.proj,o.loai,o.so||o.ten].map(norm).join("|"),
+    f:[{k:"co",l:"Pháp nhân",list:"p_codes"},
+       {k:"proj",l:"Dự án (nếu có)",t:"prj"},
+       {k:"loai",l:"Loại hạng mục pháp lý",t:"sel",o:PLL},
+       {k:"ten",l:"Tên, thửa đất, nội dung cụ thể (VD: thửa 356, tờ 25; GPXD giai đoạn 1)",full:1},
+       {k:"so",l:"Số giấy tờ / số vào sổ"},
+       {k:"ngay",l:"Ngày cấp, ngày ký",t:"date"},
+       {k:"cq",l:"Cơ quan cấp, đối tác"},
+       {k:"dt",l:"Diện tích (m²)",t:"dec"},
+       {k:"gt",l:"Giá trị, tiền thuê, nghĩa vụ tài chính (đồng)",t:"int"},
+       {k:"st",l:"Tình trạng",t:"sel",o:PLS},
+       {k:"han",l:"Hạn hiệu lực, hạn phải hoàn thành, hạn nộp (để app nhắc)",t:"date"},
+       {k:"nt",l:"Nhắc trước (số ngày, để trống = 60)",t:"int"},
+       {k:"vd",l:"Vấn đề pháp lý đang tồn đọng",t:"area",full:1},
+       {k:"ut",l:"Mức ưu tiên xử lý tồn đọng (Cao sẽ hiện cảnh báo ở Tổng quan)",t:"sel",o:PLU},
+       {k:"lk",l:"Nơi lưu hồ sơ / đường dẫn Drive",full:1},
+       {k:"cb",l:"Căn cứ pháp lý",full:1},
+       {k:"note",l:"Ghi chú",t:"area",full:1}]},
+  vay:{lab:"Vay và tài sản bảo đảm",one:"khoản vay, bảo đảm",req:["co","ten"],
+    key:o=>[o.co,o.bank,o.so||o.ten,o.ngay].map(norm).join("|"),
+    f:[{k:"co",l:"Doanh nghiệp vay",list:"p_codes"},
+       {k:"ten",l:"Khoản vay / hợp đồng tín dụng",full:1},
+       {k:"bank",l:"Bên cho vay (ngân hàng, chi nhánh)"},
+       {k:"loai",l:"Loại",t:"sel",o:VAYL},
+       {k:"so",l:"Số hợp đồng tín dụng"},
+       {k:"ngay",l:"Ngày ký",t:"date"},
+       {k:"proj",l:"Dự án (nếu có)",t:"prj"},
+       {k:"hm",l:"Số tiền vay / hạn mức (đồng)",t:"int"},
+       {k:"du",l:"Dư nợ gần nhất (đồng)",t:"int"},
+       {k:"dunt",l:"Dư nợ tại ngày",t:"date"},
+       {k:"ls",l:"Lãi suất, phí"},
+       {k:"han",l:"Ngày đến hạn / hết hạn hạn mức",t:"date"},
+       {k:"nt",l:"Nhắc trước (số ngày, để trống = 60)",t:"int"},
+       {k:"md",l:"Mục đích vay",full:1},
+       {k:"tsbd",l:"Tài sản bảo đảm (thửa đất, số GCN, tài sản hình thành từ vốn vay, tiền gửi…)",t:"area",full:1},
+       {k:"bc",l:"Bên cung cấp tài sản / bảo lãnh nếu không phải bên vay (VD: HLI cho HLM dùng thửa 807)",full:1},
+       {k:"hdbd",l:"Số hợp đồng thế chấp, bảo lãnh"},
+       {k:"dkgd",l:"Đăng ký giao dịch bảo đảm",t:"sel",o:VAYD},
+       {k:"ck",l:"Cam kết, điều kiện của ngân hàng (cổ đông, chuyển nhượng tài sản, tài chính…)",t:"area",full:1},
+       {k:"tq",l:"Phê duyệt thẩm quyền (HĐQT / ĐHĐCĐ)",t:"sel",o:["","Không thuộc diện phải phê duyệt","Đang xin phê duyệt","Đã có nghị quyết / quyết định HĐQT","Đã có nghị quyết ĐHĐCĐ"]},
+       {k:"nq",l:"Nghị quyết, quyết định phê duyệt (số, ngày)",full:1},
+       {k:"st",l:"Tình trạng",t:"sel",o:VAYS},
+       {k:"lk",l:"Nơi lưu hồ sơ / đường dẫn Drive",full:1},
+       {k:"note",l:"Ghi chú, rủi ro pháp lý",t:"area",full:1}]},
   mau:{lab:"HĐ mẫu",one:"hợp đồng mẫu",req:["ten"],
     key:o=>[o.co,o.ma||o.ten,o.ver].map(norm).join("|"),
     f:[{k:"co",l:"Pháp nhân áp dụng (để trống = dùng chung)",list:"p_codes"},
@@ -1638,7 +1689,7 @@ const SEC={
        {k:"lk",l:"Nơi lưu file gốc / đường dẫn",full:1},
        {k:"note",l:"Ghi chú, lý do cập nhật",t:"area",full:1}]}
 };
-const ORDER=["co","dv","dl","ppl","pos","uq","own","bo","hs","mt","nq","ct","cp","prj","mau"];
+const ORDER=["co","dv","dl","ppl","pos","uq","own","bo","hs","mt","nq","ct","cp","prj","pl","vay","mau"];
 let sec="dash",dsec="co",editId=null,seq=0;const ownClosed=new Set(),posClosed=new Set();
 
 /* ---------- Tiện ích ---------- */
@@ -1703,7 +1754,7 @@ const th4=document.createElement("button");th4.id="tpct";th4.textContent="Hợp 
 const th5=document.createElement("button");th5.id="tpcp";th5.textContent="Tuân thủ";nav.appendChild(th5);
 const th6=document.createElement("button");th6.id="tpmau";th6.textContent="HĐ mẫu";nav.appendChild(th6);
 const vp=document.createElement("div");vp.id="vprof";vp.hidden=true;
-const VISTAB=["dash","tl","|","co","dl","dv","|","ppl","pos","uq","|","own","bo","|","prj"];
+const VISTAB=["dash","tl","|","co","dl","dv","|","ppl","pos","uq","|","own","bo","|","prj","pl","vay"];
 vp.innerHTML=`<nav class="tabs" id="psub">${VISTAB.map(k=>k==="|"?'<span class="gsep"></span>':`<button data-s="${k}">${k==="dash"?"Tổng quan":k==="tl"?"Lịch sử":SEC[k].lab}</button>`).join("")}<span class="gsep"></span><button data-s="me">Thông tin của tôi</button><span style="margin-left:auto;display:flex;gap:6px;align-items:center;padding-left:12px"><button id="ppdf" class="primary">Xuất PDF mục này</button><button id="ppdfall">Xuất PDF toàn bộ</button></span></nav>
 <div id="gcobar" class="gcobar"></div>
 <div id="pprint"></div>
@@ -1805,17 +1856,17 @@ function renderProf(){
   if(sec==="tl"){$("pflt").hidden=true;$("pstats").hidden=true;rTl();return}
   const dsh=sec==="dash";$("pflt").hidden=dsh;$("pstats").hidden=dsh;if(dsh){rDash();return}
   const all=PD()[sec],q=$("pq").value.toLowerCase().trim(),c=$("pfc").value;
-  $("pfc").hidden=sec==="prj";$("padd").textContent="Thêm "+SEC[sec].one;$("padd2").hidden=sec!=="ppl";$("pcol").hidden=$("pexpd").hidden=!(sec==="own"||sec==="pos");
+  $("pfc").hidden=false;$("padd").textContent="Thêm "+SEC[sec].one;$("padd2").hidden=sec!=="ppl";$("pcol").hidden=$("pexpd").hidden=!(sec==="own"||sec==="pos");
   document.querySelectorAll("#psub button").forEach(b=>b.classList.toggle("on",b.dataset.s===sec));
   const fk=sec==="co"?"code":"co";
   const posOf=n=>PD().pos.filter(p=>same(p.name,n));
-  const r=all.filter(x=>(!c||sec==="prj"||(sec==="ppl"?posOf(x.name).some(p=>same(p.co,c)):same(x[fk],c)))&&(!q||(Object.values(x).join(" ")+(sec==="ppl"?" "+posOf(x.name).map(p=>Object.values(p).join(" ")).join(" "):"")).toLowerCase().includes(q)));
-  ({co:rCo,dv:rDv,dl:rDl,uq:rUq,ppl:rPpl,pos:rPos,own:rOwn,bo:rBo,hs:rHs,mt:rMt,nq:rNq,ct:rCt,cp:rCp,prj:rPrj,mau:rMau})[sec](r,all);
+  const r=all.filter(x=>(!c||(sec==="prj"?same(prjCo(x),c):sec==="ppl"?posOf(x.name).some(p=>same(p.co,c)):same(x[fk],c)))&&(!q||(Object.values(x).join(" ")+(sec==="ppl"?" "+posOf(x.name).map(p=>Object.values(p).join(" ")).join(" "):"")).toLowerCase().includes(q)));
+  ({co:rCo,dv:rDv,dl:rDl,uq:rUq,ppl:rPpl,pos:rPos,own:rOwn,bo:rBo,hs:rHs,mt:rMt,nq:rNq,ct:rCt,cp:rCp,prj:rPrj,pl:rPl,vay:rVay,mau:rMau})[sec](r,all);
 }
 function dashData(){
   const d0=PD();if(!GCO)return d0;
   const f=(a,k)=>(a||[]).filter(x=>same(x[k],GCO)),o={...d0};
-  o.co=f(d0.co,"code");["pos","own","mt","nq","ct","cp","uq","dv","bo","hs","dl"].forEach(k=>{o[k]=f(d0[k],"co")});return o;
+  o.co=f(d0.co,"code");["pos","own","mt","nq","ct","cp","uq","dv","bo","hs","dl","pl","vay"].forEach(k=>{o[k]=f(d0[k],"co")});o.prj=(d0.prj||[]).filter(x=>same(prjCo(x),GCO));return o;
 }
 function coCard(d,BOM){
   const x=(d.co||[])[0];if(!x)return`<div class="panel full"><h3>${esc(GCO)}</h3><small style="color:var(--mute)">Chưa có hồ sơ pháp nhân.</small></div>`;
@@ -1837,6 +1888,8 @@ function coCard(d,BOM){
    +r("Ủy quyền hiệu lực",String(uqa.length))
    +r("Họp / nghị quyết",`${d.mt.length} cuộc họp, ${d.nq.length} nghị quyết`+(mts[0]?` · gần nhất ${fmt(mts[0].ngay)}`:""))
    +r("Hợp đồng / tuân thủ",`${d.ct.length} hợp đồng, ${d.cp.length} mục tuân thủ`)
+   +r("Dự án, pháp lý đất",`${(d.prj||[]).length} dự án, ${(d.pl||[]).length} hạng mục pháp lý`+(()=>{const g=plGaps().filter(z=>same(z.c,GCO));return g.length?` · <span class="wn1">${g.length} cần xử lý</span>`:""})())
+   +r("Vay, bảo đảm",(()=>{const v=(d.vay||[]).filter(vayAct);if(!v.length)return'<span style="color:var(--mute)">chưa ghi nhận khoản vay</span>';const t=v.reduce((a,z)=>a+(+z.hm||0),0);return`${v.length} khoản đang hiệu lực, tổng ${bilN(t)}`+(()=>{const g=vayGaps().filter(z=>same(z.c,GCO));return g.length?` · <span class="wn1">${g.length} cần xử lý</span>`:""})()})())
    +`</div>`;
 }
 function rTl(){
@@ -1882,15 +1935,15 @@ function rDash(){
   d.co.filter(hit).forEach(x=>DKI.push({c:x.code,co:1,t:"Giấy chứng nhận đăng ký doanh nghiệp"+(x.dknd?": "+x.dknd:""),dk:x.dk}));
   d.pos.filter(x=>hit(x)&&activeP(x,t0)).forEach(x=>DKI.push({c:x.co||"-",co:1,t:x.name+" - "+[x.role,x.title].filter(Boolean).join(", "),dk:x.dk}));
   d.bo.filter(hit).forEach(x=>DKI.push({c:x.co,co:1,t:"Kê khai CSHHL: "+x.name+(x.dknd?" - "+x.dknd:""),dk:x.dk}));
-  d.prj.filter(hit).forEach(x=>DKI.push({c:x.name,co:0,t:"Giấy chứng nhận đăng ký đầu tư"+(x.dknd?": "+x.dknd:""),dk:x.dk}));
+  d.prj.filter(hit).forEach(x=>DKI.push({c:x.name,pc:prjCo(x),co:0,t:"Giấy chứng nhận đăng ký đầu tư"+(x.dknd?": "+x.dknd:""),dk:x.dk}));
   DKI.sort((a,b)=>(a.dk===CD?0:1)-(b.dk===CD?0:1));
-  if(GCO){const k=DKI.filter(i=>!i.co||same(i.c,GCO));DKI.length=0;DKI.push(...k)}
+  if(GCO){const k=DKI.filter(i=>i.co?same(i.c,GCO):(!i.pc||same(i.pc,GCO)));DKI.length=0;DKI.push(...k)}
   const pD=`<div class="panel full"><h3>Đăng ký thay đổi với cơ quan nhà nước (${DKI.length})</h3>${DKI.length?DKI.map(i=>`<div class="act" style="cursor:default"><span class="d">${i.co?chip(i.c):`<b>${esc(i.c)}</b>`}</span><span>${esc(i.t)}</span><span style="margin-left:auto;white-space:nowrap">${dkTag(i)}</span></div>`).join(""):'<small style="color:var(--mute)">Không có hồ sơ nào đang chờ hoặc đang thực hiện đăng ký.</small>'}</div>`;
   d.ppl.forEach(x=>{if(!x.cccd&&act.some(p=>same(p.name,x.name)))W.push([x.name,"thiếu số CCCD"])});
-  d.prj.forEach(x=>{if(!x.owner)W.push([x.name,"thiếu chủ đầu tư"]);if(!x.nddpl)W.push([x.name,"thiếu NĐDPL / người điều hành dự án"])});
+  d.prj.forEach(x=>{const pc=prjCo(x),pf=pc?x.name+": ":"";if(!x.owner)W.push([pc||x.name,pf+"thiếu chủ đầu tư"]);if(!x.nddpl)W.push([pc||x.name,pf+"thiếu NĐDPL / người điều hành dự án"])});
   const BOM=boModel().out.filter(o=>!GCO||same(o.c,GCO));BOM.forEach(o=>o.warn.forEach(w=>{if(w.k==="miss")W.push([o.c,"CSHHL "+w.b.name+" ("+nf(w.b.t)+"%) đạt ngưỡng 25% nhưng chưa ghi nhận kê khai"])}));
   hsGaps().filter(g=>!g.soft).forEach(g=>W.push([g.c,g.t]));govGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));cpGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));intGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));
-  const MG=mtGaps();MG.filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));ctGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));mauGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));(window.__nldGaps?window.__nldGaps():[]).filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));(window.__invGaps?window.__invGaps():[]).filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));
+  const MG=mtGaps();MG.filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));ctGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));mauGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));plGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));vayGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));(window.__nldGaps?window.__nldGaps():[]).filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));(window.__invGaps?window.__invGaps():[]).filter(g=>g.h).forEach(g=>W.push([g.c,g.t]));
   const nBO=new Set(BOM.flatMap(o=>o.bo.map(b=>b.key))).size;
   const pB=`<div class="panel full"><h3>Chủ sở hữu hưởng lợi theo doanh nghiệp (ngưỡng 25%)</h3>${BOM.length?BOM.map(o=>`<div class="act" style="cursor:default;align-items:flex-start"><span class="d">${chip(o.c)}</span><span style="flex:1">${o.bo.length?o.bo.map(b=>`<b>${esc(b.name)}</b> ${nf(b.t)}%${b.d>0&&b.i>0.005?` <small style="color:var(--mute)">(TT ${nf(b.d)}% + GT ${nf(b.i)}%)</small>`:""} ${(()=>{const s=boStat(o,b);return s==="Đã đăng ký"?'<small style="color:var(--ok)">đã kê khai</small>':s==="Đang thực hiện đăng ký"?'<span class="dkp">đang kê khai</span>':s==="Chưa đăng ký"?'<span class="wn1">⚠ chưa kê khai</span>':s==="Chưa ghi nhận"?'<span class="wn1">⚠ chưa ghi nhận kê khai</span>':""})()}`).join("<br>"):'<small style="color:var(--warn)">Chưa có cá nhân đạt 25%: xét tiêu chí kiểm soát</small>'}</span></div>`).join(""):'<small style="color:var(--mute)">Chưa có dữ liệu sở hữu vốn.</small>'}</div>`;
   if(GCO){const k=W.filter(w=>same(w[0],GCO));W.length=0;W.push(...k)}
@@ -3592,6 +3645,57 @@ function rMau(r,all){
   const rows=[...r].sort((a,b)=>(act(b)-act(a))||String(a.rsn||"9999").localeCompare(String(b.rsn||"9999")));
   $("plist").innerHTML=gp+`<table class="m"><thead><tr><th>Hợp đồng mẫu</th><th>Pháp nhân / dự án</th><th>Loại</th><th>Phiên bản, ban hành</th><th>Tình trạng</th><th>Rà soát tiếp theo</th><th>Đã dùng làm căn cứ</th></tr></thead><tbody>${rows.map(m=>{const u=usedBy(m),c=k=>u.filter(h=>h.lech===k).length;
     return `<tr data-id="${m.id}"${m.st==="Hết hiệu lực"?' style="opacity:.6"':""}><td class="t"><b>${esc(m.ten)}</b>${m.ma?`<small>Mã ${esc(m.ma)}</small>`:""}${m.lk?`<small class="clamp" title="${esc(m.lk)}">${esc(m.lk)}</small>`:""}</td><td>${m.co?chip(m.co):'<span style="color:var(--mute)">Dùng chung</span>'}${m.proj?`<small>${esc(m.proj)}</small>`:""}</td><td>${esc(m.loai)}</td><td>${esc(m.ver)}${m.ban?`<small>${fmt(m.ban)}</small>`:""}</td><td>${stT(m)}</td><td>${rsT(m)}</td><td class="num">${u.length}${u.length?`<small>${c("Giữ nguyên mẫu")} giữ nguyên, ${c("Sửa nhỏ")} sửa nhỏ, ${c("Sửa lớn")} sửa lớn</small>`:""}</td></tr>`}).join("")}</tbody></table>`}
+
+const bilN=v=>v?(+v/1e9).toLocaleString("vi-VN",{maximumFractionDigits:2})+" tỷ":"0";
+function prjCo(x){if(x.co)return x.co;const o=String(x.owner||"");return COS().find(c=>o.includes("("+c+")"))||""}
+function plOf(p){const n=norm(p.name);return PD().pl.filter(x=>x.proj&&(norm(x.proj)===n||norm(x.proj).startsWith(n+"gd")))}
+function plLab(x){return (x.proj?x.proj+" - ":"")+(x.ten||x.loai)+(x.so?" (số "+x.so+")":"")}
+const plDead=x=>x.st==="Không áp dụng"||x.st==="Đã hết hiệu lực";
+function plGaps(){const t0=today(),out=[];
+  PD().pl.filter(x=>!plDead(x)).forEach(x=>{const nm=plLab(x);
+    if(x.st==="Cần gia hạn / cấp lại / điều chỉnh"&&!x.vd)out.push({c:x.co,h:1,t:nm+": cần gia hạn, cấp lại hoặc điều chỉnh"+(x.han?" (hạn "+fmt(x.han)+")":"")});
+    if(x.han){const n=dDiff(t0,x.han),nt=+x.nt||60;
+      if(n<0)out.push({c:x.co,h:1,t:nm+": quá hạn "+(-n)+" ngày ("+fmt(x.han)+")"});
+      else if(n<=7)out.push({c:x.co,h:1,t:nm+": còn "+n+" ngày đến hạn ("+fmt(x.han)+")"});
+      else if(n<=nt)out.push({c:x.co,h:0,t:nm+": còn "+n+" ngày đến hạn ("+fmt(x.han)+")"})}
+    if(x.vd)out.push({c:x.co,h:x.ut==="Cao"?1:0,soft:x.ut!=="Cao"&&x.ut!=="Trung bình"?1:0,t:nm+": "+(x.st==="Cần gia hạn / cấp lại / điều chỉnh"?"cần gia hạn, cấp lại hoặc điều chỉnh. ":"tồn đọng. ")+(x.vd.length>170?x.vd.slice(0,170).replace(/\s+\S*$/,"")+"…":x.vd)})});
+  return out}
+const vayAct=x=>x.st==="Đang hiệu lực"||x.st==="Hết hạn, chờ gia hạn hoặc tất toán"||x.st==="Đã có chủ trương, chưa ký hợp đồng";
+function vayLab(x){return (x.bank||"Khoản vay")+(x.so?" số "+x.so:"")+(x.ten&&!x.bank?" "+x.ten:"")}
+function vayGaps(){const t0=today(),out=[];
+  PD().vay.filter(x=>x.st!=="Đã tất toán").forEach(x=>{const nm=vayLab(x);
+    if(x.han&&x.st!=="Đã có chủ trương, chưa ký hợp đồng"){const n=dDiff(t0,x.han),nt=+x.nt||60;
+      if(n<0)out.push({c:x.co,h:1,t:nm+": quá hạn "+(-n)+" ngày ("+fmt(x.han)+"), kiểm tra gia hạn hoặc tất toán"});
+      else if(n<=7)out.push({c:x.co,h:1,t:nm+": còn "+n+" ngày đến hạn ("+fmt(x.han)+")"});
+      else if(n<=nt)out.push({c:x.co,h:0,t:nm+": còn "+n+" ngày đến hạn ("+fmt(x.han)+")"})}
+    else if(x.st==="Đang hiệu lực"&&!x.han)out.push({c:x.co,h:0,soft:1,t:nm+": chưa nhập ngày đến hạn"});
+    if(x.tsbd&&x.dkgd==="Chưa đăng ký"&&x.st==="Đang hiệu lực")out.push({c:x.co,h:1,t:nm+": tài sản bảo đảm chưa đăng ký giao dịch bảo đảm"});
+    if(x.tq==="Đang xin phê duyệt")out.push({c:x.co,h:0,t:nm+": đang xin phê duyệt thẩm quyền"});
+    if(x.st==="Đang hiệu lực"&&x.tsbd&&!x.tq&&!x.nq)out.push({c:x.co,h:0,soft:1,t:nm+": chưa ghi nhận nghị quyết phê duyệt"})});
+  return out}
+function rPl(r,all){
+  const t0=today(),c=$("pfc").value,gaps=plGaps().filter(g=>!c||same(g.c,c)).sort((a,b)=>(b.h||0)-(a.h||0)||(a.soft?1:0)-(b.soft?1:0)),gh=gaps.filter(g=>g.h);
+  all=c?all.filter(x=>same(x.co,c)):all;const live=all.filter(x=>!plDead(x)),late=live.filter(x=>x.han&&x.han<t0),soon=live.filter(x=>x.han&&x.han>=t0&&dDiff(t0,x.han)<=(+x.nt||60));
+  $("pstats").innerHTML=st(all.length,"Hạng mục pháp lý")+st(all.filter(x=>x.st==="Đã có, đang hiệu lực").length,"Đã có, đang hiệu lực")+st(all.filter(x=>x.st==="Đang xin / đang thực hiện").length,"Đang xin, đang thực hiện")+st(late.length,"Quá hạn",late.length?"late":"")+st(soon.length,"Sắp đến hạn")+st(all.filter(x=>x.vd&&!plDead(x)).length,"Có vấn đề tồn đọng",all.some(x=>x.vd&&x.ut==="Cao")?"late":"");
+  const prjs=PD().prj.filter(p=>!c||same(prjCo(p),c));
+  const miss=prjs.map(p=>{const L=plOf(p),m=PLG.filter(g=>!L.some(x=>g[1].some(i=>PLL[i]===x.loai)&&x.st!=="Chưa có"&&x.st!=="Đã hết hiệu lực")).map(g=>g[0]);return{p,n:L.length,m}}).filter(z=>z.m.length);
+  const gp=`<div class="panel full${gh.length?" warnp":""}" style="margin:0 0 12px"><h3>${gh.length?"⚠ ":""}Pháp lý đất đai, dự án cần xử lý (${gaps.length})</h3>${gaps.length?gaps.map(g=>`<div class="act${g.h?" wnrow":""}" style="cursor:default"><span class="d">${chip(g.c)}</span><span>${esc(g.t)}</span></div>`).join(""):'<small style="color:var(--mute)">Chưa phát hiện vấn đề.</small>'}</div>`
+   +(miss.length?`<div class="panel full" style="margin:0 0 12px"><h3>Hạng mục chưa có chứng từ trong app (${miss.length} dự án)</h3>${miss.map(z=>`<div class="act" style="cursor:default"><span class="d"><b>${esc(z.p.name)}</b></span><span style="color:var(--mute)">${z.n?"chưa ghi nhận: ":"chưa ghi nhận hạng mục pháp lý nào. Cần có: "}${z.m.map(esc).join("; ")}</span></div>`).join("")}<small style="color:var(--mute)">Chỉ là danh sách để đối chiếu. Hạng mục nào không áp dụng cho dự án, thêm dòng với tình trạng "Không áp dụng" để app không nhắc nữa.</small></div>`:"");
+  if(!r.length){$("plist").innerHTML=gp+empty();return}
+  const stT=x=>x.st==="Đã có, đang hiệu lực"?'<span style="color:var(--ok);font-weight:600">'+esc(x.st)+'</span>':x.st==="Đang xin / đang thực hiện"?'<span class="dkp">'+esc(x.st)+'</span>':x.st==="Chưa có"||x.st==="Cần gia hạn / cấp lại / điều chỉnh"?'<span class="wn1">'+esc(x.st)+'</span>':'<span style="color:var(--mute)">'+esc(x.st||"")+'</span>';
+  const hT=x=>{if(!x.han)return"";const n=dDiff(t0,x.han);return fmt(x.han)+(plDead(x)?"":n<0?' <span class="wn1">quá hạn '+(-n)+" ngày</span>":n<=(+x.nt||60)?' <span class="dkp">còn '+n+" ngày</span>":"")};
+  const rows=[...r].sort((a,b)=>ci(a.co)-ci(b.co)||String(a.proj||"~").localeCompare(String(b.proj||"~"),"vi")||PLL.indexOf(a.loai)-PLL.indexOf(b.loai)||String(a.ngay||"").localeCompare(String(b.ngay||"")));
+  $("plist").innerHTML=gp+`<table class="m"><thead><tr><th>Pháp nhân, dự án</th><th>Hạng mục</th><th>Số, ngày</th><th>Cơ quan, đối tác</th><th>Diện tích (m²)</th><th>Tình trạng</th><th>Hạn</th><th>Vấn đề tồn đọng</th></tr></thead><tbody>${rows.map(x=>`<tr data-id="${x.id}"${plDead(x)?' style="opacity:.6"':""}><td>${chip(x.co)}${x.proj?`<small style="display:block">${esc(x.proj)}</small>`:""}</td><td class="t"><b>${esc(x.loai)}</b>${x.ten?`<small>${esc(x.ten)}</small>`:""}${x.lk?`<small class="s clamp" title="${esc(x.lk)}">${esc(x.lk)}</small>`:""}</td><td>${esc(x.so||"")}${x.ngay?`<small style="display:block">${fmt(x.ngay)}</small>`:""}</td><td>${esc(x.cq||"")}</td><td class="num">${x.dt===""||x.dt==null?"":nf(x.dt)}${x.gt?`<small style="display:block">${money(x.gt)} đ</small>`:""}</td><td>${stT(x)}</td><td>${hT(x)}</td><td>${x.vd?`<span class="clamp" title="${esc(x.vd)}">${x.ut==="Cao"?'<span class="wn1">Ưu tiên cao</span> ':""}${esc(x.vd)}</span>`:""}</td></tr>`).join("")}</tbody></table>`}
+function rVay(r,all){
+  const t0=today(),c=$("pfc").value,gaps=vayGaps().filter(g=>!c||same(g.c,c)).sort((a,b)=>(b.h||0)-(a.h||0)||(a.soft?1:0)-(b.soft?1:0)),gh=gaps.filter(g=>g.h);
+  all=c?all.filter(x=>same(x.co,c)):all;const act=all.filter(vayAct),sum=k=>act.reduce((s,x)=>s+(+x[k]||0),0);
+  $("pstats").innerHTML=st(all.length,"Khoản vay, bảo đảm")+st(act.length,"Đang hiệu lực hoặc chờ xử lý")+st(bilN(sum("hm")),"Tổng số tiền / hạn mức")+st(bilN(sum("du")),"Dư nợ đã ghi nhận")+st(act.filter(x=>x.han&&x.st!=="Đã có chủ trương, chưa ký hợp đồng"&&dDiff(t0,x.han)<=(+x.nt||60)).length,"Đến hạn hoặc quá hạn",gh.length?"late":"")+st(all.filter(x=>x.dkgd==="Chưa đăng ký").length,"Bảo đảm chưa đăng ký",all.some(x=>x.dkgd==="Chưa đăng ký")?"late":"");
+  const gp=`<div class="panel full${gh.length?" warnp":""}" style="margin:0 0 12px"><h3>${gh.length?"⚠ ":""}Vay và bảo đảm cần xử lý (${gaps.length})</h3>${gaps.length?gaps.map(g=>`<div class="act${g.h?" wnrow":""}" style="cursor:default"><span class="d">${chip(g.c)}</span><span>${esc(g.t)}</span></div>`).join(""):'<small style="color:var(--mute)">Chưa phát hiện vấn đề.</small>'}</div>`;
+  if(!r.length){$("plist").innerHTML=gp+empty();return}
+  const hT=x=>{if(!x.han)return"";const n=dDiff(t0,x.han);return fmt(x.han)+(x.st==="Đã tất toán"?"":n<0?' <span class="wn1">quá hạn '+(-n)+" ngày</span>":n<=(+x.nt||60)?' <span class="dkp">còn '+n+" ngày</span>":"")};
+  const stT=x=>x.st==="Đang hiệu lực"?'<span style="color:var(--ok);font-weight:600">'+esc(x.st)+'</span>':x.st==="Đã tất toán"?'<span style="color:var(--mute)">'+esc(x.st)+'</span>':'<span class="dkp">'+esc(x.st||"")+'</span>';
+  const rows=[...r].sort((a,b)=>(vayAct(b)-vayAct(a))||ci(a.co)-ci(b.co)||String(a.han||"9999").localeCompare(String(b.han||"9999")));
+  $("plist").innerHTML=gp+`<table class="m"><thead><tr><th>Doanh nghiệp vay</th><th>Khoản vay</th><th>Số tiền, dư nợ</th><th>Đến hạn</th><th>Tài sản bảo đảm</th><th>Cam kết, điều kiện</th><th>Phê duyệt</th><th>Tình trạng</th></tr></thead><tbody>${rows.map(x=>`<tr data-id="${x.id}"${x.st==="Đã tất toán"?' style="opacity:.6"':""}><td>${chip(x.co)}${x.proj?`<small>${esc(x.proj)}</small>`:""}</td><td class="t"><b>${esc(x.bank||x.ten)}</b>${x.bank&&x.ten?`<small>${esc(x.ten)}</small>`:""}<small class="s">${[x.loai,x.so?"số "+x.so:"",x.ngay?"ký "+fmt(x.ngay):""].filter(Boolean).map(esc).join(", ")}</small>${x.md?`<small class="s clamp" title="${esc(x.md)}">${esc(x.md)}</small>`:""}</td><td class="num">${x.hm?money(x.hm):""}${x.du?`<small style="display:block">dư nợ ${money(x.du)}${x.dunt?" ("+fmt(x.dunt)+")":""}</small>`:""}${x.ls?`<small style="display:block">${esc(x.ls)}</small>`:""}</td><td>${hT(x)}</td><td><span class="clamp" title="${esc(x.tsbd||"")}">${esc(x.tsbd||"")}</span>${x.bc?`<small class="s clamp" title="${esc(x.bc)}">Bên cung cấp: ${esc(x.bc)}</small>`:""}${x.dkgd==="Chưa đăng ký"?'<small class="wn1">Chưa đăng ký giao dịch bảo đảm</small>':x.dkgd==="Đã đăng ký"?"<small>Đã đăng ký giao dịch bảo đảm</small>":""}</td><td><span class="clamp" title="${esc(x.ck||"")}">${esc(x.ck||"")}</span></td><td>${esc(x.tq||"")}${x.nq?`<small class="s">${esc(x.nq)}</small>`:""}</td><td>${stT(x)}</td></tr>`).join("")}</tbody></table>`}
 function rPrj(r,all){
   const nx=x=>norm(x.name),inP=(p,x)=>norm(p)===nx(x)||norm(p).startsWith(nx(x)+"gd");
   const opAll=x=>tasks.filter(t=>t.st!=="Hoàn thành"&&inP(t.proj,x)).length,ctAll=x=>PD().ct.filter(c=>inP(c.proj,x)).length;
@@ -3601,7 +3705,7 @@ function rPrj(r,all){
   if(!r.length){$("plist").innerHTML=empty();return}
   $("plist").innerHTML=`<table class="m prjt"><thead><tr><th>Dự án</th><th>Chủ đầu tư / NĐDPL</th><th>Địa điểm</th><th>Đất / xưởng (m²)</th><th>Tổng vốn đầu tư</th><th>GCNĐKĐT</th><th>Việc đang xử lý</th><th>Hợp đồng</th></tr></thead><tbody>`+
   r.map(x=>{const g=projPh(x.name,x);
-    const main=`<tr data-id="${x.id}" class="pm"><td class="t"><b>${esc(x.name)}</b>${x.code?`<small>Mã dự án ${esc(x.code)}</small>`:""}${g?`<small>${g} giai đoạn</small>`:""}</td><td>${esc(x.owner)}<small class="s">${esc(x.nddpl)}</small></td><td><span class="clamp" title="${esc(x.addr)}">${esc(x.addr)}</span></td><td class="num">${nf(x.dt)}${x.dtxd!==""&&x.dtxd!=null?" / "+nf(x.dtxd):""}</td><td class="num">${money(x.tvdt)}</td><td>${x.dk&&x.dk!=="Không áp dụng"?dkTag(x):""}${x.dknd?`<small class="clamp" title="${esc(x.dknd)}">${esc(x.dknd)}</small>`:""}${x.note?`<small class="clamp s" title="${esc(x.note)}">${esc(x.note)}</small>`:""}</td><td class="num">${opAll(x)}</td><td class="num">${ctAll(x)}</td></tr>`;
+    const main=`<tr data-id="${x.id}" class="pm"><td class="t"><b>${esc(x.name)}</b>${x.code?`<small>Mã dự án ${esc(x.code)}</small>`:""}${g?`<small>${g} giai đoạn</small>`:""}${(()=>{const n=plOf(x).length;return n?`<small>${n} hạng mục pháp lý đất đai</small>`:""})()}</td><td>${prjCo(x)?chip(prjCo(x))+" ":""}${esc(x.owner)}<small class="s">${esc(x.nddpl)}</small></td><td><span class="clamp" title="${esc(x.addr)}">${esc(x.addr)}</span></td><td class="num">${nf(x.dt)}${x.dtxd!==""&&x.dtxd!=null?" / "+nf(x.dtxd):""}</td><td class="num">${money(x.tvdt)}</td><td>${x.dk&&x.dk!=="Không áp dụng"?dkTag(x):""}${x.dknd?`<small class="clamp" title="${esc(x.dknd)}">${esc(x.dknd)}</small>`:""}${x.note?`<small class="clamp s" title="${esc(x.note)}">${esc(x.note)}</small>`:""}</td><td class="num">${opAll(x)}</td><td class="num">${ctAll(x)}</td></tr>`;
     const subs=g?Array.from({length:g},(_,i)=>`<tr data-id="${x.id}" class="sub"><td class="t">Giai đoạn ${i+1}<small>${esc(x.name)} - GĐ${i+1}</small></td><td></td><td></td><td></td><td></td><td></td><td class="num">${opG(x,i+1)}</td><td class="num">${ctG(x,i+1)}</td></tr>`).join(""):"";
     return main+subs}).join("")+"</tbody></table>";
 }
@@ -3756,7 +3860,7 @@ body.pp .gcobar{display:none!important}
 .tlk{font-size:12px;border:1px solid var(--line);border-radius:6px;padding:1px 7px;color:var(--mute);white-space:nowrap}.tlt{flex:1;min-width:200px}
 @media(max-width:640px){.gcobar{padding:8px 12px 0}.tlw{padding:8px 12px}}`;
 document.head.appendChild(pcss);
-const RN={co:rCo,dv:rDv,dl:rDl,uq:rUq,ppl:rPpl,pos:rPos,own:rOwn,bo:rBo,hs:rHs,mt:rMt,nq:rNq,ct:rCt,cp:rCp,prj:rPrj,mau:rMau};
+const RN={co:rCo,dv:rDv,dl:rDl,uq:rUq,ppl:rPpl,pos:rPos,own:rOwn,bo:rBo,hs:rHs,mt:rMt,nq:rNq,ct:rCt,cp:rCp,prj:rPrj,pl:rPl,vay:rVay,mau:rMau};
 function printProf(all){
   const prev=sec,t0=document.title,cc={dash:0,co:0,ppl:1,pos:4,own:2,bo:5,hs:3,prj:3};
   let html="",label;
