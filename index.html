@@ -1911,11 +1911,18 @@ function dlpCtx(o){
   if(!o.nd5&&!o.custom)L.push("……………………………………………………………………………");
   L.push("","Điều 2. Hiệu lực của Phụ lục sửa đổi, bổ sung của Điều lệ:","Các nội dung đã được sửa đổi, bổ sung của Điều lệ được quy định tại Điều 1 Phụ lục này có hiệu lực kể từ ngày "+dd(o.hl)+" và thay thế các điều khoản tương ứng của Điều lệ.","Phụ lục này là một phần của Điều lệ, các điều khoản khác của Điều lệ không được sửa đổi, bổ sung trong phụ lục này vẫn giữ nguyên giá trị hiệu lực.");
   return{L,r,w,dia,cp,ky:o.ky,chair:cleanN(o.chair||""),lan}}
-function dlpText(o){return dlpCtx(o).L.join("\n")}
+function nganhRows(r){const out=[];String(r&&r.nganh||"").split("\n").forEach(l=>{const m=l.match(/^\s*\d+\.\s*(.*?)\s*\(mã ngành\s*(\d+)(,\s*ngành chính)?\)\s*$/);if(!m)return;let t=m[1],ct="";const k=t.indexOf(". Chi tiết:");if(k>=0){ct=t.slice(k+11).trim();t=t.slice(0,k)}out.push({t:t.trim(),ct,ma:m[2],c:!!m[3]})});
+  return out.sort((x,y)=>(y.c?1:0)-(x.c?1:0))}
+const NGB="[[BANG_NGANH]]";
+function nganhTable(r){const R=nganhRows(r),bd="border:1px solid #000;padding:3px 5px;",c=(v,w,x)=>`<td style="${bd}text-align:${x||"left"};vertical-align:top;width:${w}">${v}</td>`;
+  if(!R.length)return `<p><i>(Chưa có dữ liệu ngành nghề của công ty. Nhập ở tab Pháp nhân hoặc nhập file cập nhật.)</i></p>`;
+  return `<table style="border-collapse:collapse;width:100%;margin:6px 0"><thead><tr><th style="${bd}width:9%">STT</th><th style="${bd}width:65%">Tên ngành</th><th style="${bd}width:13%">Mã ngành</th><th style="${bd}width:13%">Ngành nghề kinh doanh chính</th></tr></thead><tbody>`+
+   R.map((x,i)=>`<tr>${c(i+1,"9%","center")}${c(`<p style="margin:0;text-align:left">${esc(x.t)}</p>`+(x.ct?`<p style="margin:6px 0 0;text-align:justify">Chi tiết: ${esc(x.ct)}</p>`:""),"65%")}${c(x.ma,"13%","center")}${c(x.c?"X":"","13%","center")}</tr>`).join("")+`</tbody></table>`}
+function dlpText(o){const X=dlpCtx(o);return X.L.map(l=>l===NGB?nganhRows(X.r).map((x,i)=>(i+1)+". "+x.t+(x.ct?". Chi tiết: "+x.ct:"")+" (mã ngành "+x.ma+(x.c?", ngành chính":"")+")").join("\n"):l).join("\n")}
 function dlpHtml(o){
   const X=dlpCtx(o),L=X.L,i1=L.findIndex(x=>/^Điều 1\./.test(x)),head=L.slice(0,3),body=L.slice(3);
   const h=head.map((x,i)=>i===0?`<div class="fh"><h2 style="margin:0 0 4px">${esc(x)}</h2></div>`:i===1?`<p style="text-align:center;margin:2px 0"><b>${esc(x)}</b></p>`:`<p style="text-align:center;margin:2px 0 10px"><i>${esc(x)}</i></p>`).join("");
-  const b=body.filter((x,i)=>!(x===""&&(i===0))).map(x=>x===""?"":/^Điều \d\./.test(x)?(()=>{const m=x.match(/^(Điều \d\.[^:]*:?)(.*)$/);return `<p><b>${esc(m[1])}</b>${esc(m[2])}</p>`})():`<p>${esc(x)}</p>`).join("");
+  const b=body.filter((x,i)=>!(x===""&&(i===0))).map(x=>x===""?"":/^Điều \d\./.test(x)?(()=>{const m=x.match(/^(Điều \d\.[^:]*:?)(.*)$/);return `<p><b>${esc(m[1])}</b>${esc(m[2])}</p>`})():x===NGB?nganhTable(X.r):/^Điều \d:/.test(x)||/^“?Sửa đổi.*:$/.test(x)?`<p><b>${esc(x)}</b></p>`:`<p>${esc(x)}</p>`).join("");
   const sig=X.cp?{t:"TM. ĐẠI HỘI ĐỒNG CỔ ĐÔNG",l:"CHỦ TỊCH HỘI ĐỒNG QUẢN TRỊ"}:{t:"TM. "+X.w.n.toUpperCase(),l:X.w.lead.toUpperCase()};
   return `<div class="fpage nq">${h}${b}
 <p style="text-align:right;margin-top:10px"><i>${esc(X.dia)}, ${dmy(o.ky||o.hl)}</i></p>
@@ -1950,7 +1957,7 @@ $("plist").addEventListener("click",e=>{
     if(x)Object.assign(x,rec);else d.dl.push({id:uid(),...rec});saveC();renderProf()}},true);
 $("plist").addEventListener("click",e=>{const nn=e.target.closest("[data-dlpnn]");if(!nn)return;e.stopPropagation();const ta=nn.closest("[data-dlpbox]").querySelector('[data-dlp="custom"]');
   const rr=coRec(nn.closest("[data-dlpbox]").querySelector('[data-dlp="c"]').value);
-  if(rr&&rr.nganh){ta.value=(ta.value?ta.value+"\n\n":"")+"“Sửa đổi Điều 4 Điều lệ Công ty (ngành, nghề kinh doanh)\n\nĐiều 4. Ngành, nghề kinh doanh của Công ty được sửa đổi như sau"+(rr.nganhso?" (theo Giấy xác nhận số "+rr.nganhso+(rr.nganhngay?" ngày "+fmt(rr.nganhngay):"")+")":"")+":\n"+rr.nganh+"”";return}
+  if(rr&&rr.nganh){ta.value=(ta.value?ta.value+"\n\n":"")+"“Sửa đổi Điều 4 Điều lệ Công ty:\n\nĐiều 4: Ngành, nghề kinh doanh:\n"+NGB;return}
   ta.value=(ta.value?ta.value+"\n\n":"")+"“Sửa đổi, bổ sung Điều 4 Điều lệ Công ty (ngành, nghề kinh doanh)\n\nĐiều 4. Ngành, nghề kinh doanh của Công ty:\nBổ sung các ngành, nghề kinh doanh sau:\n1. ……………………………… (mã ngành ……)\n2. ……………………………… (mã ngành ……)\nBỏ ngành, nghề kinh doanh sau (nếu có):\n1. ……………………………… (mã ngành ……)”"},true);
 $("plist").addEventListener("change",e=>{const t=e.target;if(!t.dataset||!t.dataset.dlp)return;const bx=t.closest("[data-dlpbox]");if(!bx)return;
   if(t.dataset.dlp==="c")dlpFill(bx);
@@ -2028,7 +2035,50 @@ function govGaps(){
     else if(est&&n<=90)out.push({c:p.co,h:0,t:who+": đủ 05 năm kể từ ngày bổ nhiệm vào "+fmt(end)+" (còn "+n+" ngày), chuẩn bị bầu hoặc bổ nhiệm lại"});
     else if(!est&&n>=0&&n<=90)out.push({c:p.co,h:n<=30?1:0,t:who+": nhiệm kỳ kết thúc ngày "+fmt(end)+" (còn "+n+" ngày), chuẩn bị bầu hoặc bổ nhiệm lại"})});
   return out}
-function rPos(r,all){
+/* ===== Quyết định bổ nhiệm (theo mẫu QĐ bổ nhiệm Giám đốc điều hành HLM) ===== */
+function qdAbbr(t){const m={"tonggiamdoc":"TGĐ","giamdoc":"GĐ","chutichhoidongquantri":"HĐQT","chutichhoidongthanhvien":"HĐTV","chusohuucongty":"CSH"},k=norm(t||"");return m[k]||String(t||"").split(/\s+/).map(w=>w[0]||"").join("").toUpperCase()||"QĐ"}
+function qdDoc(o){
+  const r=coRec(o.c),p=o.nm?persOf(o.nm):{},nu=/nữ/i.test(p.gt||""),hon=/nam/i.test(p.gt||"")?"Ông":nu?"Bà":"Ông/Bà",NM=cleanN(o.nm||"").toUpperCase()||"……………",nm=cleanN(o.nm||"")||"……………",cd=o.cd||"……………",nk=o.ky,yr=nk?nk.slice(0,4):"……",
+    st=o.st||"Tổng Giám đốc",cn=r.name||r.code,so=(o.so||"……")+"/"+yr+"/"+(r.code||"……")+"/QĐ-"+qdAbbr(st),dia=diaOf(r)||"……………",hl=o.hl||o.ky,
+    gt=p.gt||"……",dob=p.dob?fmt(p.dob):"……/……/………",num=p.cccd||p.hc||"……………",ng=(p.cccd?p.cccdngay:p.hcngay),noi=(p.cccd?p.cccdnoi:p.hcnoi)||"……………",tt=p.ttru||p.addr||"……………",
+    ban=/tổng giám đốc/i.test(st)?"Ban Tổng Giám đốc":"Ban điều hành",lc=cd,mn=o.k==="mn",vb=mn?"miễn nhiệm":o.k==="bl"?"bổ nhiệm lại":"bổ nhiệm",vbU=vb.charAt(0).toUpperCase()+vb.slice(1);
+  return `<div class="fpage nq">${lh(r,so,dia,dmy(o.ky),"")}
+<p style="text-align:center;margin:14px 0 0"><b style="font-size:15px">QUYẾT ĐỊNH</b></p><p style="text-align:center;margin:2px 0 6px"><i>Về việc ${vb} ${esc(lc)}</i><br>-----------------</p>
+<p style="text-align:center;margin:6px 0 0"><b>${esc(st.toUpperCase())}</b><br><b>${esc(cn.toUpperCase())}</b></p>
+<p style="margin:4px 0 0 14px"><i>- Căn cứ Luật Doanh nghiệp và các văn bản hướng dẫn thi hành;</i></p><p style="margin:2px 0 0 14px"><i>- Căn cứ điều lệ hoạt động của ${esc(cn)};</i></p><p style="margin:2px 0 8px 14px"><i>- Căn cứ quyền hạn của ${esc(st)} ${esc(cn)}.</i></p>
+<p style="text-align:center;margin:8px 0"><b>QUYẾT ĐỊNH</b></p>
+<p><b>Điều 1. ${vbU} ${esc(lc)} đối với:</b></p>
+<p>${hon}: <b>${esc(NM)}</b>&emsp;&emsp;Giới tính: ${esc(gt)}</p>
+<p>Sinh ngày: ${esc(dob)}&emsp;&emsp;Dân tộc: ${esc(p.dt||"Kinh")}&emsp;&emsp;Quốc tịch: ${esc(p.qt||"Việt Nam")}</p>
+<p>CCCD số: ${esc(num)}&emsp;&emsp;Cấp ngày: ${ng?fmt(ng):"……/……/………"}</p>
+<p>Nơi cấp: ${esc(noi)}</p><p>Địa chỉ thường trú: ${esc(tt)}</p>
+<p><b>${mn?"Thôi giữ chức vụ":"Giữ chức vụ"} ${esc(lc)} kể từ ${dmy(hl)}</b></p>
+<p><b>Điều 2.</b> ${hon} <b>${esc(nm)}</b> ${mn?"có trách nhiệm bàn giao công việc, hồ sơ, tài liệu, tài sản đang quản lý theo quy định của Công ty và pháp luật hiện hành.":"có trách nhiệm thực hiện công việc theo phân công của "+esc(st)+" phù hợp theo quy định của pháp luật hiện hành. Đồng thời, chịu trách nhiệm pháp lý liên quan đến vai trò, nhiệm vụ được giao."}</p>
+<p><b>Điều 3.</b> ${esc(ban)}, ${hon} <b>${esc(nm)}</b> và các đơn vị liên quan có trách nhiệm thi hành nội dung quyết định này.</p>
+<p>Quyết định này có hiệu lực kể từ ngày ký./.</p>
+<div style="display:flex;justify-content:space-between;gap:20px;margin-top:10px"><div style="width:50%;font-size:12px"><b><i>Nơi nhận: (03 bản)</i></b><br><i>- Như điều 3;</i><br><i>- Lưu P.HCNS</i></div><div class="fsig" style="width:45%;text-align:center"><b>${esc(st.toUpperCase())}</b><div style="height:80px"></div><b>${esc(cleanN(o.sg||"").toUpperCase())}</b></div></div></div>`}
+function qdBox(cos){
+  const L=(t,i,full)=>`<label class="stl"${full?' style="grid-column:1/-1"':""}>${t}${i}</label>`,inp=(k,ph,ty)=>`<input data-qd="${k}" ${ty?'type="date"':'type="text"'}${ph?` placeholder="${esc(ph)}"`:""}>`;
+  return `<div class="hsp" style="border-color:var(--seal);margin:0 0 12px"><b>Lập quyết định bổ nhiệm, bổ nhiệm lại, miễn nhiệm</b> (theo mẫu quyết định bổ nhiệm Giám đốc điều hành của HLM; thông tin người được bổ nhiệm lấy từ tab Nhân sự).<div class="stgrid" data-qdbox>
+${L("Doanh nghiệp",`<select data-qd="c">${cos.map(c=>`<option>${esc(c)}</option>`).join("")}</select>`)}
+${L("Loại quyết định",`<select data-qd="k"><option value="bn">Bổ nhiệm</option><option value="bl">Bổ nhiệm lại</option><option value="mn">Miễn nhiệm</option></select>`)}
+${L("Người được bổ nhiệm / miễn nhiệm",`<select data-qd="nm"></select>`)}
+${L("Chức danh",inp("cd","VD: Giám đốc điều hành"))}${L("Chức danh người ký quyết định",inp("st","Tổng Giám đốc"))}
+${L("Người ký quyết định",`<select data-qd="sg"></select>`)}${L("Số quyết định (chỉ phần số thứ tự)",inp("so","VD: 08"))}
+${L("Ngày ký",inp("ky","",1))}${L("Ngày giữ / thôi giữ chức vụ (để trống = ngày ký)",inp("hl","",1))}
+<div style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px"><button class="primary" data-qdprint>Xem, sửa và in / PDF</button><button data-qdword>Tải Word (.doc)</button></div></div><small style="display:block;color:var(--mute);margin-top:4px">Số quyết định tự ghép dạng “08/2025/HLM/QĐ-TGĐ”. Sau khi ký, anh cập nhật chức vụ ở bảng bên dưới.</small></div>`}
+function qdFill(bx){const q=k=>bx.querySelector('[data-qd="'+k+'"]'),c=q("c").value,d=setDefaults(c,""),t0=today(),
+  tg=PD().pos.filter(x=>same(x.co,c)&&/tonggiamdoc/.test(norm((x.title||"")+" "+(x.role||"")))&&activeP(x,t0))[0],set=(k,v)=>{const e=q(k);e.innerHTML=setPeopleOpts(v);e.value=v};
+  set("nm",d.nw);set("sg",tg?cleanN(tg.name):d.chair);if(!q("cd").value)q("cd").value="Giám đốc điều hành";if(!q("st").value)q("st").value=tg?"Tổng Giám đốc":"Tổng Giám đốc"}
+function qdRead(bx){const q=k=>bx.querySelector('[data-qd="'+k+'"]').value.trim();return{c:q("c"),nm:q("nm"),cd:q("cd"),st:q("st"),sg:q("sg"),so:q("so"),ky:q("ky"),hl:q("hl"),k:q("k")}}
+$("plist").addEventListener("click",e=>{const wd=e.target.closest("[data-qdword]"),pr=e.target.closest("[data-qdprint]")||wd;if(!pr)return;e.stopPropagation();
+  const o=qdRead(pr.closest("[data-qdbox]")),ms=[];if(!o.nm)ms.push("chưa chọn người được bổ nhiệm");else{const p=persOf(o.nm);if(!p.cccd&&!p.hc)ms.push("người được bổ nhiệm chưa có số giấy tờ (tab Nhân sự)");if(!p.dob)ms.push("chưa có ngày sinh")}if(!o.sg)ms.push("chưa chọn người ký");if(!o.ky)ms.push("chưa có ngày ký");
+  if(ms.length&&!confirm("Dữ liệu chưa đủ để điền hết quyết định:\n\n- "+ms.join("\n- ")+"\n\nBấm OK để in luôn (phần thiếu để dấu chấm điền tay)."))return;
+  if(wd)wordSave(qdDoc(o),"Quyet dinh "+o.c);else showSheet(qdDoc(o),{title:"Quyết định "+o.c})},true);
+$("plist").addEventListener("change",e=>{const t=e.target;if(t.dataset&&t.dataset.qd==="c"){const bx=t.closest("[data-qdbox]");if(bx)qdFill(bx)}},true);
+function rPos(r,all){rPos0(r,all);
+  const cos=COS();if(!cos.length)return;$("plist").insertAdjacentHTML("afterbegin",qdBox(cos));const bx=$("plist").querySelector("[data-qdbox]");if(bx)qdFill(bx)}
+function rPos0(r,all){
   const t0=today();
   $("pstats").innerHTML=st(all.length,"Chức vụ")+st(all.filter(x=>activeP(x,t0)).length,"Đang hiệu lực")+st(all.filter(x=>x.dk==="Chưa đăng ký").length,"Chưa đăng ký thay đổi",all.some(x=>x.dk==="Chưa đăng ký")?"late":"")+st(all.filter(x=>x.dk==="Đang thực hiện đăng ký").length,"Đang thực hiện đăng ký")+st(all.filter(x=>x.to&&x.to<t0).length,"Đã hết hiệu lực");
   if(!r.length){$("plist").innerHTML=empty();return}
@@ -2405,13 +2455,17 @@ function wordInline(root){
     P.forEach(a=>{const v=cs.getPropertyValue(a);if(v&&v!=="normal"&&v!=="none"&&v!=="start")o.push(a+":"+v)});
     o.push("font-size:"+pt(cs.fontSize));
     if(cs.lineHeight!=="normal"&&!/^(SPAN|B|I|U|STRONG|EM|SUP|SUB|BR)$/.test(e.tagName))o.push("line-height:"+pt(cs.lineHeight));
-    if(!/^(SPAN|B|I|U|STRONG|EM|SUP|SUB|BR|TD|TH|TR|TBODY|THEAD)$/.test(e.tagName)&&!e.classList.contains("fpage")){B.forEach(x=>{const m=parseFloat(cs["margin-"+x]);if(m&&!(x==="left"&&e.tagName==="DIV"&&e.offsetWidth<cw-2))o.push("margin-"+x+":"+pt(m))});const pd=B.map(x=>parseFloat(cs["padding-"+x])||0);if(pd.some(Boolean))o.push("padding:"+pd.map(v=>(v*0.75).toFixed(1)+"pt").join(" "))}
+    if(!/^(SPAN|B|I|U|STRONG|EM|SUP|SUB|BR|TD|TH|TR|TBODY|THEAD)$/.test(e.tagName)&&!e.classList.contains("fpage")){B.forEach(x=>{const m=parseFloat(cs["margin-"+x])||0;if((m||(e.tagName==="P"&&(x==="top"||x==="bottom")))&&!(x==="left"&&e.tagName==="DIV"&&e.offsetWidth<cw-2))o.push("margin-"+x+":"+pt(m))});const pd=B.map(x=>parseFloat(cs["padding-"+x])||0);if(pd.some(Boolean))o.push("padding:"+pd.map(v=>(v*0.75).toFixed(1)+"pt").join(" "))}
     if(/^(TD|TH|TABLE)$/.test(e.tagName)){B.forEach(x=>{const w=parseFloat(cs["border-"+x+"-width"]);if(w&&cs["border-"+x+"-style"]!=="none")o.push("border-"+x+":"+(w*0.75).toFixed(2)+"pt solid "+cs["border-"+x+"-color"])});const pd=B.map(x=>parseFloat(cs["padding-"+x])||0);o.push("padding:"+pd.map(v=>(v*0.75).toFixed(1)+"pt").join(" "))}
     if(/^(DIV|TABLE)$/.test(e.tagName)&&!e.classList.contains("fpage")&&e.offsetWidth&&e.offsetWidth<cw-2){o.push("width:"+(e.offsetWidth/cw*100).toFixed(1)+"%");const ml=parseFloat(cs.marginLeft);if(ml>0)o.push("margin-left:"+(ml/cw*100).toFixed(1)+"%")}
-    if(e.tagName==="TABLE")o.push("border-collapse:collapse");
+    if(e.tagName==="TABLE")o.push("border-collapse:collapse");if(/^(TD|TH)$/.test(e.tagName)){const tb=e.closest("table");if(tb&&tb.offsetWidth)o.push("width:"+(e.offsetWidth/tb.offsetWidth*100).toFixed(1)+"%")}if(e.tagName==="TABLE")o.push("table-layout:fixed");
     if(e.style&&e.style.height&&!e.children.length)o.push("height:"+pt(e.style.height));
     if(e.classList.contains("fpage")&&e!==fp[fp.length-1])o.push("page-break-after:always");
     d.setAttribute("style",o.join(";"));d.removeAttribute("contenteditable");d.removeAttribute("class")});
+  for(let k=src.length-1;k>=0;k--){const e=src[k],d=dst[k];if(e.nodeType!==1||getComputedStyle(e).display!=="flex"||!d.parentNode)continue;
+    const tb=document.createElement("table"),tr=document.createElement("tr"),w=e.offsetWidth||1;tb.setAttribute("style","border-collapse:collapse;width:100%;table-layout:fixed");tb.appendChild(document.createElement("tbody")).appendChild(tr);
+    [...d.children].forEach((c,i)=>{const oc=e.children[i],td=document.createElement("td");td.setAttribute("style","vertical-align:top;padding:0;width:"+((oc?oc.offsetWidth:w/d.children.length)/w*100).toFixed(1)+"%");c.style.width="auto";c.style.marginLeft="0";td.appendChild(c);tr.appendChild(td)});
+    d.parentNode.replaceChild(tb,d)}
   return cl.innerHTML.replace(/<hr[^>]*>/g,"")}
 function wordSave(html,title){
   let h;if(typeof html==="string"){const bx=document.createElement("div");bx.style.cssText="position:absolute;left:-9999px;top:0;width:170mm";bx.innerHTML=html;document.body.appendChild(bx);try{h=wordInline(bx)}finally{bx.remove()}}else h=wordInline(html);
