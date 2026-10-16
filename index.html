@@ -1830,7 +1830,7 @@ function refreshLists(){
   opts($("pfc"),codes,"Mọi pháp nhân");
 }
 const activeP=(x,t0)=>(!x.from||x.from<=t0)&&(!x.to||x.to>=t0);
-const rep=code=>{const t0=today();return PD().pos.filter(p=>same(p.co,code)&&/nddpl|daidienphapluat/.test(norm(p.role))&&activeP(p,t0)).map(p=>esc(p.name)).join("<br>")};
+const rep=code=>{const t0=today();return PD().pos.filter(p=>same(p.co,code)&&/nddpl|daidienphapluat/.test(norm(p.role))&&activeP(p,t0)).map(p=>p.name).filter((n,i,A)=>A.findIndex(m=>norm(m)===norm(n))===i).map(esc).join("<br>")};
 function grp(list){
   const g={};list.forEach(x=>{const k=norm(x.co)+"|"+(x.asof||"");(g[k]=g[k]||{co:x.co||"",asof:x.asof||"",rows:[]}).rows.push(x)});
   return Object.values(g).map(o=>{
