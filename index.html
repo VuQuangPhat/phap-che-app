@@ -2066,16 +2066,26 @@ ${L("Người được bổ nhiệm / miễn nhiệm",`<select data-qd="nm"></se
 ${L("Chức danh",inp("cd","VD: Giám đốc điều hành"))}${L("Chức danh người ký quyết định",inp("st","Tổng Giám đốc"))}
 ${L("Người ký quyết định",`<select data-qd="sg"></select>`)}${L("Số quyết định (chỉ phần số thứ tự)",inp("so","VD: 08"))}
 ${L("Ngày ký",inp("ky","",1))}${L("Ngày giữ / thôi giữ chức vụ (để trống = ngày ký)",inp("hl","",1))}
-<div style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px"><button class="primary" data-qdprint>Xem, sửa và in / PDF</button><button data-qdword>Tải Word (.doc)</button></div></div><small style="display:block;color:var(--mute);margin-top:4px">Số quyết định tự ghép dạng “08/2025/HLM/QĐ-TGĐ”. Sau khi ký, anh cập nhật chức vụ ở bảng bên dưới.</small></div>`}
+<div style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px"><button class="primary" data-qdprint>Xem, sửa và in / PDF</button><button data-qdword>Tải Word (.doc)</button></div></div><small data-qdnote style="display:block;color:var(--seal);margin-top:4px"></small><small style="display:block;color:var(--mute);margin-top:4px">Số quyết định tự ghép dạng “08/2025/HLM/QĐ-TGĐ”. Sau khi ký, anh cập nhật chức vụ ở bảng bên dưới.</small></div>`}
+function qdAuth(c,date,cd){
+  const r=coRec(c),P=PD().pos.filter(x=>same(x.co,c)&&activeP(x,date)),has=(x,re)=>re.test(norm((x.title||"")+" "+(x.role||""))),ce=norm(cd||"");
+  const board=ce==="tonggiamdoc"||ce==="giamdoc"||/^(tonggiamdoc|giamdoc)(cong|ty)?$/.test(ce);
+  if(board){const w=uqCqW(uqModel(r));if(w){let nm="";if(w.bb||/Hội đồng/.test(w.lead)){const ch=P.filter(x=>has(x,/chutich/))[0];nm=ch?cleanN(ch.name):""}else{const H=gmHolders(c).rows[0];nm=H?cleanN(H.n):""}
+      return{name:nm,title:w.lead,basis:"bổ nhiệm "+cd+" thuộc thẩm quyền của "+w.n}}}
+  const tg=P.filter(x=>has(x,/tonggiamdoc/))[0],gd=P.filter(x=>norm(x.title||x.role||"")==="giamdoc")[0],a=tg||gd;
+  if(a)return{name:cleanN(a.name),title:tg?"Tổng Giám đốc":"Giám đốc",basis:(tg?"Tổng Giám đốc":"Giám đốc")+" tại ngày ký"};
+  const ch=P.filter(x=>has(x,/chutich/))[0];return ch?{name:cleanN(ch.name),title:(ch.title||"Chủ tịch"),basis:"không thấy Tổng Giám đốc đang giữ chức tại ngày ký, lấy Chủ tịch"}:{name:"",title:"Tổng Giám đốc",basis:"chưa có người đang giữ chức có thẩm quyền tại ngày ký (kiểm tra tab Chức vụ)"}}
+function qdAuthApply(bx){const q=k=>bx.querySelector('[data-qd="'+k+'"]'),c=q("c").value,dt=q("ky").value||today(),a=qdAuth(c,dt,q("cd").value);
+  const e=q("sg");e.innerHTML=setPeopleOpts(a.name);e.value=a.name;q("st").value=a.title;const n=bx.parentNode.querySelector("[data-qdnote]");if(n)n.textContent="Người ký tự chọn theo ngày "+(q("ky").value?fmt(q("ky").value):"hôm nay")+": "+(a.name||"(chưa có)")+", "+a.title+" ("+a.basis+"). Anh vẫn đổi tay được."}
 function qdFill(bx){const q=k=>bx.querySelector('[data-qd="'+k+'"]'),c=q("c").value,d=setDefaults(c,""),t0=today(),
   tg=PD().pos.filter(x=>same(x.co,c)&&/tonggiamdoc/.test(norm((x.title||"")+" "+(x.role||"")))&&activeP(x,t0))[0],set=(k,v)=>{const e=q(k);e.innerHTML=setPeopleOpts(v);e.value=v};
-  set("nm",d.nw);set("sg",tg?cleanN(tg.name):d.chair);if(!q("cd").value)q("cd").value="Giám đốc điều hành";if(!q("st").value)q("st").value=tg?"Tổng Giám đốc":"Tổng Giám đốc"}
+  set("nm",d.nw);set("sg",tg?cleanN(tg.name):d.chair);if(!q("cd").value)q("cd").value="Giám đốc điều hành";qdAuthApply(bx)}
 function qdRead(bx){const q=k=>bx.querySelector('[data-qd="'+k+'"]').value.trim();return{c:q("c"),nm:q("nm"),cd:q("cd"),st:q("st"),sg:q("sg"),so:q("so"),ky:q("ky"),hl:q("hl"),k:q("k")}}
 $("plist").addEventListener("click",e=>{const wd=e.target.closest("[data-qdword]"),pr=e.target.closest("[data-qdprint]")||wd;if(!pr)return;e.stopPropagation();
   const o=qdRead(pr.closest("[data-qdbox]")),ms=[];if(!o.nm)ms.push("chưa chọn người được bổ nhiệm");else{const p=persOf(o.nm);if(!p.cccd&&!p.hc)ms.push("người được bổ nhiệm chưa có số giấy tờ (tab Nhân sự)");if(!p.dob)ms.push("chưa có ngày sinh")}if(!o.sg)ms.push("chưa chọn người ký");if(!o.ky)ms.push("chưa có ngày ký");
   if(ms.length&&!confirm("Dữ liệu chưa đủ để điền hết quyết định:\n\n- "+ms.join("\n- ")+"\n\nBấm OK để in luôn (phần thiếu để dấu chấm điền tay)."))return;
   if(wd)wordSave(qdDoc(o),"Quyet dinh "+o.c);else showSheet(qdDoc(o),{title:"Quyết định "+o.c})},true);
-$("plist").addEventListener("change",e=>{const t=e.target;if(t.dataset&&t.dataset.qd==="c"){const bx=t.closest("[data-qdbox]");if(bx)qdFill(bx)}},true);
+$("plist").addEventListener("change",e=>{const t=e.target;if(!t.dataset||!t.dataset.qd)return;const bx=t.closest("[data-qdbox]");if(!bx)return;if(t.dataset.qd==="c")qdFill(bx);else if(t.dataset.qd==="ky"||t.dataset.qd==="cd")qdAuthApply(bx)},true);
 function rPos(r,all){rPos0(r,all);
   const cos=COS();if(!cos.length)return;$("plist").insertAdjacentHTML("afterbegin",qdBox(cos));const bx=$("plist").querySelector("[data-qdbox]");if(bx)qdFill(bx)}
 function rPos0(r,all){
