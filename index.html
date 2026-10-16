@@ -2070,15 +2070,25 @@ ${L("Số nghị quyết / quyết định của cơ quan thông qua (khi cấp 
 ${L("Ngày ký",inp("ky","",1))}${L("Ngày giữ / thôi giữ chức vụ (để trống = ngày ký)",inp("hl","",1))}
 <div style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px"><button class="primary" data-qdprint>Xem, sửa và in / PDF</button><button data-qdword>Tải Word (.doc)</button></div></div><small data-qdnote style="display:block;color:var(--seal);margin-top:4px"></small><small style="display:block;color:var(--mute);margin-top:4px">Số quyết định tự ghép dạng “08/2025/HLM/QĐ-TGĐ”. Sau khi ký, anh cập nhật chức vụ ở bảng bên dưới.</small></div>`}
 function qdAuth(c,date,cd){
-  const r=coRec(c),P=PD().pos.filter(x=>same(x.co,c)&&activeP(x,date)),has=(x,re)=>re.test(norm((x.title||"")+" "+(x.role||""))),ce=norm(cd||"");
+  const ALL=PD().pos.filter(x=>same(x.co,c)),P=ALL.filter(x=>activeP(x,date)),has=(x,re)=>re.test(norm((x.title||"")+" "+(x.role||""))),ce=norm(cd||"");
+  const near=(L)=>{if(!L.length)return null;const d=t=>Math.abs((new Date(t)-new Date(date))/864e5);return [...L].sort((a,b)=>Math.min(d(a.from||"1900-01-01"),d(a.to||"2999-01-01"))-Math.min(d(b.from||"1900-01-01"),d(b.to||"2999-01-01")))[0]};
+  const diag=ALL.length?" Chức vụ đang có của "+c+": "+ALL.map(x=>cleanN(x.name)+" ("+(x.title||x.role||"?")+", "+(x.from?fmt(x.from):"…")+" – "+(x.to?fmt(x.to):"nay")+")").join("; ")+".":" Tab Chức vụ chưa có dòng nào của "+c+".";
   const board=/giamdoc/.test(ce)&&!/pho/.test(ce);
-  if(board){const w=uqCqW(uqModel(r));if(w){let nm="";if(w.bb||/Hội đồng/.test(w.lead)){const ch=P.filter(x=>has(x,/chutich/))[0];nm=ch?cleanN(ch.name):""}else{const H=gmHolders(c).rows[0];nm=H?cleanN(H.n):""}
-      return{name:nm,title:w.lead,basis:"bổ nhiệm, miễn nhiệm "+cd+" thuộc thẩm quyền của "+w.n+" (Luật Doanh nghiệp, Điều lệ; anh đối chiếu Điều lệ công ty)"+(nm?"":"; KHÔNG tìm thấy Chủ tịch đang giữ chức tại ngày này, kiểm tra tab Chức vụ")}}}
-  const tg=P.filter(x=>has(x,/tonggiamdoc/))[0],gd=P.filter(x=>norm(x.title||x.role||"")==="giamdoc")[0],a=tg||gd;
-  if(a)return{name:cleanN(a.name),title:tg?"Tổng Giám đốc":"Giám đốc",basis:(tg?"Tổng Giám đốc":"Giám đốc")+" tại ngày ký"};
-  const ch=P.filter(x=>has(x,/chutich/))[0];return ch?{name:cleanN(ch.name),title:(ch.title||"Chủ tịch"),basis:"không thấy Tổng Giám đốc đang giữ chức tại ngày ký, lấy Chủ tịch"}:{name:"",title:"Tổng Giám đốc",basis:"chưa có người đang giữ chức có thẩm quyền tại ngày ký (kiểm tra tab Chức vụ)"}}
+  const pick=(re,exact)=>{const a=P.filter(x=>has(x,re))[0];if(a)return{x:a,ap:false};const b=near(ALL.filter(x=>has(x,re)));return b?{x:b,ap:true}:null};
+  if(board){const w=uqCqW(uqModel(coRec(c)));if(w){let nm="",ap=false;if(w.bb||/Hội đồng/.test(w.lead)){const r=pick(/chutich/);if(r){nm=cleanN(r.x.name);ap=r.ap}}else{const H=gmHolders(c).rows[0];nm=H?cleanN(H.n):""}
+      return{name:nm,title:w.lead,basis:"bổ nhiệm, miễn nhiệm "+cd+" thuộc thẩm quyền của "+w.n+" (anh đối chiếu Điều lệ công ty)"+(nm?(ap?"; CHÚ Ý: không có Chủ tịch hiệu lực đúng ngày ký, lấy người gần ngày nhất":""):"; KHÔNG tìm thấy Chủ tịch trong tab Chức vụ (cần dòng có chức danh chứa chữ 'Chủ tịch')")+(nm&&!ap?"":diag)}}}
+  const r=pick(/tonggiamdoc/)||pick(/chutich/);if(r)return{name:cleanN(r.x.name),title:has(r.x,/tonggiamdoc/)?"Tổng Giám đốc":(r.x.title||"Chủ tịch"),basis:(r.ap?"CHÚ Ý: không có người hiệu lực đúng ngày ký, lấy người gần ngày nhất":"người đang giữ chức tại ngày ký")+(r.ap?diag:"")};
+  return{name:"",title:"Tổng Giám đốc",basis:"chưa tìm thấy người có thẩm quyền."+diag}}
+function qdTit(t){return String(t||"").replace(/HĐQT/g,"Hội đồng quản trị").replace(/HĐTV/g,"Hội đồng thành viên").replace(/\bTGĐ\b/g,"Tổng Giám đốc").replace(/\bGĐ\b/g,"Giám đốc").replace(/NĐDPL/g,"Người đại diện theo pháp luật").trim()}
+function qdTitleOf(c,name,date){const L=PD().pos.filter(x=>same(x.co,c)&&same(x.name,name)&&(x.title||x.role)),k=x=>norm((x.title||"")+" "+(x.role||""));
+  const act=L.filter(x=>activeP(x,date)),pref=a=>a.find(x=>!/^nddpl$/.test(norm(x.role)))||a[0];
+  const x=pref(act)||pref([...L].sort((a,b)=>String(b.from||"").localeCompare(String(a.from||""))));return x?qdTit(x.title||x.role):""}
+function qdPersonPick(bx,which){const q=k=>bx.querySelector('[data-qd="'+k+'"]'),c=q("c").value,dt=q("ky").value||today(),nm=which==="sg"?q("sg").value:q("nm").value,n=bx.parentNode.querySelector("[data-qdnote]");
+  if(!nm)return;const t=qdTitleOf(c,nm,dt);
+  if(which==="sg"){if(t)q("st").value=t;if(n)n.textContent="[mẫu QĐ bản 16/10 d] Chức danh người ký lấy theo Chức vụ của "+cleanN(nm)+" tại ngày "+(q("ky").value?fmt(q("ky").value):"hôm nay")+": "+(t||"(không tìm thấy dòng Chức vụ, nhập tay)")}
+  else{if(t){q("cd").value=t;qdAuthApply(bx)}else if(n)n.textContent="[mẫu QĐ bản 16/10 d] Chưa có dòng Chức vụ của "+cleanN(nm)+" nên chưa tự điền chức danh, anh nhập ô Chức danh."}}
 function qdAuthApply(bx){const q=k=>bx.querySelector('[data-qd="'+k+'"]'),c=q("c").value,dt=q("ky").value||today(),a=qdAuth(c,dt,q("cd").value);
-  const e=q("sg");e.innerHTML=setPeopleOpts(a.name);e.value=a.name;q("st").value=a.title;const n=bx.parentNode.querySelector("[data-qdnote]");if(n)n.style.color=a.name?"var(--seal)":"var(--late,#b00)";n.textContent="Người ký tự chọn theo ngày "+(q("ky").value?fmt(q("ky").value):"hôm nay")+": "+(a.name||"(chưa có)")+", "+a.title+" ("+a.basis+"). Anh vẫn đổi tay được."}
+  const e=q("sg");e.innerHTML=setPeopleOpts(a.name);e.value=a.name;q("st").value=a.title;const n=bx.parentNode.querySelector("[data-qdnote]");if(n)n.style.color=a.name?"var(--seal)":"var(--late,#b00)";n.textContent="[mẫu QĐ bản 16/10 d] Người ký tự chọn theo ngày "+(q("ky").value?fmt(q("ky").value):"hôm nay")+": "+(a.name||"(chưa có)")+", "+a.title+" ("+a.basis+"). Anh vẫn đổi tay được."}
 function qdFill(bx){const q=k=>bx.querySelector('[data-qd="'+k+'"]'),c=q("c").value,d=setDefaults(c,""),t0=today(),
   tg=PD().pos.filter(x=>same(x.co,c)&&/tonggiamdoc/.test(norm((x.title||"")+" "+(x.role||"")))&&activeP(x,t0))[0],set=(k,v)=>{const e=q(k);e.innerHTML=setPeopleOpts(v);e.value=v};
   set("nm",d.nw);set("sg",tg?cleanN(tg.name):d.chair);if(!q("cd").value)q("cd").value="Giám đốc điều hành";qdAuthApply(bx)}
@@ -2087,7 +2097,7 @@ $("plist").addEventListener("click",e=>{const wd=e.target.closest("[data-qdword]
   const o=qdRead(pr.closest("[data-qdbox]")),ms=[];if(!o.nm)ms.push("chưa chọn người được bổ nhiệm");else{const p=persOf(o.nm);if(!p.cccd&&!p.hc)ms.push("người được bổ nhiệm chưa có số giấy tờ (tab Nhân sự)");if(!p.dob)ms.push("chưa có ngày sinh")}if(!o.sg)ms.push("chưa chọn người ký");if(!o.ky)ms.push("chưa có ngày ký");
   if(ms.length&&!confirm("Dữ liệu chưa đủ để điền hết quyết định:\n\n- "+ms.join("\n- ")+"\n\nBấm OK để in luôn (phần thiếu để dấu chấm điền tay)."))return;
   if(wd)wordSave(qdDoc(o),"Quyet dinh "+o.c);else showSheet(qdDoc(o),{title:"Quyết định "+o.c})},true);
-$("plist").addEventListener("change",e=>{const t=e.target;if(!t.dataset||!t.dataset.qd)return;const bx=t.closest("[data-qdbox]");if(!bx)return;if(t.dataset.qd==="c")qdFill(bx);else if(t.dataset.qd==="ky"||t.dataset.qd==="cd")qdAuthApply(bx)},true);
+$("plist").addEventListener("change",e=>{const t=e.target;if(!t.dataset||!t.dataset.qd)return;const bx=t.closest("[data-qdbox]");if(!bx)return;if(t.dataset.qd==="c")qdFill(bx);else if(t.dataset.qd==="sg"||t.dataset.qd==="nm")qdPersonPick(bx,t.dataset.qd);else if(t.dataset.qd==="ky"||t.dataset.qd==="cd")qdAuthApply(bx)},true);
 $("plist").addEventListener("input",e=>{const t=e.target;if(t.dataset&&(t.dataset.qd==="ky"||t.dataset.qd==="cd")){const bx=t.closest("[data-qdbox]");if(bx&&(t.dataset.qd==="cd"||t.value.length===10))qdAuthApply(bx)}},true);
 function rPos(r,all){rPos0(r,all);
   const cos=COS();if(!cos.length)return;$("plist").insertAdjacentHTML("afterbegin",qdBox(cos));const bx=$("plist").querySelector("[data-qdbox]");if(bx)qdFill(bx)}
