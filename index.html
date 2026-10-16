@@ -2084,12 +2084,13 @@ $("plist").addEventListener("click",e=>{if(e.target.closest("[data-dlopen]")){e.
 $("plist").addEventListener("change",e=>{const t=e.target;if(!t.dataset||t.dataset.capimp===undefined)return;const f=t.files&&t.files[0];if(!f)return;
   f.text().then(tx=>{let j;try{j=JSON.parse(tx)}catch(err){alert("File không phải JSON hợp lệ.");return}
     if(!j||j.app!=="phapche-capnhat"||!Array.isArray(j.items)){alert("File không đúng định dạng cập nhật của app.");return}
-    const d=PD();let add=0,upd=0,bad=0;
+    const d=PD();let add=0,upd=0,bad=0,del=0;
     j.items.forEach(it=>{const sc=SEC[it.sec],o=it.data;if(!sc||!o||!d[it.sec]){bad++;return}
       if(sc.req&&sc.req.some(k=>!o[k])){bad++;return}
       const k=sc.key(o),x=d[it.sec].find(y=>sc.key(y)===k);
+      if(it.mode==="del"){if(x){d[it.sec].splice(d[it.sec].indexOf(x),1);del++}else bad++;return}
       if(x){Object.keys(o).forEach(a=>{if(o[a]!==""&&o[a]!=null&&(it.mode!=="fill"||x[a]===""||x[a]==null))x[a]=o[a]});upd++}else{d[it.sec].push({id:uid(),...o});add++}});
-    saveC();renderProf();alert("Đã thêm "+add+" dòng mới, cập nhật "+upd+" dòng"+(bad?", bỏ qua "+bad+" dòng lỗi":"")+".")})},true);
+    saveC();renderProf();alert("Đã thêm "+add+" dòng mới, cập nhật "+upd+" dòng"+(del?", xóa "+del+" dòng trùng":"")+(bad?", bỏ qua "+bad+" dòng lỗi":"")+".")})},true);
 $("plist").addEventListener("change",e=>{const t=e.target;if(!t.dataset||t.dataset.dlimp===undefined)return;const f=t.files&&t.files[0];if(!f)return;
   f.text().then(tx=>{let j;try{j=JSON.parse(tx)}catch(err){alert("File không phải JSON hợp lệ.");return}
     const it=(j&&j.app==="phapche-dieule"&&Array.isArray(j.items))?j.items:null;if(!it){alert("File không đúng định dạng điều lệ của app.");return}
