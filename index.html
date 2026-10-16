@@ -1407,7 +1407,14 @@ const MAS=["Nháp","Đang dùng","Chờ cập nhật","Hết hiệu lực"];
 const CPL=["Giấy phép / điều kiện kinh doanh","Báo cáo định kỳ với cơ quan nhà nước","Hồ sơ nội bộ cần lưu giữ, cập nhật","Đăng ký, gia hạn khác"],CPK=["Một lần","Hàng tháng","Hàng quý","6 tháng","Hàng năm","Khác"],CPS=["Đang theo dõi","Đang thực hiện","Đã hoàn thành","Ngừng áp dụng"];
 const DV_L=["Chi nhánh","Văn phòng đại diện","Địa điểm kinh doanh","Chi nhánh ở nước ngoài","Văn phòng đại diện ở nước ngoài"],DV_S=["Đang hoạt động","Đang đăng ký thành lập","Đang chấm dứt","Tạm ngừng","Đã chấm dứt"];
 const UQ_CQ=["Hội đồng quản trị","Hội đồng thành viên","Chủ sở hữu công ty","Không cần (người đại diện theo pháp luật tự ký)"],UQ_ST=["Đang hiệu lực","Đã thu hồi","Hết hiệu lực"];
+const DL_L=["Điều lệ đầy đủ","Phụ lục sửa đổi, bổ sung"],DL_S=["Đang hiệu lực","Đã được thay thế","Dự thảo"];
 const SEC={
+  dl:{lab:"Điều lệ",one:"điều lệ, phụ lục điều lệ",req:["co","ten"],
+    key:o=>[o.co,o.loai,o.ten].map(norm).join("|"),
+    f:[{k:"co",l:"Doanh nghiệp",list:"p_codes"},{k:"loai",l:"Loại văn bản",t:"sel",o:DL_L},{k:"ten",l:"Tên văn bản",full:1},{k:"lan",l:"Lần sửa đổi (với phụ lục)"},
+       {k:"ngay",l:"Ngày hiệu lực",t:"date"},{k:"st",l:"Tình trạng",t:"sel",o:DL_S},{k:"cc",l:"Căn cứ (nghị quyết, quyết định, GCN ĐKDN liên quan)",full:1},
+       {k:"nd",l:"Nội dung chính, điều khoản được sửa",full:1},{k:"file",l:"Tên file bản gốc (scan)",full:1},
+       {k:"nv",l:"Toàn văn",t:"area",full:1},{k:"note",l:"Ghi chú",t:"area",full:1}]},
   uq:{lab:"Ủy quyền",one:"văn bản ủy quyền",req:["co","a","b"],
     key:o=>[o.co,o.b,o.so,o.ngay].map(norm).join("|"),
     f:[{k:"co",l:"Doanh nghiệp (Bên ủy quyền)",list:"p_codes"},{k:"a",l:"Người đại diện theo pháp luật (Bên A)",list:"p_names"},{k:"at",l:"Chức danh Bên A"},
@@ -1488,6 +1495,10 @@ const SEC={
        {k:"shares",l:"Số cổ phần",t:"int"},
        {k:"dd",l:"Người đại diện dự họp ĐHĐCĐ (nếu cổ đông là tổ chức)"},
        {k:"asof",l:"Ngày chốt số liệu",t:"date"},
+       {k:"paid",l:"Số cổ phần / phần vốn đã góp đủ tiền (để trống: chưa theo dõi; bằng số cổ phần: đã góp đủ)",t:"int"},
+       {k:"han",l:"Hạn phải góp đủ (theo Luật Doanh nghiệp, Điều lệ hoặc nghị quyết)",t:"date"},
+       {k:"gday",l:"Ngày góp đủ thực tế (kể cả góp bù ở lần sau)",t:"date"},
+       {k:"dot",l:"Các đợt góp (VD: đợt 1 ngày …: … cổ phần; đợt 2 ngày …: … cổ phần)",t:"area",full:1},
        {k:"note",l:"Ghi chú",t:"area",full:1}]},
   bo:{lab:"CSHHL",one:"chủ sở hữu hưởng lợi",req:["co","name"],
     key:o=>[o.co,o.name].map(norm).join("|"),
@@ -1622,7 +1633,7 @@ const SEC={
        {k:"lk",l:"Nơi lưu file gốc / đường dẫn",full:1},
        {k:"note",l:"Ghi chú, lý do cập nhật",t:"area",full:1}]}
 };
-const ORDER=["co","dv","ppl","pos","uq","own","bo","hs","mt","nq","ct","cp","prj","mau"];
+const ORDER=["co","dv","dl","ppl","pos","uq","own","bo","hs","mt","nq","ct","cp","prj","mau"];
 let sec="dash",dsec="co",editId=null,seq=0;const ownClosed=new Set(),posClosed=new Set();
 
 /* ---------- Tiện ích ---------- */
@@ -1785,7 +1796,7 @@ function renderProf(){
   const fk=sec==="co"?"code":"co";
   const posOf=n=>PD().pos.filter(p=>same(p.name,n));
   const r=all.filter(x=>(!c||sec==="prj"||(sec==="ppl"?posOf(x.name).some(p=>same(p.co,c)):same(x[fk],c)))&&(!q||(Object.values(x).join(" ")+(sec==="ppl"?" "+posOf(x.name).map(p=>Object.values(p).join(" ")).join(" "):"")).toLowerCase().includes(q)));
-  ({co:rCo,dv:rDv,uq:rUq,ppl:rPpl,pos:rPos,own:rOwn,bo:rBo,hs:rHs,mt:rMt,nq:rNq,ct:rCt,cp:rCp,prj:rPrj,mau:rMau})[sec](r,all);
+  ({co:rCo,dv:rDv,dl:rDl,uq:rUq,ppl:rPpl,pos:rPos,own:rOwn,bo:rBo,hs:rHs,mt:rMt,nq:rNq,ct:rCt,cp:rCp,prj:rPrj,mau:rMau})[sec](r,all);
 }
 function rDash(){
   const d=PD(),t0=today(),sum=(a,k)=>a.reduce((s,x)=>s+(+x[k]||0),0);
@@ -1873,6 +1884,20 @@ function rCo(r,all){
   r.map(x=>{const lack=x.vtg!==""&&x.vtg!=null&&x.vdl&&+x.vtg<+x.vdl;
     return `<tr data-id="${x.id}"><td>${chip(x.code)}</td><td class="t">${esc(x.name)}<small>${esc(x.addr)}</small></td><td>${esc(x.msdn)}<small class="s">${[x.lan?"Lần "+x.lan:"",x.ngay?fmt(x.ngay):""].filter(Boolean).join(" - ")}</small>${x.dk&&x.dk!=="Không áp dụng"?`<small class="s">${dkTag(x)}${x.dknd?": "+esc(x.dknd):""}</small>`:""}</td><td>${x.ngaylan1?fmt(x.ngaylan1):'<span class="bad">Chưa có</span>'}</td><td class="num">${money(x.vdl)}</td><td class="num">${x.vtg===""||x.vtg==null?"":money(x.vtg)}${lack?`<small class="s bad">Thấp hơn vốn điều lệ ${money(+x.vdl-+x.vtg)}</small>`:""}</td><td>${rep(x.code)}</td><td>${(()=>{const D=(PD().dv||[]).filter(v=>same(v.co,x.code)&&v.st!=="Đã chấm dứt"),c=l=>D.filter(v=>v.loai===l).length,t=[[c("Chi nhánh")+c("Chi nhánh ở nước ngoài"),"chi nhánh"],[c("Văn phòng đại diện")+c("Văn phòng đại diện ở nước ngoài"),"VPĐD"],[c("Địa điểm kinh doanh"),"địa điểm KD"]].filter(a=>a[0]).map(a=>a[0]+" "+a[1]);return t.length?t.join(", "):'<span style="color:var(--mute)">Chưa có</span>'})()}</td><td>${(()=>{const q=window.__nldSum?window.__nldSum(x.code):{n:0,cd:null},c=q.cd;return (q.n?q.n+" lao động đang làm việc":'<span style="color:var(--mute)">Chưa có hồ sơ lao động</span>')+`<small class="s">${c?esc(c.st)+(+c.dv?", "+c.dv+" đoàn viên":""):"Chưa theo dõi công đoàn"}</small>`})()}</td></tr>`}).join("")+"</tbody></table>";
 }
+function rDl(r,all){
+  const full=all.filter(x=>x.loai==="Điều lệ đầy đủ"),pl=all.filter(x=>x.loai!=="Điều lệ đầy đủ"),cur=co=>{const L=all.filter(x=>same(x.co,co)&&x.ngay).sort((a,b)=>String(b.ngay).localeCompare(String(a.ngay)));return L[0]};
+  $("pstats").innerHTML=st(all.length,"Văn bản điều lệ")+st(full.length,"Điều lệ đầy đủ")+st(pl.length,"Phụ lục sửa đổi, bổ sung")+st(new Set(all.map(x=>norm(x.co))).size,"Doanh nghiệp có điều lệ");
+  const bar=`<div class="hsp" style="margin:0 0 12px"><b>Nhập điều lệ từ file</b> (file .json do Claude xuất từ bản scan): <input type="file" accept=".json,application/json" data-dlimp style="margin-left:6px"><small style="display:block;color:var(--mute);margin-top:4px">Dữ liệu được lưu trong trình duyệt của anh (và đồng bộ GitHub nếu đang bật), không nằm trong file index.html. Nếu kho đồng bộ GitHub là công khai thì không nên nhập điều lệ vào đây vì có tên, địa chỉ, số cổ phần của cổ đông.</small></div>`;
+  if(!r.length){$("plist").innerHTML=bar+empty();return}
+  const L=[...r].sort((a,b)=>ci(a.co)-ci(b.co)||String(a.ngay||"").localeCompare(String(b.ngay||""))||(+a.lan||0)-(+b.lan||0));
+  $("plist").innerHTML=bar+`<table class="m"><thead><tr><th>Doanh nghiệp</th><th>Văn bản</th><th>Ngày hiệu lực</th><th>Căn cứ, nội dung</th><th>Tình trạng</th><th>Toàn văn</th></tr></thead><tbody>`+L.map(x=>`<tr data-id="${x.id}"><td>${chip(x.co)}</td><td class="t"><b>${esc(x.ten)}</b><small class="s">${esc(x.loai||"")}${x.file?" · "+esc(x.file):""}</small></td><td>${x.ngay?fmt(x.ngay):""}</td><td class="t">${esc(x.nd||"")}${x.cc?`<small class="s">${esc(x.cc)}</small>`:""}</td><td>${x.st==="Đang hiệu lực"?'<span style="color:var(--ok);font-weight:600">Đang hiệu lực</span>':esc(x.st||"")}</td><td>${x.nv?`<a class="bo-add" data-dlview="${x.id}">Xem toàn văn</a>`:'<span style="color:var(--mute)">Chưa có</span>'}</td></tr>${x.note?`<tr class="nt" data-id="${x.id}"><td></td><td colspan="5"><small class="s" style="color:var(--warn,#b45309)">${esc(x.note)}</small></td></tr>`:""}<tr hidden data-dlbox="${x.id}"><td colspan="6"><div class="dlt" style="white-space:pre-wrap;font-family:'Times New Roman',serif;font-size:13px;line-height:1.5;max-height:520px;overflow:auto;padding:10px 14px;border:1px solid var(--line,#ddd);border-radius:6px;background:var(--card,#fff)">${esc(x.nv||"")}</div></td></tr>`).join("")+"</tbody></table>"}
+$("plist").addEventListener("click",e=>{const a=e.target.closest("[data-dlview]");if(!a)return;e.stopPropagation();const b=$("plist").querySelector('[data-dlbox="'+a.dataset.dlview+'"]');if(b){b.hidden=!b.hidden;a.textContent=b.hidden?"Xem toàn văn":"Thu gọn"}},true);
+$("plist").addEventListener("change",e=>{const t=e.target;if(!t.dataset||t.dataset.dlimp===undefined)return;const f=t.files&&t.files[0];if(!f)return;
+  f.text().then(tx=>{let j;try{j=JSON.parse(tx)}catch(err){alert("File không phải JSON hợp lệ.");return}
+    const it=(j&&j.app==="phapche-dieule"&&Array.isArray(j.items))?j.items:null;if(!it){alert("File không đúng định dạng điều lệ của app.");return}
+    const d=PD();d.dl=d.dl||[];let add=0,upd=0;
+    it.forEach(o=>{if(!o.co||!o.ten)return;const k=SEC.dl.key(o),x=d.dl.find(y=>SEC.dl.key(y)===k);if(x){Object.assign(x,o);upd++}else{d.dl.push({id:uid(),...o});add++}});
+    saveC();renderProf();alert("Đã nhập "+add+" văn bản mới, cập nhật "+upd+" văn bản.")})},true);
 function rDv(r,all){
   const act=x=>x.st!=="Đã chấm dứt",n=l=>all.filter(x=>act(x)&&x.loai===l).length;
   $("pstats").innerHTML=st(n("Chi nhánh")+n("Chi nhánh ở nước ngoài"),"Chi nhánh đang có")+st(n("Văn phòng đại diện")+n("Văn phòng đại diện ở nước ngoài"),"Văn phòng đại diện đang có")+st(n("Địa điểm kinh doanh"),"Địa điểm kinh doanh đang có")+st(all.filter(x=>x.st==="Đang đăng ký thành lập"||x.st==="Đang chấm dứt").length,"Đang đăng ký hoặc đang chấm dứt")+st(all.filter(x=>x.st==="Đã chấm dứt").length,"Đã chấm dứt");
@@ -3216,8 +3241,34 @@ function cpGaps(){
     else if(n<=7)out.push({c:h.co,h:1,t:nm+": còn "+n+" ngày đến hạn ("+fmt(h.han)+")"});
     else if(n<=nt)out.push({c:h.co,h:0,t:nm+": còn "+n+" ngày đến hạn ("+fmt(h.han)+")"})});
   return out}
+function ownGaps(){
+  const d=PD(),t0=today(),out=[],G=grp(d.own),F=x=>x!==""&&x!=null;
+  d.co.forEach(c=>{
+    const g=G.find(x=>same(x.co,c.code));if(!g)return;
+    const cp=/cổ phần/i.test(c.name||""),lim=cp?30:60,hs=d.hs.filter(h=>same(h.co,c.code)&&/vốn điều lệ|cổ đông|thành viên góp vốn|chuyển nhượng/i.test(h.tt||"")&&h.st!=="Đang soạn"),
+      who=x=>(cp?"Cổ đông ":"Thành viên ")+x.holder;
+    if(g.ok===false)out.push({c:c.code,h:0,t:"Cơ cấu sở hữu vốn chốt ngày "+fmt(g.asof)+" lệch vốn điều lệ: "+String(g.msg).toLowerCase()+". Nếu vừa đăng ký thay đổi vốn thì cập nhật tab Sở hữu vốn cho khớp"});
+    g.rows.forEach(x=>{
+      if(!F(x.paid))return;
+      const miss=(+x.shares||0)-(+x.paid||0),tien=money(Math.max(miss,0)*g.par);
+      if(miss>0){
+        if(!x.han){out.push({c:c.code,h:0,t:who(x)+" mới góp "+nf(x.paid)+"/"+nf(x.shares)+" (còn thiếu "+tien+" đồng) nhưng chưa ghi hạn góp đủ: nhập ô \"Hạn phải góp đủ\" ở tab Sở hữu vốn"});return}
+        const n=dDiff(t0,x.han);
+        if(n>=0){if(n<=30)out.push({c:c.code,h:0,t:who(x)+" còn thiếu "+tien+" đồng, đến hạn góp đủ trong "+n+" ngày ("+fmt(x.han)+")"});return}
+        const done=hs.some(h=>h.st==="Đã có kết quả"&&h.kq&&h.kq>=x.han),open=hs.some(h=>h.st!=="Đã có kết quả"&&(!h.ngay||h.ngay>=x.han)),dl=addD(x.han,lim),m=dDiff(t0,dl);
+        if(done)return;
+        if(open)out.push({c:c.code,h:0,t:who(x)+" chưa góp đủ "+tien+" đồng, đã quá hạn góp ("+fmt(x.han)+"); đang có hồ sơ thay đổi vốn, cổ đông chưa có kết quả: theo dõi cho đến khi có kết quả"});
+        else out.push({c:c.code,h:1,t:who(x)+" chưa góp đủ "+tien+" đồng, đã quá hạn góp ("+fmt(x.han)+") và chưa có hồ sơ đăng ký điều chỉnh vốn điều lệ, tỷ lệ sở hữu theo vốn thực góp ("+(m>=0?"còn "+m+" ngày, hạn "+fmt(dl):"đã quá hạn "+(-m)+" ngày, hạn "+fmt(dl))+" theo quy định "+(cp?"công ty cổ phần":"công ty TNHH")+"*). Tạo hồ sơ \"Thay đổi vốn điều lệ\" ở tab Hồ sơ nộp Sở TC"})}
+      else if(x.gday&&x.han&&x.gday>x.han){
+        const done=hs.some(h=>h.st==="Đã có kết quả"&&h.kq&&h.kq>=x.gday),open=hs.some(h=>h.st!=="Đã có kết quả"&&(!h.ngay||h.ngay>=x.han));
+        if(!done&&!open)out.push({c:c.code,h:0,t:who(x)+" góp đủ ngày "+fmt(x.gday)+", sau hạn góp "+fmt(x.han)+": kiểm tra đã đăng ký điều chỉnh vốn, tỷ lệ sở hữu theo vốn thực góp hoặc xử lý góp muộn chưa, chưa thấy hồ sơ liên quan ở tab Hồ sơ nộp Sở TC"})}});
+    const have=g.rows.filter(x=>F(x.paid));
+    if(have.length&&have.length<g.rows.length)out.push({c:c.code,h:0,soft:1,t:"Mới theo dõi số đã góp của "+have.length+"/"+g.rows.length+" cổ đông, thành viên: nhập đủ để đối chiếu với vốn thực góp"});
+    if(have.length&&have.length===g.rows.length&&F(c.vtg)){const tot=have.reduce((a,x)=>a+(+x.paid||0),0)*g.par;
+      if(tot!==+c.vtg)out.push({c:c.code,h:0,t:"Tổng vốn đã góp theo tab Sở hữu vốn ("+money(tot)+" đồng) khác Vốn thực góp ở tab Pháp nhân ("+money(+c.vtg)+" đồng): kiểm tra và sửa cho khớp"})}});
+  return out}
 function intGaps(){
-  const d=PD(),t0=today(),out=[],G=grp(d.own);
+  const d=PD(),t0=today(),out=[...ownGaps()],G=grp(d.own);
   d.co.forEach(c=>{
     const cpn=/cổ phần/i.test(c.name||""),g=G.find(x=>same(x.co,c.code)),hs=d.hs.filter(h=>same(h.co,c.code));
     if(cpn&&g&&g.asof){
@@ -3267,12 +3318,13 @@ function rOwn(r,all){
   const ga=grp(all);
   $("pstats").innerHTML=st(new Set(all.map(x=>norm(x.co))).size,"Công ty có cơ cấu sở hữu")+st(all.length,"Dòng cổ đông")+st(ga.filter(g=>g.ok===false).length,"Bảng lệch vốn điều lệ",ga.some(g=>g.ok===false)?"late":"")+st(ga.filter(g=>g.ok===null).length,"Bảng chưa đối chiếu được");
   if(!r.length){$("plist").innerHTML=empty();return}
-  $("plist").innerHTML=(all.length?ownDash():"")+grp(r).map(g=>{
+  const og=ownGaps(),ogh=og.filter(g=>g.h),gpo=og.length?`<div class="panel full${ogh.length?" warnp":""}" style="margin:0 0 12px"><h3>${ogh.length?"⚠ ":""}Góp vốn và cơ cấu sở hữu cần xử lý (${og.length})</h3>${og.map(g=>`<div class="act${g.h?" wnrow":""}" style="cursor:default"><span class="d">${chip(g.c)}</span><span>${esc(g.t)}</span></div>`).join("")}<small style="color:var(--mute)">Dấu * : thời hạn theo Luật Doanh nghiệp 2020 (30 ngày với công ty cổ phần, 60 ngày với công ty TNHH kể từ ngày cuối cùng phải góp đủ), chưa đối chiếu với văn bản hiện hành. Hạn góp đủ nhập ở từng dòng cổ đông.</small></div>`:"";
+  $("plist").innerHTML=gpo+(all.length?ownDash():"")+grp(r).map(g=>{
     const pctSum=g.base?g.val/g.base*100:0,ix=Math.max(0,COS().findIndex(c=>same(c,g.co)));
     const key=g.co+"|"+g.asof;return `<div class="ow ${cx(g.co)}${ownClosed.has(key)?" col":""}" data-k="${esc(key)}"><h3 class="gh" data-og="${esc(key)}">${esc(g.co)}${g.asof?` - chốt ngày ${fmt(g.asof)}`:""}<small>mệnh giá ${money(g.par)} đồng${g.vdl?`, vốn điều lệ ${money(g.vdl)} đồng`:""}</small><small>| ${g.rows.length} cổ đông</small></h3><div class="owb">
-<table class="m" style="min-width:640px"><thead><tr><th>Cổ đông</th><th>Số cổ phần</th><th>Giá trị (đồng)</th><th>Tỷ lệ</th><th>Ghi chú</th></tr></thead><tbody>`+
-    g.rows.map(x=>`<tr data-id="${x.id}"><td>${esc(x.holder)}</td><td class="num">${nf(x.shares)}</td><td class="num">${money((+x.shares||0)*g.par)}</td><td class="num">${g.base?nf((+x.shares||0)*g.par/g.base*100)+"%":""}</td><td>${esc(x.note)}</td></tr>`).join("")+
-    `<tr class="tot"><td>Tổng cộng</td><td class="num">${nf(g.sh)}</td><td class="num">${money(g.val)}</td><td class="num">${nf(pctSum)}%</td><td class="${g.ok===true?"ok":g.ok===false?"bad":""}">${esc(g.msg)}</td></tr></tbody></table></div></div>`}).join("");
+<table class="m" style="min-width:640px"><thead><tr><th>Cổ đông</th><th>Số cổ phần</th><th>Giá trị (đồng)</th><th>Tỷ lệ</th><th>Đã góp</th><th>Hạn góp đủ</th><th>Ghi chú</th></tr></thead><tbody>`+
+    g.rows.map(x=>`<tr data-id="${x.id}"><td>${esc(x.holder)}</td><td class="num">${nf(x.shares)}</td><td class="num">${money((+x.shares||0)*g.par)}</td><td class="num">${g.base?nf((+x.shares||0)*g.par/g.base*100)+"%":""}</td><td class="num">${(()=>{if(x.paid===""||x.paid==null)return"";const m=(+x.shares||0)-(+x.paid||0);return m>0?`<span class="wn1">${nf(x.paid)}/${nf(x.shares)} (thiếu ${money(m*g.par)})</span>`:'<span style="color:var(--ok)">Đủ'+(x.gday?" "+fmt(x.gday):"")+"</span>"})()}</td><td>${x.han?(x.han<today()&&x.paid!==""&&x.paid!=null&&+x.paid<+x.shares?`<span class="wn1">⚠ ${fmt(x.han)}</span>`:fmt(x.han)):""}</td><td>${esc(x.note)}${x.dot?`<small class="s">${esc(x.dot)}</small>`:""}</td></tr>`).join("")+
+    `<tr class="tot"><td>Tổng cộng</td><td class="num">${nf(g.sh)}</td><td class="num">${money(g.val)}</td><td class="num">${nf(pctSum)}%</td><td></td><td></td><td class="${g.ok===true?"ok":g.ok===false?"bad":""}">${esc(g.msg)}</td></tr></tbody></table></div></div>`}).join("");
 }
 const mauLab=m=>(m.ma?m.ma+" - ":"")+m.ten+(m.ver?" ("+m.ver+")":"");
 function mauGaps(){const t0=today(),out=[];
@@ -3447,7 +3499,7 @@ body.pp #vprof .sechead{margin:0 0 8px;padding:5px 10px;font-size:14px;color:var
 body.pp #vprof .sechead.first{break-before:auto}
 }`;
 document.head.appendChild(pcss);
-const RN={co:rCo,dv:rDv,uq:rUq,ppl:rPpl,pos:rPos,own:rOwn,bo:rBo,hs:rHs,mt:rMt,nq:rNq,ct:rCt,cp:rCp,prj:rPrj,mau:rMau};
+const RN={co:rCo,dv:rDv,dl:rDl,uq:rUq,ppl:rPpl,pos:rPos,own:rOwn,bo:rBo,hs:rHs,mt:rMt,nq:rNq,ct:rCt,cp:rCp,prj:rPrj,mau:rMau};
 function printProf(all){
   const prev=sec,t0=document.title,cc={dash:0,co:0,ppl:1,pos:4,own:2,bo:5,hs:3,prj:3};
   let html="",label;
