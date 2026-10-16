@@ -1927,18 +1927,18 @@ ${L("Ngày hiệu lực (thường là ngày đăng ký thay đổi, để trố
 ${L("Người ký (Chủ tịch HĐQT hoặc chủ sở hữu)",`<select data-dlp="chair"></select>`)}
 ${L("Căn cứ bổ sung (VD: GCN ĐKDN thay đổi lần … ngày …)",inp("gcn",""),1)}
 <label class="stl" style="grid-column:1/-1" data-dlpcu hidden>Nội dung sửa đổi tự soạn (mỗi dòng một đoạn, ghi rõ “Sửa đổi Điều … Điều lệ Công ty”)<textarea data-dlp="custom" rows="6"></textarea></label>
-<div style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px"><button class="primary" data-dlpprint>In phụ lục / PDF</button><button data-dlpsave>Lưu vào danh sách Điều lệ (dự thảo)</button></div></div><small style="display:block;color:var(--mute);margin-top:4px">Sau khi phụ lục có hiệu lực, cập nhật “Ngày Điều lệ hiện hành” ở tab Pháp nhân và đổi tình trạng văn bản ở danh sách này. Căn cứ pháp lý (Luật Doanh nghiệp 2020) anh đối chiếu văn bản hiện hành trước khi ký.</small></div>`}
+<div style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px"><button class="primary" data-dlpprint>Xem, sửa và in / PDF</button><button data-dlpword>Tải Word (.doc)</button><button data-dlpsave>Lưu vào danh sách Điều lệ (dự thảo)</button></div></div><small style="display:block;color:var(--mute);margin-top:4px">Sau khi phụ lục có hiệu lực, cập nhật “Ngày Điều lệ hiện hành” ở tab Pháp nhân và đổi tình trạng văn bản ở danh sách này. Căn cứ pháp lý (Luật Doanh nghiệp 2020) anh đối chiếu văn bản hiện hành trước khi ký.</small></div>`}
 function dlpFill(bx){
   const q=k=>bx.querySelector('[data-dlp="'+k+'"]'),c=q("c").value,d=setDefaults(c,""),pp=setPeopleOpts;
   const set=(k,v)=>{const e=q(k);e.innerHTML=pp(v);e.value=v};
   set("nw",d.nw);set("chair",d.chair);q("nwt").value=d.nwt;q("lan").placeholder="tự động: "+dlpNext(c)}
 function dlpRead(bx){const q=k=>bx.querySelector('[data-dlp="'+k+'"]').value.trim();return{c:q("c"),nd5:q("mau")==="nd5",lan:q("lan"),nw:q("nw"),nwt:q("nwt"),nqso:q("nqso"),nqngay:q("nqngay"),hl:q("hl"),ky:q("ky"),chair:q("chair"),gcn:q("gcn"),custom:q("custom")}}
 $("plist").addEventListener("click",e=>{
-  const pr=e.target.closest("[data-dlpprint]"),sv=e.target.closest("[data-dlpsave]");if(!pr&&!sv)return;e.stopPropagation();
+  const wd=e.target.closest("[data-dlpword]"),pr=e.target.closest("[data-dlpprint]")||wd,sv=e.target.closest("[data-dlpsave]");if(!pr&&!sv)return;e.stopPropagation();
   const o=dlpRead((pr||sv).closest("[data-dlpbox]")),ms=[];
   if(o.nd5&&!o.nw)ms.push("chưa chọn người đại diện mới");if(o.nd5&&o.nw){const p=persOf(o.nw);if(!p.cccd&&!p.hc)ms.push("người đại diện mới chưa có số giấy tờ pháp lý (tab Nhân sự)");if(!p.dob)ms.push("chưa có ngày sinh");if(!p.addr&&!p.ttru)ms.push("chưa có địa chỉ")}
   if(!o.nqso)ms.push("chưa có số nghị quyết");if(!o.chair)ms.push("chưa chọn người ký");
-  if(pr){if(ms.length&&!confirm("Dữ liệu chưa đủ để điền hết phụ lục:\n\n- "+ms.join("\n- ")+"\n\nBấm OK để in luôn (phần thiếu để dấu chấm điền tay)."))return;showSheet(dlpHtml(o),{title:"Phụ lục Điều lệ "+o.c})}
+  if(pr){if(ms.length&&!confirm("Dữ liệu chưa đủ để điền hết phụ lục:\n\n- "+ms.join("\n- ")+"\n\nBấm OK để in luôn (phần thiếu để dấu chấm điền tay)."))return;if(wd)wordSave(dlpHtml(o),"Phu luc Dieu le "+o.c);else showSheet(dlpHtml(o),{title:"Phụ lục Điều lệ "+o.c})}
   else{const d=PD();d.dl=d.dl||[];const lan=o.lan||dlpNext(o.c),ten="Phụ lục sửa đổi, bổ sung Điều lệ lần thứ "+String(lan).padStart(2,"0"),x=d.dl.find(y=>same(y.co,o.c)&&same(y.ten,ten));
     const rec={co:o.c,loai:"Phụ lục sửa đổi, bổ sung",ten,lan:String(lan),ngay:o.hl||"",st:"Dự thảo",cc:(o.nqso?"Nghị quyết số "+o.nqso+(o.nqngay?" ngày "+fmt(o.nqngay):""):""),nd:o.nd5?"Sửa khoản 1 Điều 5: người đại diện theo pháp luật "+cleanN(o.nw)+(o.nwt?", "+o.nwt:"")+".":"Tự soạn.",nv:dlpText(o),note:"Dự thảo lập từ app, chưa ký."};
     if(x)Object.assign(x,rec);else d.dl.push({id:uid(),...rec});saveC();renderProf()}},true);
@@ -2377,14 +2377,19 @@ function mauPos(n,o){const D=window.MPG&&MPG[n];if(!D)return"";const r=coRec(o.c
     if(D.sig&&D.sig.pg===pi&&o.sign)h+=`<div class="msg" style="left:${D.sig.cx-150}px;top:${D.sig.top}px"><b>${esc(String(o.sign).toUpperCase())}</b></div>`;
     return h+"</div>"}).join("")}
 /* ===== Chế độ xem trước, gõ trực tiếp vào chỗ trống rồi in ===== */
+function wordSave(html,title){
+  const css='@page WordSection1{size:21cm 29.7cm;margin:2cm 1.5cm 1.6cm 2cm}div.WordSection1{page:WordSection1}body{font-family:"Times New Roman",serif;font-size:12pt;line-height:1.2}.fpage{page-break-after:always}.fpage:last-child{page-break-after:auto}p{margin:3pt 0;text-align:justify}h2{font-size:14pt;text-align:center;margin:0 0 4pt}.fsig{width:55%;margin-left:45%;text-align:center;page-break-inside:avoid}.fh{text-align:center}table{border-collapse:collapse}td,th{border:1px solid #000;padding:2pt 4pt}';
+  const doc='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>'+esc(title||"Văn bản")+'</title><!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]--><style>'+css+'</style></head><body><div class="WordSection1">'+html+'</div></body></html>';
+  const fn=String(title||"van-ban").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D").replace(/[^A-Za-z0-9]+/g,"_").replace(/^_+|_+$/g,"")||"van-ban";
+  const u=URL.createObjectURL(new Blob(["\ufeff",doc],{type:"application/msword"})),a=document.createElement("a");a.href=u;a.download=fn+".doc";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)}
 function showSheet(html,opt){opt=opt||{};const prev=sec,t0=document.title;
   $("plist").innerHTML=html;$("pprint").innerHTML="";$("pstats").hidden=true;
   const pg=document.createElement("style");pg.textContent="@page{size:A4 portrait;margin:18mm 15mm 16mm 20mm}@page land{size:A4 landscape;margin:12mm}@page mp{size:A4 portrait;margin:0}";document.head.appendChild(pg);
   document.title=opt.title||t0;document.body.classList.add("pp","pf","pv");$("plist").contentEditable="true";$("plist").spellcheck=false;
   let bar=$("pvbar");if(!bar){bar=document.createElement("div");bar.id="pvbar";document.body.appendChild(bar)}
-  bar.hidden=false;bar.innerHTML=`<b>${esc(opt.title||"Xem trước")}</b><span>Bấm vào chỗ trống (dấu chấm) rồi gõ để điền trước khi in. Chỉnh ở đây chỉ dùng để in, không lưu vào dữ liệu. Trong hộp thoại in, chọn lề "Mặc định" (hoặc "Không") và tắt "Đầu trang và chân trang".</span><button class="primary" id="pvprint">In / Lưu PDF</button><button id="pvclose">Đóng</button>`;
+  bar.hidden=false;bar.innerHTML=`<b>${esc(opt.title||"Xem trước")}</b><span>Bấm vào chữ bất kỳ để sửa trực tiếp (kể cả dấu chấm) trước khi in hoặc tải Word. Chỉnh ở đây chỉ dùng để in, không lưu vào dữ liệu. Trong hộp thoại in, chọn lề "Mặc định" (hoặc "Không") và tắt "Đầu trang và chân trang".</span><button class="primary" id="pvprint">In / Lưu PDF</button><button id="pvword">Tải Word (.doc)</button><button id="pvclose">Đóng</button>`;
   const close=()=>{document.body.classList.remove("pp","pf","pv");$("plist").contentEditable="false";bar.hidden=true;document.title=t0;pg.remove();sec=prev;renderProf()};
-  $("pvprint").onclick=()=>window.print();$("pvclose").onclick=close;window.scrollTo(0,0)}
+  $("pvprint").onclick=()=>window.print();$("pvword").onclick=()=>wordSave($("plist").innerHTML,opt.title);$("pvclose").onclick=close;window.scrollTo(0,0)}
 /* ===== Mẫu 7, Mẫu 8: danh sách cổ đông sáng lập / cổ đông là nhà đầu tư nước ngoài ===== */
 function m78Rows(c,sel){const H=gmHolders(c),par=H.g?+H.g.par||10000:10000,tot=H.rows.reduce((s,x)=>s+x.sh,0)||1;
   return H.rows.filter(x=>!sel||sel.includes(x.n)).map(x=>({...x,info:holderInfo({n:x.n,rec:(H.g.rows.find(y=>y.holder===x.n)||{}),sh:x.sh}),par,pct:x.sh/tot*100,val:x.sh*par}))}
