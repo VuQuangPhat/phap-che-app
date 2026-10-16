@@ -1484,7 +1484,7 @@ const SEC={
        {k:"cccdnoi",l:"Nơi cấp CCCD"},
        {k:"dob",l:"Ngày sinh",t:"date"},
        {k:"gt",l:"Giới tính",t:"sel",o:["","Nam","Nữ"]},
-       {k:"qt",l:"Quốc tịch",ph:"Việt Nam"},
+       {k:"qt",l:"Quốc tịch (mặc định Việt Nam)",t:"sel",o:["Việt Nam","Hoa Kỳ","Hàn Quốc","Nhật Bản","Trung Quốc","Đài Loan","Hồng Kông","Singapore","Thái Lan","Malaysia","Anh","Pháp","Đức","Úc","Canada","Quốc tịch khác"]},
        {k:"nhom",l:"Nhóm có quan hệ gia đình / hợp đồng (cùng tên nhóm để cộng gộp tỷ lệ)",ph:"VD: Gia đình Ngô"},
        {k:"addr",l:"Địa chỉ liên lạc (số nhà, đường, phường/xã, tỉnh/thành phố)",full:1},
        {k:"ttru",l:"Nơi thường trú (nếu khác địa chỉ liên lạc)",full:1},
@@ -2143,7 +2143,7 @@ function govGaps(){
     const nd0=act.filter(p=>/nddpl|daidienphapluat/.test(norm(p.role)));
     act.filter(p=>p.role==="Người được ủy quyền"&&p.uqa).forEach(p=>{if(!nd0.some(n=>same(n.name,p.uqa)))out.push({c:c.code,h:1,t:"Văn bản ủy quyền của "+p.uqa+" cho "+p.name+" tự hết hiệu lực vì "+p.uqa+" không còn là người đại diện theo pháp luật hiện hành: cần ký văn bản ủy quyền mới hoặc đóng chức vụ ủy quyền này"})});
     const nd=nd0;
-    if(nd.length){const vn=nd.some(p=>{const q=(d.ppl.find(x=>same(x.name,p.name))||{}).qt;return !q||/viet nam/.test(pn(q))});
+    if(nd.length){const vn=nd.some(p=>{const q=(d.ppl.find(x=>same(x.name,p.name))||{}).qt;return !q||/^(viet\s*nam|vn)$/.test(pn(q))});
       if(!vn)out.push({c:c.code,h:1,t:"Tất cả NĐDPL đang hiệu lực đều không phải công dân Việt Nam: phải có ít nhất một NĐDPL cư trú tại Việt Nam (Điều 12 Luật Doanh nghiệp)"})}});
   d.pos.filter(p=>activeP(p,t0)&&(isBoard(p)||isBKS(p)||isMgr(p))).forEach(p=>{
     const who=p.name+" ("+[p.role,p.title].filter(Boolean).join(", ")+")";let end="",est=0;
