@@ -1364,16 +1364,17 @@ function shUnpack(T){
 function shLoadGsi(){return new Promise((ok,no)=>{if(window.google&&google.accounts&&google.accounts.oauth2)return ok();const s=document.createElement("script");s.src="https://accounts.google.com/gsi/client";s.onload=ok;s.onerror=()=>no(new Error("Không tải được thư viện đăng nhập Google"));document.head.appendChild(s)})}
 async function shAuth(interactive){
   if(shTok&&Date.now()<shExp-60000)return shTok;
+  try{const m=JSON.parse(sessionStorage.getItem("phapche_sh_tok")||"null");if(m&&m.exp-60000>Date.now()){shTok=m.t;shExp=m.exp;return shTok}}catch(e){}
   await shLoadGsi();
   return new Promise((ok,no)=>{
     const tc=google.accounts.oauth2.initTokenClient({client_id:SH.client,scope:"https://www.googleapis.com/auth/spreadsheets",prompt:interactive?"":"none",
-      callback:r=>{if(r.error)return no(new Error(r.error==="interaction_required"||r.error==="popup_closed"?"Cần đăng nhập lại Google: bấm nút Đồng bộ Google Sheet":r.error));shTok=r.access_token;shExp=Date.now()+(+r.expires_in||3600)*1000;ok(shTok)},
+      callback:r=>{if(r.error)return no(new Error(r.error==="interaction_required"||r.error==="popup_closed"?"Cần đăng nhập lại Google: bấm nút Đồng bộ Google Sheet":r.error));shTok=r.access_token;shExp=Date.now()+(+r.expires_in||3600)*1000;try{sessionStorage.setItem("phapche_sh_tok",JSON.stringify({t:shTok,exp:shExp}))}catch(e){}ok(shTok)},
       error_callback:e=>no(new Error("Cần đăng nhập lại Google: bấm nút Đồng bộ Google Sheet"))});
     tc.requestAccessToken(interactive?{}:{prompt:""})})}
 async function shApi(path,opt){
   const tk=await shAuth(false);
   const r=await fetch("https://sheets.googleapis.com/v4/spreadsheets/"+SH.id+path,{...(opt||{}),headers:{Authorization:"Bearer "+tk,"Content-Type":"application/json"}});
-  if(r.status===401){shTok=null;throw new Error("Phiên Google hết hạn: bấm nút Đồng bộ Google Sheet để đăng nhập lại")}
+  if(r.status===401){shTok=null;try{sessionStorage.removeItem("phapche_sh_tok")}catch(e){}throw new Error("Phiên Google hết hạn: bấm nút Đồng bộ Google Sheet để đăng nhập lại")}
   if(r.status===403)throw new Error("Không đủ quyền với Sheet (403): dùng đúng tài khoản Google chủ Sheet");
   if(r.status===404)throw new Error("Không thấy Sheet (kiểm tra ID)");
   if(!r.ok)throw new Error("Google Sheets "+r.status+" "+(await r.text()).slice(0,120));
@@ -1453,7 +1454,7 @@ shDlg.querySelector("#sh_save").onclick=async()=>{
   }catch(e){SH=old;ghStatus("Lỗi Google Sheet: "+e.message,true);alert("Không kết nối được: "+e.message)}};
 shDlg.querySelector("#sh_pull").onclick=async()=>{if(!SH)return alert("Chưa kết nối.");if(!confirm("Thay toàn bộ dữ liệu máy này bằng bản trên Sheet?"))return;try{await shAuth(true);await shPull();shDlg.close()}catch(e){ghStatus("Lỗi Google Sheet: "+e.message,true)}};
 shDlg.querySelector("#sh_push").onclick=async()=>{if(!SH)return alert("Chưa kết nối.");if(!confirm("Ghi đè dữ liệu trên Sheet bằng bản của máy này?"))return;try{await shAuth(true)}catch(e){return ghStatus("Lỗi Google Sheet: "+e.message,true)}await shPush(true);shDlg.close()};
-shDlg.querySelector("#sh_off").onclick=()=>{if(!confirm("Ngắt kết nối Google Sheet? Dữ liệu trên máy này vẫn giữ nguyên."))return;SH=null;shTok=null;localStorage.removeItem(KSH);localStorage.removeItem(KDIRTY);ghStatus("");shDlg.close()};
+shDlg.querySelector("#sh_off").onclick=()=>{if(!confirm("Ngắt kết nối Google Sheet? Dữ liệu trên máy này vẫn giữ nguyên."))return;SH=null;shTok=null;try{sessionStorage.removeItem("phapche_sh_tok")}catch(e){}localStorage.removeItem(KSH);localStorage.removeItem(KDIRTY);ghStatus("");shDlg.close()};
 window.addEventListener("beforeunload",e=>{if(SH&&localStorage.getItem(KDIRTY)){e.preventDefault();e.returnValue=""}});
 if(SH)shInit();
 
