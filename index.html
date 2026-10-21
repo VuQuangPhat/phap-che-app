@@ -1380,7 +1380,7 @@ function boLaw(){const rs=QT().filter(r=>r&&r.nhom==="bo.can_cu"&&ruleOn(r)).sor
 function seedRules(){if(!CFG.prof)CFG.prof={};const q=CFG.prof.qt=Array.isArray(CFG.prof.qt)?CFG.prof.qt:[];let n=0;
   DEF_RULES.forEach(d=>{if(!q.some(r=>r&&r.ma===d.ma)){q.push({id:"qt"+Math.random().toString(36).slice(2,8),...d});n++}});return n}
 const SH_TAB={qt:"quy_tac",tt:"thu_tuc",dm:"danh_muc"},SH_TAB_R={quy_tac:"qt",thu_tuc:"tt",danh_muc:"dm"};
-const SH_PRJ_PROF=["prj","pl"],shIsPrjTask=t=>String((t&&t.proj)||"").trim()!=="";
+const SH_PRJ_PROF=["prj","pl","inv"],shInvTid=()=>{const o=new Set();(((typeof CFG!=="undefined"&&CFG.prof)||{}).inv||[]).forEach(r=>(r.works||[]).forEach(w=>w&&w.tid&&o.add(w.tid)));return o},shIsPrjTask=t=>String((t&&t.proj)||"").trim()!==""||shInvTid().has(t&&t.id);
 /* tách 2 Sheet khi SH.id2 có: B = dự án (prof_prj, prof_pl, công việc có trường proj); A = phần còn lại */
 function shPackAll(){
   try{seedRules()}catch(e){}
@@ -2960,13 +2960,29 @@ function wordSave(html,title,pn){
   const doc='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>'+esc(title||"Văn bản")+'</title><!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]--><style>'+css+'</style></head><body><div class="WordSection1">'+html+'</div>'+ft+'</body></html>';
   const fn=String(title||"van-ban").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D").replace(/[^A-Za-z0-9]+/g,"_").replace(/^_+|_+$/g,"")||"van-ban";
   const u=URL.createObjectURL(new Blob(["\ufeff",doc],{type:"application/msword"})),a=document.createElement("a");a.href=u;a.download=fn+".doc";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)}
-function showSheet(html,opt){opt=opt||{};const prev=sec,t0=document.title;
+let FORMSNAP=null;
+function formSnap(){const o={};document.querySelectorAll('#plist [data-uq],#plist [data-dlp],#plist [data-m12k]').forEach(e=>{const a=e.hasAttribute("data-uq")?"uq":e.hasAttribute("data-dlp")?"dlp":"m12k",k=e.getAttribute("data-"+a);o[a+"|"+k]=e.type==="checkbox"||e.type==="radio"?{c:e.checked}:{v:e.value}});return Object.keys(o).length?o:null}
+function formRestore(sn){if(!sn)return;const pl=$("plist");
+  ["uq","dlp","m12k"].forEach(a=>{let bx=pl.querySelector("[data-"+a+"box]");if(!bx&&a==="m12k"){const f=pl.querySelector("[data-m12k]");bx=f&&(f.closest("[data-m12kbox]")||f.closest("div"))}if(!bx)return;
+    const first=a==="uq"?"co":a==="dlp"?"c":null,keys=Object.keys(sn).filter(x=>x.startsWith(a+"|")).map(x=>x.slice(a.length+1));
+    if(!keys.length)return;
+    const put=k=>{const e=bx.querySelector("[data-"+a+'="'+k+'"]'),v=sn[a+"|"+k];if(!e||!v)return;
+      if("c" in v){e.checked=v.c;return}
+      if(e.tagName==="SELECT"&&![...e.options].some(o=>o.value===v.v)){const o=document.createElement("option");o.value=o.textContent=v.v;e.appendChild(o)}
+      e.value=v.v};
+    try{
+      if(first&&keys.includes(first)){put(first);if(a==="uq")fillUq(bx,false);else dlpFill(bx)}
+      keys.forEach(k=>{if(k!==first)put(k)});
+      if(a==="uq"){const t=bx.querySelector('[data-uq="can"]'),sv=sn["uq|can"];t.dataset.ed="";const auto=uqCanAuto(uqRead(bx));if(sv&&sv.v!==auto){t.value=sv.v;t.dataset.ed="1"}else t.value=auto;uqVis(bx)}
+      if(a==="m12k"&&typeof m12Vis==="function")m12Vis(bx);
+    }catch(e){}});}
+function showSheet(html,opt){opt=opt||{};const prev=sec,t0=document.title;{const sn=formSnap();if(sn)FORMSNAP=sn}
   $("plist").innerHTML=html;$("pprint").innerHTML="";$("pstats").hidden=true;
   const pg=document.createElement("style");pg.textContent="@page{size:A4 portrait;margin:18mm 15mm 16mm 20mm}@page land{size:A4 landscape;margin:12mm}@page mp{size:A4 portrait;margin:0}"+(opt.pn?"@page{@bottom-center{content:\"Trang \" counter(page) \"/\" counter(pages);font:italic 11pt \"Times New Roman\",serif}}":"");document.head.appendChild(pg);
   document.title=opt.title||t0;document.body.classList.add("pp","pf","pv");$("plist").contentEditable="true";$("plist").spellcheck=false;
   let bar=$("pvbar");if(!bar){bar=document.createElement("div");bar.id="pvbar";document.body.appendChild(bar)}
   bar.hidden=false;bar.innerHTML=`<b>${esc(opt.title||"Xem trước")}</b><span>Bấm vào chữ để sửa trực tiếp; bấm vào một đoạn rồi “Xóa đoạn đang chọn” để bỏ cả dòng (VD dòng căn cứ Nghị quyết). Tải Word sẽ lấy đúng bản đã sửa. Chỉnh ở đây chỉ dùng để in, không lưu vào dữ liệu. Trong hộp thoại in, chọn lề "Mặc định" (hoặc "Không") và tắt "Đầu trang và chân trang".</span><button class="primary" id="pvprint">In / Lưu PDF</button><button id="pvdel" title="Bấm vào đoạn cần bỏ rồi bấm nút này">Xóa đoạn đang chọn</button><button id="pvundo">Hoàn tác</button><button id="pvword">Tải Word (.doc)</button><button id="pvclose">Đóng</button>`;
-  const close=()=>{document.body.classList.remove("pp","pf","pv");$("plist").contentEditable="false";bar.hidden=true;document.title=t0;pg.remove();sec=prev;renderProf()};
+  const close=()=>{document.body.classList.remove("pp","pf","pv");$("plist").contentEditable="false";bar.hidden=true;document.title=t0;pg.remove();sec=prev;renderProf();{const sn=FORMSNAP;FORMSNAP=null;formRestore(sn)}};
   $("pvprint").onclick=()=>window.print();$("pvdel").onmousedown=e=>e.preventDefault();$("pvundo").onmousedown=e=>e.preventDefault();
   $("pvdel").onclick=()=>{const sl=getSelection();let n=sl&&sl.anchorNode;if(n&&n.nodeType===3)n=n.parentNode;const bl=n&&n.closest&&n.closest("#plist p, #plist li, #plist .pb, #plist tr, #plist .fsig");if(!bl||!$("plist").contains(bl)){alert("Bấm vào đoạn cần bỏ trước.");return}
     const r=document.createRange();r.selectNode(bl);sl.removeAllRanges();sl.addRange(r);document.execCommand("delete")||bl.remove()};
