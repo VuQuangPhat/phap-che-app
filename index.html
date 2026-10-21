@@ -1245,7 +1245,7 @@ async function ghPut(){
   ghSha=(await r.json()).content.sha;localStorage.removeItem(KDIRTY);
 }
 function ghSchedule(){
-  if(!GH&&!SH)return;localStorage.setItem(KDIRTY,"1");ghStatus("Chờ đồng bộ…");
+  if(!GH&&!SH)return;if(SH&&shRO)return;localStorage.setItem(KDIRTY,"1");ghStatus("Chờ đồng bộ…");
   clearTimeout(ghTimer);ghTimer=setTimeout(ghPush,2500);
 }
 async function ghPush(){
@@ -1333,7 +1333,7 @@ if(!load("phapche_sh_v1",null))ghInit();
 
 /* ---------- Đồng bộ Google Sheet (thay GitHub; mỗi mục dữ liệu là một tab) ---------- */
 const KSH="phapche_sh_v1";
-SH=load(KSH,null);let shTok=null,shExp=0,shRev=null,shBusy=false;
+SH=load(KSH,null);let shTok=null,shExp=0,shRev=null,shBusy=false,shRO=false,shMail="";
 const SHM="§",SHCH=40000;
 let shLong=[];
 function shEnc0(v){if(v===undefined||v===null)return"";if(typeof v==="number")return v;if(typeof v==="string")return v===""?SHM+"e":v.startsWith(SHM)?SHM+"s"+v:v;return SHM+JSON.stringify(v)}
@@ -1364,21 +1364,45 @@ function shUnpack(T){
 function shLoadGsi(){return new Promise((ok,no)=>{if(window.google&&google.accounts&&google.accounts.oauth2)return ok();const s=document.createElement("script");s.src="https://accounts.google.com/gsi/client";s.onload=ok;s.onerror=()=>no(new Error("Không tải được thư viện đăng nhập Google"));document.head.appendChild(s)})}
 async function shAuth(interactive){
   if(shTok&&Date.now()<shExp-60000)return shTok;
-  try{const m=JSON.parse(sessionStorage.getItem("phapche_sh_tok")||"null");if(m&&m.exp-60000>Date.now()){shTok=m.t;shExp=m.exp;return shTok}}catch(e){}
+  try{const m=JSON.parse(sessionStorage.getItem("phapche_sh_tok2")||"null");if(m&&m.exp-60000>Date.now()){shTok=m.t;shExp=m.exp;return shTok}}catch(e){}
   await shLoadGsi();
   return new Promise((ok,no)=>{
-    const tc=google.accounts.oauth2.initTokenClient({client_id:SH.client,scope:"https://www.googleapis.com/auth/spreadsheets",prompt:interactive?"":"none",
-      callback:r=>{if(r.error)return no(new Error(r.error==="interaction_required"||r.error==="popup_closed"?"Cần đăng nhập lại Google: bấm nút Đồng bộ Google Sheet":r.error));shTok=r.access_token;shExp=Date.now()+(+r.expires_in||3600)*1000;try{sessionStorage.setItem("phapche_sh_tok",JSON.stringify({t:shTok,exp:shExp}))}catch(e){}ok(shTok)},
+    const tc=google.accounts.oauth2.initTokenClient({client_id:SH.client,scope:"https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/userinfo.email",prompt:interactive?"":"none",
+      callback:r=>{if(r.error)return no(new Error(r.error==="interaction_required"||r.error==="popup_closed"?"Cần đăng nhập lại Google: bấm nút Đồng bộ Google Sheet":r.error));shTok=r.access_token;shExp=Date.now()+(+r.expires_in||3600)*1000;try{sessionStorage.setItem("phapche_sh_tok2",JSON.stringify({t:shTok,exp:shExp}))}catch(e){}ok(shTok)},
       error_callback:e=>no(new Error("Cần đăng nhập lại Google: bấm nút Đồng bộ Google Sheet"))});
     tc.requestAccessToken(interactive?{}:{prompt:""})})}
 async function shApi(path,opt){
   const tk=await shAuth(false);
   const r=await fetch("https://sheets.googleapis.com/v4/spreadsheets/"+SH.id+path,{...(opt||{}),headers:{Authorization:"Bearer "+tk,"Content-Type":"application/json"}});
-  if(r.status===401){shTok=null;try{sessionStorage.removeItem("phapche_sh_tok")}catch(e){}throw new Error("Phiên Google hết hạn: bấm nút Đồng bộ Google Sheet để đăng nhập lại")}
-  if(r.status===403)throw new Error("Không đủ quyền với Sheet (403): dùng đúng tài khoản Google chủ Sheet");
+  if(r.status===401){shTok=null;try{sessionStorage.removeItem("phapche_sh_tok2")}catch(e){}throw new Error("Phiên Google hết hạn: bấm nút Đồng bộ Google Sheet để đăng nhập lại")}
+  if(r.status===403){if(opt&&opt.method&&opt.method!=="GET"){shRO=true;shApplyRO()}throw new Error("Không đủ quyền với Sheet (403): tài khoản này chỉ được xem hoặc chưa được chia sẻ")}
   if(r.status===404)throw new Error("Không thấy Sheet (kiểm tra ID)");
   if(!r.ok)throw new Error("Google Sheets "+r.status+" "+(await r.text()).slice(0,120));
   return r.json()}
+async function shEmailGet(){
+  if(shMail)return shMail;const tk=await shAuth(false);
+  const r=await fetch("https://www.googleapis.com/oauth2/v3/userinfo",{headers:{Authorization:"Bearer "+tk}});
+  if(!r.ok)throw new Error("userinfo "+r.status);shMail=String((await r.json()).email||"").toLowerCase();return shMail}
+function shApplyRO(){
+  document.body.classList.toggle("ro",!!shRO);
+  let b=document.getElementById("roBar");
+  if(shRO){if(!b){b=document.createElement("div");b.id="roBar";b.style.cssText="background:#fff4d6;color:#6b4e00;border:1px solid #e7cf8a;border-radius:8px;padding:8px 14px;margin:8px 16px;font-size:13px";const h=document.querySelector("header")||document.body.firstElementChild;h.after(b)}
+    b.textContent="Chế độ chỉ xem"+(shMail?" ("+shMail+")":"")+": bạn xem được dữ liệu nhưng mọi thay đổi sẽ không được lưu.";b.hidden=false}
+  else if(b)b.hidden=true}
+async function shRole(){
+  shRO=false;
+  try{const t=await shTitles();
+    if(t.includes("_users")){
+      const j=await shApi("/values/"+shRange("_users")+"!A:C"),rows=(j.values||[]).slice(1),me=await shEmailGet();
+      const r=rows.find(x=>String(x[0]||"").trim().toLowerCase()===me);
+      shRO=!(r&&/quản trị|admin|sửa/i.test(String(r[1]||"")))}
+  }catch(e){}
+  shApplyRO()}
+document.addEventListener("click",e=>{
+  if(!shRO)return;const b=e.target.closest("button,label,input[type=file]");if(!b)return;
+  const t=(b.innerText||b.value||"").trim();
+  if(b.matches("input[type=file]")||/^(Thêm|Sửa|Xóa|Xoá|Lưu|Nhập|Ghi nhận|Đồng bộ công việc|Ghi đè|Khôi phục|Cập nhật|Tạo|Đẩy lên)/i.test(t)&&!b.closest("dialog#shdlg")){
+    e.preventDefault();e.stopPropagation();alert("Bạn đang ở chế độ chỉ xem nên không sửa được.")}},true);
 const shRange=t=>encodeURIComponent("'"+t+"'");
 async function shTitles(){const j=await shApi("?fields=sheets.properties.title");return(j.sheets||[]).map(s=>s.properties.title)}
 async function shGetRev(){const j=await shApi("/values/"+shRange("_meta")+"!A1:B2").catch(e=>{if(/400/.test(e.message))return{};throw e});const v=(j.values||[]);return{rev:+(v[0]&&v[0][1])||0,at:(v[1]&&v[1][1])||""}}
@@ -1405,7 +1429,7 @@ async function shPut(force){
   await shApi("/values:batchUpdate",{method:"POST",body:JSON.stringify({valueInputOption:"RAW",data})});
   shRev=nr;localStorage.removeItem(KDIRTY)}
 async function shPush(force){
-  if(!SH)return;if(shBusy){ghSchedule();return}shBusy=true;
+  if(!SH||shRO)return;if(shBusy){ghSchedule();return}shBusy=true;
   try{ghStatus("Đang ghi lên Google Sheet…");await shPut(force);ghStatus("Đã đồng bộ Google Sheet lúc "+new Date().toLocaleTimeString("vi-VN"))}
   catch(e){ghStatus(e.message==="conflict"?"Xung đột: Sheet có bản mới hơn từ máy khác. Mở “Đồng bộ Google Sheet” để tải về hoặc ghi đè.":"Lỗi Google Sheet: "+e.message,true)}
   shBusy=false}
@@ -1414,13 +1438,14 @@ async function shInit(){
   if(!SH){return}
   ghStatus("Đang kết nối Google Sheet…");
   try{
+    await shRole();
     if(localStorage.getItem(KDIRTY)){await shGet();
       if(confirm("Máy này có thay đổi chưa ghi lên Google Sheet.\nOK = ghi lên (ghi đè bản trên Sheet).\nCancel = bỏ thay đổi và tải bản từ Sheet.")){await shPush(true)}else{await shPull()}return}
     const d=await shGet();if(d===null){await shPush(true);return}
     ghApply(d);ghStatus("Đã tải từ Google Sheet lúc "+new Date().toLocaleTimeString("vi-VN"))
   }catch(e){ghStatus("Lỗi Google Sheet: "+e.message+" (đang dùng dữ liệu của máy này)",true)}}
 const shDlg=document.createElement("dialog");
-shDlg.style.cssText=ghDlg.style.cssText;
+shDlg.id="shdlg";shDlg.style.cssText=ghDlg.style.cssText;
 shDlg.innerHTML=`<h2 style="margin:0 0 8px;font-size:16px">Đồng bộ dữ liệu với Google Sheet</h2>
 <p style="margin:0 0 10px;color:var(--mute);font-size:12px">Mỗi mục dữ liệu là một tab trong Sheet của bạn. Đăng nhập Google bằng đúng tài khoản chủ Sheet; không có khóa nào lưu trong app. Chỉ chia sẻ Sheet cho người được phép xem dữ liệu cá nhân.</p>
 <div style="display:grid;gap:8px">
@@ -1444,18 +1469,89 @@ shDlg.querySelector("#sh_save").onclick=async()=>{
   if(!id||!cl){alert("Cần nhập ID Sheet và OAuth Client ID.");return}
   const old=SH;SH={id,client:cl};shTok=null;shRev=null;
   try{
-    await shAuth(true);ghStatus("Đang kết nối Google Sheet…");
+    await shAuth(true);ghStatus("Đang kết nối Google Sheet…");await shRole();
     const d=await shGet();
     if(d===null){await shPush(true)}
-    else{const n=(d.tasks||[]).length;
+    else{const n=(d.tasks||[]).length;if(shRO){ghApply(d);localStorage.setItem(KSH,JSON.stringify(SH));shDlg.close();ghStatus("Đã tải từ Google Sheet (chế độ chỉ xem)");return}
       if(!(tasks.length||budget.length)||confirm("Sheet đã có dữ liệu ("+n+" công việc).\nOK = dùng dữ liệu trên Sheet thay cho dữ liệu máy này.\nCancel = ghi dữ liệu máy này lên Sheet, ghi đè.")){ghApply(d);ghStatus("Đã tải từ Google Sheet lúc "+new Date().toLocaleTimeString("vi-VN"))}
       else{await shPush(true)}}
     localStorage.setItem(KSH,JSON.stringify(SH));shDlg.close()
   }catch(e){SH=old;ghStatus("Lỗi Google Sheet: "+e.message,true);alert("Không kết nối được: "+e.message)}};
 shDlg.querySelector("#sh_pull").onclick=async()=>{if(!SH)return alert("Chưa kết nối.");if(!confirm("Thay toàn bộ dữ liệu máy này bằng bản trên Sheet?"))return;try{await shAuth(true);await shPull();shDlg.close()}catch(e){ghStatus("Lỗi Google Sheet: "+e.message,true)}};
 shDlg.querySelector("#sh_push").onclick=async()=>{if(!SH)return alert("Chưa kết nối.");if(!confirm("Ghi đè dữ liệu trên Sheet bằng bản của máy này?"))return;try{await shAuth(true)}catch(e){return ghStatus("Lỗi Google Sheet: "+e.message,true)}await shPush(true);shDlg.close()};
-shDlg.querySelector("#sh_off").onclick=()=>{if(!confirm("Ngắt kết nối Google Sheet? Dữ liệu trên máy này vẫn giữ nguyên."))return;SH=null;shTok=null;try{sessionStorage.removeItem("phapche_sh_tok")}catch(e){}localStorage.removeItem(KSH);localStorage.removeItem(KDIRTY);ghStatus("");shDlg.close()};
+shDlg.querySelector("#sh_off").onclick=()=>{if(!confirm("Ngắt kết nối Google Sheet? Dữ liệu trên máy này vẫn giữ nguyên."))return;SH=null;shTok=null;try{sessionStorage.removeItem("phapche_sh_tok2")}catch(e){}localStorage.removeItem(KSH);localStorage.removeItem(KDIRTY);ghStatus("");shDlg.close()};
 window.addEventListener("beforeunload",e=>{if(SH&&localStorage.getItem(KDIRTY)){e.preventDefault();e.returnValue=""}});
+/* link mời: ?sh=<ID Sheet>&cid=<Client ID> => người mới chỉ cần bấm Đăng nhập */
+(()=>{
+  const q=new URLSearchParams(location.search),qi=(q.get("sh")||"").trim(),qc=(q.get("cid")||"").trim();
+  if(qi&&qc&&!SH){
+    const b=document.createElement("div");b.id="inviteBar";b.style.cssText="background:#e8f1ff;color:#143a7b;border:1px solid #b6cdf2;border-radius:8px;padding:10px 14px;margin:8px 16px;font-size:14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap";
+    b.innerHTML='<span>Bạn được mời xem dữ liệu pháp chế. Đăng nhập bằng tài khoản Google đã được chia sẻ.</span><button class="primary" id="inviteGo">Đăng nhập Google</button>';
+    (document.querySelector("header")||document.body.firstElementChild).after(b);
+    b.querySelector("#inviteGo").onclick=()=>{shDlg.querySelector("#sh_i").value=qi;shDlg.querySelector("#sh_c").value=qc;shDlg.querySelector("#sh_save").click();
+      const t=setInterval(()=>{if(SH){clearInterval(t);b.remove();try{history.replaceState(null,"",location.pathname)}catch(e){}}},500);setTimeout(()=>clearInterval(t),60000)}}
+  const cp=document.createElement("button");cp.textContent="Sao chép link mời";cp.id="sh_inv";
+  shDlg.querySelector("#sh_close").before(cp);
+  cp.onclick=async()=>{if(!SH)return alert("Hãy kết nối Google Sheet trước.");
+    const u=location.origin+location.pathname+"?sh="+encodeURIComponent(SH.id)+"&cid="+encodeURIComponent(SH.client);
+    try{await navigator.clipboard.writeText(u);alert("Đã sao chép link mời. Gửi link này cho người được chia sẻ Sheet và đã thêm vào Test users:\n\n"+u)}catch(e){prompt("Sao chép link mời:",u)}};
+  $("ghst").addEventListener("click",()=>{if(SH&&/đăng nhập lại Google|hết hạn/i.test($("ghst").textContent)){shAuth(true).then(()=>shInit()).catch(e=>ghStatus("Lỗi Google Sheet: "+e.message,true))}});
+  $("ghst").style.cursor="pointer";
+})();
+
+/* Phân quyền trong app (chỉ quản trị): sửa tab _users của Sheet */
+let drvTok=null,drvExp=0;
+function drvAuth(){return new Promise((ok,no)=>{if(drvTok&&Date.now()<drvExp-60000)return ok(drvTok);
+  if(!window.google||!google.accounts)return no(new Error("Chưa tải được Google"));
+  google.accounts.oauth2.initTokenClient({client_id:SH.client,scope:"https://www.googleapis.com/auth/drive",
+    callback:r=>{if(r.error)return no(new Error(r.error));drvTok=r.access_token;drvExp=Date.now()+(+r.expires_in||3600)*1000;ok(drvTok)},
+    error_callback:()=>no(new Error("Chưa cấp quyền chia sẻ Drive"))}).requestAccessToken({})})}
+async function drvApi(path,opt){const tk=await drvAuth();
+  const r=await fetch("https://www.googleapis.com/drive/v3/files/"+SH.id+path,{...(opt||{}),headers:{Authorization:"Bearer "+tk,"Content-Type":"application/json"}});
+  if(!r.ok)throw new Error("Drive "+r.status+" "+(await r.text()).slice(0,120));
+  return r.status===204?{}:r.json()}
+/* Đồng bộ chia sẻ Drive theo danh sách vai trò; chỉ đụng tới email có trong _users cũ/mới, không đụng chủ sở hữu */
+async function drvSync(rows,oldMails){
+  const j=await drvApi("/permissions?fields=permissions(id,emailAddress,role)&supportsAllDrives=true"),cur={};
+  (j.permissions||[]).forEach(p=>{if(p.emailAddress)cur[p.emailAddress.toLowerCase()]=p});
+  const log=[];
+  for(const [e,v] of rows){const want=/quản trị/i.test(v)?"writer":"reader",p=cur[e];
+    if(p&&p.role==="owner")continue;
+    if(!p){await drvApi("/permissions?sendNotificationEmail=false&supportsAllDrives=true",{method:"POST",body:JSON.stringify({type:"user",role:want,emailAddress:e})});log.push("+ "+e+" ("+want+")")}
+    else if(p.role!==want){await drvApi("/permissions/"+p.id+"?supportsAllDrives=true",{method:"PATCH",body:JSON.stringify({role:want})});log.push("~ "+e+" → "+want)}}
+  const keep=new Set(rows.map(r=>r[0]));
+  for(const e of oldMails){const p=cur[e];if(!keep.has(e)&&p&&p.role!=="owner"){await drvApi("/permissions/"+p.id+"?supportsAllDrives=true",{method:"DELETE"});log.push("- "+e+" (thu hồi)")}}
+  return log}
+(()=>{
+  const d=document.createElement("dialog");d.id="permdlg";d.style.cssText=ghDlg.style.cssText.replace("480px","620px");
+  d.innerHTML='<h2 style="margin:0 0 8px;font-size:16px">Phân quyền xem / quản trị</h2><p style="margin:0 0 10px;color:var(--mute);font-size:12px">Vai trò trong app. Khi bấm Lưu, app tự chia sẻ Sheet trong Drive (quản trị = Người chỉnh sửa, xem = Người xem) và thu hồi quyền người bị xóa khỏi danh sách; sẽ hiện thêm một lần xin quyền Drive. Việc duy nhất còn lại ngoài app: thêm email vào Test users trong Google Cloud. Người không có tên trong danh sách chỉ được xem.</p><div id="perm_rows" style="display:grid;gap:6px"></div><div class="bar" style="margin-top:12px"><button id="perm_add">Thêm người</button><button class="primary" id="perm_save">Lưu</button><button id="perm_close">Đóng</button></div>';
+  document.body.appendChild(d);
+  const rowH=(e,r,n)=>`<div class="pr" style="display:grid;grid-template-columns:1.6fr 110px 1fr;gap:6px"><input class="pe" value="${esc(e)}" placeholder="email@gmail.com"><select class="pv"><option${/quản trị/i.test(r)?" selected":""}>quản trị</option><option${/quản trị/i.test(r)?"":" selected"}>xem</option></select><input class="pn2" value="${esc(n)}" placeholder="ghi chú"></div>`;
+  const b=document.createElement("button");b.id="shperm";b.textContent="Phân quyền";$("shb").after(b);
+  b.onclick=async()=>{
+    if(!SH)return alert("Hãy kết nối Google Sheet trước.");
+    if(shRO)return alert("Chỉ quản trị mới phân quyền được.");
+    try{await shAuth(false);const t=await shTitles();let rows=[];
+      if(t.includes("_users")){const j=await shApi("/values/"+shRange("_users")+"!A:C");rows=(j.values||[]).slice(1)}
+      d._old=rows.map(r=>String(r[0]||"").toLowerCase()).filter(Boolean);
+      $("perm_rows").innerHTML=rows.map(r=>rowH(r[0]||"",r[1]||"",r[2]||"")).join("")||rowH("","xem","");
+      d.showModal()}catch(e){alert("Không đọc được danh sách: "+e.message)}};
+  d.querySelector("#perm_add").onclick=()=>$("perm_rows").insertAdjacentHTML("beforeend",rowH("","xem",""));
+  d.querySelector("#perm_close").onclick=()=>d.close();
+  d.querySelector("#perm_save").onclick=async()=>{
+    const rows=[...d.querySelectorAll(".pr")].map(r=>[r.querySelector(".pe").value.trim().toLowerCase(),r.querySelector(".pv").value,r.querySelector(".pn2").value.trim()]).filter(r=>r[0]);
+    if(rows.some(r=>!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(r[0])))return alert("Có email không hợp lệ.");
+    if(!rows.some(r=>r[0]===shMail&&/quản trị/i.test(r[1])))return alert("Phải giữ tài khoản của bạn ("+shMail+") là quản trị, nếu không bạn sẽ mất quyền sửa.");
+    try{const t=await shTitles();
+      if(!t.includes("_users"))await shApi(":batchUpdate",{method:"POST",body:JSON.stringify({requests:[{addSheet:{properties:{title:"_users"}}}]})});
+      await shApi("/values:batchClear",{method:"POST",body:JSON.stringify({ranges:["'_users'!A1:C500"]})});
+      await shApi("/values:batchUpdate",{method:"POST",body:JSON.stringify({valueInputOption:"RAW",data:[{range:"'_users'!A1",values:[["email","vai_tro","ghi_chu"],...rows]}]})});
+      let msg="Đã lưu phân quyền ("+rows.length+" người).";
+      try{const lg=await drvSync(rows,d._old||[]);msg+=lg.length?"\nDrive:\n"+lg.join("\n"):"\nDrive: đã khớp, không cần đổi."}
+      catch(e){msg+="\nChưa chia sẻ được Drive tự động ("+e.message+"). Hãy chia sẻ Sheet thủ công."}
+      d.close();alert(msg)}catch(e){alert("Không lưu được: "+e.message)}};
+})();
+
 if(SH)shInit();
 
 </script>
