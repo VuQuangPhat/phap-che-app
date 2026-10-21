@@ -1493,7 +1493,7 @@ async function shPush(force){
   catch(e){ghStatus(e.message==="conflict"?"Xung đột: Sheet có bản mới hơn từ máy khác. Mở “Đồng bộ Google Sheet” để tải về hoặc ghi đè.":"Lỗi Google Sheet: "+e.message,true)}
   shBusy=false}
 async function shPull(){const d=await shGet();if(d===null)throw new Error("Sheet chưa có dữ liệu");ghApply(d);ghStatus("Đã tải từ Google Sheet lúc "+new Date().toLocaleTimeString("vi-VN"))}
-function gateOpen(){const g=$("gate");if(g)g.remove()}
+function gateOpen(){const g=$("gate");if(g)g.remove();try{aqInit()}catch(e){}}
 function gateMsg(m){const e=$("gate_msg");if(e)e.textContent=m}
 async function shInit(){
   if(!SH){return}
@@ -1527,6 +1527,40 @@ const sv=i=>shDlg.querySelector("#"+i).value.trim();
 (()=>{const b=document.createElement("button");b.id="shb";b.textContent="Đồng bộ Google Sheet";$("gh").after(b);
   b.onclick=()=>{if(SH){shDlg.querySelector("#sh_i").value=SH.id;shDlg.querySelector("#sh_i2").value=SH.id2||"";shDlg.querySelector("#sh_c").value=SH.client}shDlg.showModal()}})();
 shDlg.querySelector("#sh_close").onclick=()=>shDlg.close();
+/* ---------- Gắn hiệu lực + link văn bản gốc cho căn cứ pháp lý (đọc từ Sheet Aqua legal, bộ não thứ cấp) ---------- */
+const AQUA_DEF="1Gu9IhBgWEfgx1J412G18PRosbiFKfnZucU_OqKP42sQ";
+let AQ=null,AQM=null,aqBusy=false,aqT=0;
+const aqId=()=>(typeof ruleTxt==="function"?ruleTxt("aqua.sheet",""):"").trim()||AQUA_DEF;
+const aqNorm=s=>String(s||"").toLowerCase().replace(/đ/g,"d").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9\/]/g,"");
+const aqD=s=>{const m=String(s||"").match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);return m?new Date(+m[3],+m[2]-1,+m[1]):null};
+const AQ_RE=/\d{1,4}\/\d{4}\/[A-Za-zĐđ][A-Za-zĐđ0-9\-]*/g;
+async function aqInit(){if(AQ||aqBusy)return;aqBusy=true;
+  try{const j=await shApi("/values/"+shRange("Văn bản")+"?valueRenderOption=FORMATTED_VALUE",undefined,aqId());
+    const v=j.values||[],h=(v[0]||[]).map(x=>String(x).trim()),ix=n=>h.indexOf(n);
+    const c={so:ix("Số hiệu"),ten:ix("Tên văn bản"),hl:ix("Ngày hiệu lực"),het:ix("Ngày hết hiệu lực"),tk:ix("Thay thế / sửa đổi"),lk:ix("Link văn bản gốc")};
+    if(c.so<0)return;AQM=new Map();
+    v.slice(1).forEach(r=>{const g=k=>c[k]>=0?String(r[c[k]]||""):"",so=g("so");if(so)AQM.set(aqNorm(so),{so,ten:g("ten"),hl:g("hl"),het:g("het"),tk:g("tk"),lk:g("lk")})});
+    AQ=true;aqScan()}
+  catch(e){/* không có quyền hoặc Sheet Aqua lỗi: bỏ qua, app chạy bình thường không gắn hiệu lực */}
+  finally{aqBusy=false}}
+function aqSt(x){const t=new Date();t.setHours(0,0,0,0);const hl=aqD(x.hl),het=aqD(x.het);
+  if(het&&het<=t)return["hết hiệu lực","x"];if(hl&&hl>t)return["chưa có hiệu lực","w"];if(hl)return["còn hiệu lực","ok"];return["chưa rõ hiệu lực","w"]}
+function aqScan(){if(!AQM||document.body.classList.contains("pv")||document.body.classList.contains("pp"))return;
+  const bad="INPUT,TEXTAREA,SELECT,OPTION,A,SCRIPT,STYLE,BUTTON,.cs,[contenteditable=true],.fpage,#pvbar,#gate";
+  const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,{acceptNode:n=>{const t=n.nodeValue;if(!t||t.length<8)return NodeFilter.FILTER_REJECT;AQ_RE.lastIndex=0;if(!AQ_RE.test(t))return NodeFilter.FILTER_REJECT;const e=n.parentElement;return e&&!e.closest(bad)?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT}}),L=[];
+  while(w.nextNode())L.push(w.currentNode);
+  L.forEach(n=>{const t=n.nodeValue;let last=0,hit=false;const fr=document.createDocumentFragment();AQ_RE.lastIndex=0;let m;
+    while((m=AQ_RE.exec(t))){const x=AQM.get(aqNorm(m[0]));if(!x)continue;hit=true;
+      if(m.index>last)fr.appendChild(document.createTextNode(t.slice(last,m.index)));
+      const sp=document.createElement("span");sp.className="cs";const[st,k]=aqSt(x);
+      const tip=x.so+" · "+x.ten+" · "+st+(x.hl?" (từ "+x.hl+")":"")+(x.het?"; hết hiệu lực "+x.het:"")+(x.tk?" · "+x.tk:"");
+      const lk=/^https?:/.test(x.lk);const el=document.createElement(lk?"a":"span");el.className="csl";el.textContent=m[0];el.title=tip;if(lk){el.href=x.lk;el.target="_blank";el.rel="noopener"}
+      const b=document.createElement("span");b.className="csb "+k;b.textContent=st;b.title=tip;
+      sp.appendChild(el);sp.appendChild(b);fr.appendChild(sp);last=m.index+m[0].length}
+    if(hit){if(last<t.length)fr.appendChild(document.createTextNode(t.slice(last)));n.parentNode.replaceChild(fr,n)}})}
+document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest("a.csl"))e.stopPropagation()},true);
+new MutationObserver(()=>{if(!AQM)return;clearTimeout(aqT);aqT=setTimeout(aqScan,350)}).observe(document.body,{childList:true,subtree:true,characterData:true});
+(()=>{const st=document.createElement("style");st.textContent=".csl{color:var(--link,#0a58b4);text-decoration:underline dotted;cursor:pointer}.csb{display:inline-block;margin-left:4px;padding:0 6px;border-radius:9px;font-size:.78em;font-weight:600;line-height:1.5;vertical-align:baseline;white-space:nowrap}.csb.ok{background:#e3f4e8;color:#1a7f37}.csb.x{background:#fde8ea;color:#d70015}.csb.w{background:#fff4d6;color:#8a6100}@media print{.csb{display:none!important}.csl{color:inherit;text-decoration:none}}";document.head.appendChild(st)})();
 shDlg.querySelector("#sh_save").onclick=async()=>{
   const cleanId=x=>String(x||"").trim().replace(/^.*\/d\//,"").replace(/\/.*$/,""),id=cleanId(sv("sh_i")),id2=cleanId(sv("sh_i2")),cl=sv("sh_c");
   if(!id||!cl){alert("Cần nhập ID Sheet và OAuth Client ID.");return}
