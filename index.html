@@ -428,6 +428,7 @@ table.fm.m78{table-layout:fixed;font-size:8.5px;width:100%}table.fm.m78 th,table
 </style>
 </head>
 <body>
+<div id="gate" style="position:fixed;inset:0;z-index:2147483000;background:#0f1b2d;color:#fff;display:flex;align-items:center;justify-content:center;padding:16px;font-family:system-ui,sans-serif"><div style="max-width:420px;text-align:center"><div style="font-size:20px;font-weight:700;margin-bottom:8px">Quản lý công việc pháp chế</div><p id="gate_msg" style="margin:0 0 16px;font-size:14px;opacity:.85">Cần đăng nhập Google để xem nội dung. Chỉ tài khoản đã được cấp quyền mới vào được.</p><button id="gate_go" style="padding:10px 18px;font-size:15px;border:0;border-radius:8px;background:#fff;color:#0f1b2d;cursor:pointer;font-weight:600">Đăng nhập Google</button><div style="margin-top:14px"><a href="#" id="gate_cfg" style="color:#9fc1ff;font-size:12px">Quản trị: cấu hình lần đầu</a></div></div></div>
 <header>
   <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap"><h1>Quản lý công việc pháp chế<small id="bakinfo"></small><small id="ghst"></small></h1>
   <button id="teamw" title="Nhân sự phòng - bấm để chọn"><span class="tw-n" id="twn">01</span><span class="tw-l"><b>Nhân sự phòng</b><small id="twm"></small></span></button></div>
@@ -1434,16 +1435,18 @@ async function shPush(force){
   catch(e){ghStatus(e.message==="conflict"?"Xung đột: Sheet có bản mới hơn từ máy khác. Mở “Đồng bộ Google Sheet” để tải về hoặc ghi đè.":"Lỗi Google Sheet: "+e.message,true)}
   shBusy=false}
 async function shPull(){const d=await shGet();if(d===null)throw new Error("Sheet chưa có dữ liệu");ghApply(d);ghStatus("Đã tải từ Google Sheet lúc "+new Date().toLocaleTimeString("vi-VN"))}
+function gateOpen(){const g=$("gate");if(g)g.remove()}
+function gateMsg(m){const e=$("gate_msg");if(e)e.textContent=m}
 async function shInit(){
   if(!SH){return}
   ghStatus("Đang kết nối Google Sheet…");
   try{
     await shRole();
-    if(localStorage.getItem(KDIRTY)){await shGet();
+    if(localStorage.getItem(KDIRTY)){await shGet();gateOpen();
       if(confirm("Máy này có thay đổi chưa ghi lên Google Sheet.\nOK = ghi lên (ghi đè bản trên Sheet).\nCancel = bỏ thay đổi và tải bản từ Sheet.")){await shPush(true)}else{await shPull()}return}
-    const d=await shGet();if(d===null){await shPush(true);return}
+    const d=await shGet();gateOpen();if(d===null){await shPush(true);return}
     ghApply(d);ghStatus("Đã tải từ Google Sheet lúc "+new Date().toLocaleTimeString("vi-VN"))
-  }catch(e){ghStatus("Lỗi Google Sheet: "+e.message+" (đang dùng dữ liệu của máy này)",true)}}
+  }catch(e){gateMsg("Không vào được: "+e.message);ghStatus("Lỗi Google Sheet: "+e.message+" (đang dùng dữ liệu của máy này)",true)}}
 const shDlg=document.createElement("dialog");
 shDlg.id="shdlg";shDlg.style.cssText=ghDlg.style.cssText;
 shDlg.innerHTML=`<h2 style="margin:0 0 8px;font-size:16px">Đồng bộ dữ liệu với Google Sheet</h2>
@@ -1470,7 +1473,7 @@ shDlg.querySelector("#sh_save").onclick=async()=>{
   const old=SH;SH={id,client:cl};shTok=null;shRev=null;
   try{
     await shAuth(true);ghStatus("Đang kết nối Google Sheet…");await shRole();
-    const d=await shGet();
+    const d=await shGet();gateOpen();
     if(d===null){await shPush(true)}
     else{const n=(d.tasks||[]).length;if(shRO){ghApply(d);localStorage.setItem(KSH,JSON.stringify(SH));shDlg.close();ghStatus("Đã tải từ Google Sheet (chế độ chỉ xem)");return}
       if(!(tasks.length||budget.length)||confirm("Sheet đã có dữ liệu ("+n+" công việc).\nOK = dùng dữ liệu trên Sheet thay cho dữ liệu máy này.\nCancel = ghi dữ liệu máy này lên Sheet, ghi đè.")){ghApply(d);ghStatus("Đã tải từ Google Sheet lúc "+new Date().toLocaleTimeString("vi-VN"))}
@@ -1552,6 +1555,19 @@ async function drvSync(rows,oldMails){
       d.close();alert(msg)}catch(e){alert("Không lưu được: "+e.message)}};
 })();
 
+/* Cổng đăng nhập: chặn toàn bộ giao diện cho tới khi đăng nhập Google và đọc được Sheet */
+(()=>{const go=$("gate_go"),cf=$("gate_cfg");if(!go)return;
+  go.onclick=()=>{const inv=$("inviteGo");if(inv){inv.click();return}
+    if(!SH){gateMsg("Chưa có cấu hình kết nối. Hãy mở bằng link mời do quản trị gửi, hoặc bấm cấu hình lần đầu nếu bạn là quản trị.");return}
+    gateMsg("Đang đăng nhập…");shAuth(true).then(()=>shInit()).catch(e=>gateMsg(e.message))};
+  cf.onclick=ev=>{ev.preventDefault();$("gate").style.display="none";$("shb").click();
+    const o=new MutationObserver(()=>{if(!shDlg.open){o.disconnect();if($("gate"))$("gate").style.display="flex"}});o.observe(shDlg,{attributes:true,attributeFilter:["open"]})};
+  const lo=document.createElement("button");lo.id="shout";lo.textContent="Đăng xuất";$("shb").after(lo);
+  lo.onclick=()=>{if(!confirm("Đăng xuất Google? Trang sẽ tải lại và yêu cầu đăng nhập lại."))return;
+    try{sessionStorage.removeItem("phapche_sh_tok2")}catch(e){}
+    try{if(window.google&&google.accounts&&shTok)google.accounts.oauth2.revoke(shTok,()=>{})}catch(e){}
+    location.reload()};
+})();
 if(SH)shInit();
 
 </script>
