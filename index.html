@@ -2101,7 +2101,8 @@ function rDash(){
   const pD=`<div class="panel full"><h3>Đăng ký thay đổi với cơ quan nhà nước (${DKI.length})</h3>${DKI.length?DKI.map(i=>`<div class="act" style="cursor:pointer" data-wgo="${i.co===0?"prj":/^Giấy chứng nhận đăng ký doanh nghiệp/.test(i.t)?"co":/^Kê khai CSHHL/.test(i.t)?"bo":"pos"}" data-wc="${esc(i.c)}" data-wt="${esc(i.t)}"><span class="d">${i.co?chip(i.c):`<b>${esc(i.c)}</b>`}</span><span>${esc(i.t)}</span><span style="margin-left:auto;white-space:nowrap">${dkTag(i)}</span></div>`).join(""):'<small style="color:var(--mute)">Không có hồ sơ nào đang chờ hoặc đang thực hiện đăng ký.</small>'}</div>`;
   d.ppl.forEach(x=>{if(!x.cccd&&act.some(p=>same(p.name,x.name)))W.push([x.name,"thiếu số CCCD","ppl"])});
   d.prj.forEach(x=>{const pc=prjCo(x),pf=pc?x.name+": ":"";if(!x.owner)W.push([pc||x.name,pf+"thiếu chủ đầu tư","prj",x.name]);if(!x.nddpl)W.push([pc||x.name,pf+"thiếu NĐDPL / người điều hành dự án","prj",x.name])});
-  const BOM=boModel().out.filter(o=>!GCO||same(o.c,GCO));BOM.forEach(o=>o.warn.forEach(w=>{if(w.k==="miss")W.push([o.c,"CSHHL "+w.b.name+" ("+nf(w.b.t)+"%) đạt ngưỡng 25% nhưng chưa ghi nhận kê khai","bo"])}));
+  const BOM=boModel().out.filter(o=>!GCO||same(o.c,GCO));BOM.forEach(o=>o.warn.forEach(w=>{if(w.k==="miss")W.push([o.c,"CSHHL "+w.b.name+" ("+nf(w.b.t)+"%) đạt ngưỡng 25% nhưng chưa ghi nhận kê khai","bo"]);else if(w.k==="diff")W.push([o.c,"CSHHL "+w.b.name+": tỷ lệ đã kê khai "+nf(w.tl)+"% lệch với số tính từ sở hữu vốn "+nf(w.b.t)+"%, cần đối chiếu","bo"])}));
+  BOM.forEach(o=>{if(o.g&&o.g.asof&&(new Date(today())-new Date(o.g.asof))/864e5>183)W.push([o.c,"Số liệu sở hữu vốn chốt "+fmt(o.g.asof)+" đã quá 6 tháng, cần xác nhận lại cơ cấu cổ đông (ảnh hưởng xác định CSHHL)","own"])});
   hsGaps().filter(g=>!g.soft).forEach(g=>W.push([g.c,g.t,"hs"]));govGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"pos"]));cpGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"cp"]));intGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,wSecOf(g.t)]));
   const MG=mtGaps();MG.filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"mt"]));ctGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"ct"]));mauGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"mau"]));plGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"pl"]));vayGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"vay"]));(window.__nldGaps?window.__nldGaps():[]).filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"nld"]));(window.__invGaps?window.__invGaps():[]).filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"inv"]));
   const nBO=new Set(BOM.flatMap(o=>o.bo.map(b=>b.key))).size;
@@ -2493,6 +2494,7 @@ function boModel(){
     const warn=[];
     bo.forEach(b=>{if(!decl.some(x=>pn(x.name)===b.key))warn.push({k:"miss",b})});
     if(bo.length)decl.forEach(x=>{if(!bo.some(b=>b.key===pn(x.name))&&/Tiêu chí 1|Thành viên/.test(x.tc||""))warn.push({k:"stale",x})});
+    decl.forEach(x=>{const b=bo.find(z=>z.key===pn(x.name));const tl=parseFloat(String(x.tl||"").replace(",","."));if(b&&tl>0&&Math.abs(tl-b.t)>0.05)warn.push({k:"diff",b,x,tl})});
     return{c,list,bo,ents,mgr,decl,warn,g:M.latest[norm(c)]};
   });
   return{out,M};
@@ -2661,7 +2663,7 @@ function rBo(r,all){
     else if(o.ents.length)sttxt=`<span class="bo-st wr">Có tổ chức ngoài hệ thống đạt 25%, cần truy xuất đến cá nhân</span>`;
     else sttxt=`<span class="bo-st wr">Không ai đạt 25%: xét tiêu chí 2 (kiểm soát), hoặc tiêu chí 3</span>`;
     const mg=!o.bo.length&&o.mgr.length?`<div style="margin-top:6px;font-size:12.5px;color:var(--mute)">Gợi ý để xét tiêu chí 2, 3 (đang giữ chức vụ): ${[...new Set(o.mgr.map(p=>p.name+" ("+p.role+")"))].map(esc).join("; ")}</div>`:"";
-    const wr=o.warn.map(w=>w.k==="miss"?`<div class="wn">⚠ <b>${esc(w.b.name)}</b> đạt ngưỡng 25% (${nf(w.b.t)}%) nhưng chưa có dòng kê khai trong mục này.</div>`:`<div class="wn amb">⚠ <b>${esc(w.x.name)}</b> đã ghi nhận theo tiêu chí sở hữu nhưng hiện không đạt 25%: rà soát để cập nhật.</div>`).join("");
+    const wr=o.warn.map(w=>w.k==="diff"?`<div class="wn amb">⚠ <b>${esc(w.b.name)}</b>: tỷ lệ đã kê khai ${nf(w.tl)}% lệch với số tính từ sở hữu vốn ${nf(w.b.t)}%. Đối chiếu giấy xác nhận và cơ cấu cổ đông.</div>`:w.k==="miss"?`<div class="wn">⚠ <b>${esc(w.b.name)}</b> đạt ngưỡng 25% (${nf(w.b.t)}%) nhưng chưa có dòng kê khai trong mục này.</div>`:`<div class="wn amb">⚠ <b>${esc(w.x.name)}</b> đã ghi nhận theo tiêu chí sở hữu nhưng hiện không đạt 25%: rà soát để cập nhật.</div>`).join("");
     return `<div class="bo-card ${cx(o.c)}"><h3>${chip(o.c)} <small style="font-weight:400;color:var(--mute)">${o.g&&o.g.asof?"số liệu chốt "+fmt(o.g.asof):""}</small> ${sttxt}${o.warn.some(w=>w.k==="miss")?` <span class="bo-st bd">⚠ ${o.warn.filter(w=>w.k==="miss").length} chưa kê khai</span>`:""}</h3><div class="bb"><div style="overflow-x:auto">${tb}</div>${mg}${wr}</div></div>`}).join("");
   function gname0(k){const x=d.ppl.find(p=>norm(p.nhom)===k);return x?x.nhom:k}
   let reg="";
@@ -2849,7 +2851,8 @@ function procMissing(c,it,o){const r=coRec(c),m=[],S=o.s||{},t0=today();
     if(!Object.values(S).some(Boolean))m.push("Mẫu 12: chưa chọn mục thay đổi, hãy chọn mục cần in");
   }
   if((P.m||[]).some(x=>x===7||x===8)||S.cd){const H=gmHolders(c);if(!H.rows.length)m.push("Mẫu 7/8: chưa có cơ cấu sở hữu vốn (tab Sở hữu vốn)");else if(!(o.sel&&o.sel.length))m.push("Mẫu 7/8: chưa chọn cổ đông cần liệt kê")}
-  if((P.m||[]).includes(10)){const bo=boModel().out.find(x=>same(x.c,c));if(!bo)m.push("Mẫu 10: chưa có dữ liệu sở hữu vốn để xác định CSHHL");else if(!bo.bo.length)m.push("Mẫu 10: chưa có cá nhân đạt ngưỡng 25%, cần bổ sung người quản lý hoặc người kiểm soát")}
+  if((P.m||[]).includes(10)){const bo=boModel().out.find(x=>same(x.c,c));if(!bo)m.push("Mẫu 10: chưa có dữ liệu sở hữu vốn để xác định CSHHL");else if(!bo.bo.length)m.push("Mẫu 10: chưa có cá nhân đạt ngưỡng 25%, cần bổ sung người quản lý hoặc người kiểm soát");else bo.bo.forEach(b=>{const p=persOf(b.name),x=[];if(!p.dob)x.push("ngày sinh");if(!p.gt)x.push("giới tính");if(!p.cccd&&!p.hc)x.push("số định danh hoặc hộ chiếu");if(!p.addr)x.push("địa chỉ liên lạc");if(x.length)m.push("Mẫu 10: "+b.name+" thiếu "+x.join(", ")+" (tab Nhân sự)")});
+    if(bo&&bo.g&&bo.g.asof&&(new Date(today())-new Date(bo.g.asof))/864e5>183)m.push("Mẫu 10: số liệu sở hữu vốn chốt "+fmt(bo.g.asof)+" đã quá 6 tháng, cần xác nhận lại cơ cấu cổ đông")}
   return m}
 function chkPage(c,it,o,miss){const r=coRec(c),P=PROC[it.t]||{a:[]},cq=cqOf(r)||"Cơ quan đăng ký kinh doanh";
   return `<div class="fpage nq"><div class="fh"><h2 style="margin-top:6px">DANH MỤC HỒ SƠ NỘP CƠ QUAN ĐĂNG KÝ KINH DOANH</h2><div class="fs"><b>${esc(it.t)}${o.step?" - BƯỚC "+o.step+"/3":""}</b><br>${esc((r.name||r.code).toUpperCase())}${r.msdn?" - MSDN: "+esc(r.msdn):""}</div></div>
