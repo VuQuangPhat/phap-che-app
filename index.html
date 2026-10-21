@@ -238,7 +238,8 @@ table.rt tr.sec td{background:#f1f1ec;font-weight:700;text-align:center}
 body.pd .pcap{max-height:none!important;overflow:visible}body.pd .pcap::after,body.pd .pmore{display:none}
 #pdet{width:min(940px,96vw)}#pdb{max-height:72vh;overflow:auto}#pdet .panel{border:0;background:transparent;padding:0}#pdet .pmore{display:none}
 #sprintbox{display:none}
-@media print{body.sp>*:not(#sprintbox){display:none!important}body.sp #sprintbox{display:block}#sprintbox .sl{page-break-after:always;break-after:page;-webkit-print-color-adjust:exact;print-color-adjust:exact}body.sp{background:#fff!important}}
+#sig{text-align:center;font-size:12px;color:#8a8f98;padding:18px 16px 28px;margin-top:12px}#sig b{color:#5b6068;font-weight:600}
+@media print{#sig{display:none!important}body.sp>*:not(#sprintbox){display:none!important}body.sp #sprintbox{display:block}#sprintbox .sl{page-break-after:always;break-after:page;-webkit-print-color-adjust:exact;print-color-adjust:exact}body.sp{background:#fff!important}}
 
 @media print{header,.tabs,#vlist,#vbud,#vdash{display:none!important}dialog:not([open]){display:none}#rdlg{position:static!important;inset:auto!important;width:100%!important;max-width:none!important;height:auto!important;max-height:none!important;overflow:visible!important;margin:0!important;border:0;padding:0;box-shadow:none;background:#fff}#rdlg::backdrop{display:none}html,body{height:auto!important;overflow:visible!important}#rdlg h2,#rdlg .bar,#rdlg .foot,#rdlg .hint{display:none}#rbody{max-height:none;border:0;overflow:visible;padding:0}}
 @media print{body.rpt>*:not(#rdlg):not(script):not(style){display:none!important}#rbody table.rt tr.split{break-inside:auto!important;page-break-inside:auto!important}#rbody table.rt{min-width:0;width:100%;font-size:11px;page-break-inside:auto}#rbody table.rt thead{display:table-header-group}#rbody table.rt tr{break-inside:avoid;page-break-inside:avoid}#rbody table.rt th,#rbody table.rt td{padding:3px 5px}#rbody .rh{break-after:avoid}#rbody table.rt tr.sec{break-after:avoid}}
@@ -568,6 +569,8 @@ table.fm.m78{table-layout:fixed;font-size:8.5px;width:100%}table.fm.m78 th,table
   <div id="kbody" style="max-height:62vh;overflow:auto;padding-right:4px"></div>
   <div class="foot"><button id="kcancel">Đóng</button><button class="primary" id="ksave">Lưu</button></div>
 </dialog>
+
+<footer id="sig">Website được xây dựng và biên soạn bởi <b>Vũ Quang Phát</b> · Pháp lý &amp; Phát triển dự án BĐS</footer>
 
 <dialog id="pdlg" style="width:min(760px,95vw)">
   <h2>Chỉnh kế hoạch công việc</h2>
