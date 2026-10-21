@@ -1218,7 +1218,7 @@ render();
 
 /* ---------- Đồng bộ GitHub (lưu data.json trong repo qua GitHub API) ---------- */
 const KGH="phapche_gh_v1",KDIRTY="phapche_gh_dirty";
-let GH=load(KGH,null),ghSha=null,ghTimer=null,ghBusy=false;
+let SH=null,GH=load(KGH,null),ghSha=null,ghTimer=null,ghBusy=false;
 const b64e=s=>{let r="";new TextEncoder().encode(s).forEach(c=>r+=String.fromCharCode(c));return btoa(r)};
 const b64d=s=>new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\s/g,"")),c=>c.charCodeAt(0)));
 const ghUrl=()=>`https://api.github.com/repos/${GH.owner}/${GH.repo}/contents/${GH.path.split("/").map(encodeURIComponent).join("/")}`;
@@ -1245,10 +1245,11 @@ async function ghPut(){
   ghSha=(await r.json()).content.sha;localStorage.removeItem(KDIRTY);
 }
 function ghSchedule(){
-  if(!GH)return;localStorage.setItem(KDIRTY,"1");ghStatus("Chờ đồng bộ…");
+  if(!GH&&!SH)return;localStorage.setItem(KDIRTY,"1");ghStatus("Chờ đồng bộ…");
   clearTimeout(ghTimer);ghTimer=setTimeout(ghPush,2500);
 }
 async function ghPush(){
+  if(SH)return shPush();
   if(!GH)return;if(ghBusy){ghSchedule();return}
   ghBusy=true;
   try{ghStatus("Đang đẩy lên GitHub…");await ghPut();ghStatus("Đã đồng bộ GitHub lúc "+new Date().toLocaleTimeString("vi-VN"))}
@@ -1327,7 +1328,129 @@ ghDlg.querySelector("#gh_pull").onclick=async()=>{if(!GH)return alert("Chưa k�
 ghDlg.querySelector("#gh_push").onclick=async()=>{if(!GH)return alert("Chưa kết nối.");if(!confirm("Ghi đè dữ liệu trên GitHub bằng bản của máy này?"))return;await ghForcePush();ghDlg.close()};
 ghDlg.querySelector("#gh_off").onclick=()=>{if(!confirm("Ngắt kết nối GitHub? Dữ liệu trên máy này vẫn giữ nguyên."))return;GH=null;localStorage.removeItem(KGH);localStorage.removeItem(KDIRTY);ghStatus("");bakInfo();ghDlg.close()};
 window.addEventListener("beforeunload",e=>{if(GH&&localStorage.getItem(KDIRTY)){e.preventDefault();e.returnValue=""}});
-ghInit();
+if(!load("phapche_sh_v1",null))ghInit();
+
+/* ---------- Đồng bộ Google Sheet (thay GitHub; mỗi mục dữ liệu là một tab) ---------- */
+const KSH="phapche_sh_v1";
+SH=load(KSH,null);let shTok=null,shExp=0,shRev=null,shBusy=false;
+const SHM="§",SHCH=40000;
+function shEnc(v){if(v===undefined||v===null)return"";if(typeof v==="number")return v;if(typeof v==="string")return v===""?SHM+"e":v.startsWith(SHM)?SHM+"s"+v:v;return SHM+JSON.stringify(v)}
+function shDec(c){if(c===undefined||c===null||c==="")return undefined;if(typeof c!=="string")return c;if(c===SHM+"e")return"";if(c.startsWith(SHM+"s"))return c.slice(2);if(c.startsWith(SHM))return JSON.parse(c.slice(1));return c}
+function shTable(arr){const keys=[];arr.forEach(r=>Object.keys(r||{}).forEach(k=>{if(!keys.includes(k))keys.push(k)}));if(!keys.length)keys.push("id");
+  return [keys,...arr.map(r=>keys.map(k=>shEnc(r[k])))]}
+function shFromTable(v){if(!v||!v.length)return[];const h=v[0];return v.slice(1).filter(r=>r.some(c=>c!==""&&c!==undefined)).map(r=>{const o={};h.forEach((k,i)=>{const x=shDec(r[i]);if(x!==undefined)o[k]=x});return o})}
+const shIsRows=a=>Array.isArray(a)&&a.every(r=>r&&typeof r==="object"&&!Array.isArray(r));
+/* state -> {tab:[[...]]}; tab tên: tasks, budget, prof_<k>, cfg (key/seq/chunk) */
+function shPack(){
+  const T={tasks:shTable(tasks),budget:shTable(budget)},kv=[["key","seq","value"]];
+  const putKV=(k,v)=>{const s=JSON.stringify(v===undefined?null:v);for(let i=0,n=0;i<Math.max(s.length,1);i+=SHCH,n++)kv.push([k,n,s.slice(i,i+SHCH)])};
+  Object.keys(CFG).forEach(k=>{
+    if(k==="prof"&&CFG.prof&&typeof CFG.prof==="object"){
+      Object.keys(CFG.prof).forEach(p=>{const v=CFG.prof[p];if(shIsRows(v)&&v.length)T["prof_"+p]=shTable(v);else putKV("prof."+p,v)})}
+    else putKV(k,CFG[k])});
+  T.cfg=kv;return T}
+function shUnpack(T){
+  const o={tasks:shFromTable(T.tasks),budget:shFromTable(T.budget)},cfg={},prof={},kv={};
+  (T.cfg||[]).slice(1).forEach(r=>{(kv[r[0]]=kv[r[0]]||[]).push([+r[1],r[2]||""])});
+  Object.keys(kv).forEach(k=>{const v=JSON.parse(kv[k].sort((a,b)=>a[0]-b[0]).map(x=>x[1]).join("")||"null");if(k.startsWith("prof."))prof[k.slice(5)]=v;else cfg[k]=v});
+  Object.keys(T).forEach(t=>{if(t.startsWith("prof_"))prof[t.slice(5)]=shFromTable(T[t])});
+  if(Object.keys(prof).length)cfg.prof=prof;o.cfg=cfg;return o}
+/* ----- Google Identity Services ----- */
+function shLoadGsi(){return new Promise((ok,no)=>{if(window.google&&google.accounts&&google.accounts.oauth2)return ok();const s=document.createElement("script");s.src="https://accounts.google.com/gsi/client";s.onload=ok;s.onerror=()=>no(new Error("Không tải được thư viện đăng nhập Google"));document.head.appendChild(s)})}
+async function shAuth(interactive){
+  if(shTok&&Date.now()<shExp-60000)return shTok;
+  await shLoadGsi();
+  return new Promise((ok,no)=>{
+    const tc=google.accounts.oauth2.initTokenClient({client_id:SH.client,scope:"https://www.googleapis.com/auth/spreadsheets",prompt:interactive?"":"none",
+      callback:r=>{if(r.error)return no(new Error(r.error==="interaction_required"||r.error==="popup_closed"?"Cần đăng nhập lại Google: bấm nút Đồng bộ Google Sheet":r.error));shTok=r.access_token;shExp=Date.now()+(+r.expires_in||3600)*1000;ok(shTok)},
+      error_callback:e=>no(new Error("Cần đăng nhập lại Google: bấm nút Đồng bộ Google Sheet"))});
+    tc.requestAccessToken(interactive?{}:{prompt:""})})}
+async function shApi(path,opt){
+  const tk=await shAuth(false);
+  const r=await fetch("https://sheets.googleapis.com/v4/spreadsheets/"+SH.id+path,{...(opt||{}),headers:{Authorization:"Bearer "+tk,"Content-Type":"application/json"}});
+  if(r.status===401){shTok=null;throw new Error("Phiên Google hết hạn: bấm nút Đồng bộ Google Sheet để đăng nhập lại")}
+  if(r.status===403)throw new Error("Không đủ quyền với Sheet (403): dùng đúng tài khoản Google chủ Sheet");
+  if(r.status===404)throw new Error("Không thấy Sheet (kiểm tra ID)");
+  if(!r.ok)throw new Error("Google Sheets "+r.status+" "+(await r.text()).slice(0,120));
+  return r.json()}
+const shRange=t=>encodeURIComponent("'"+t+"'");
+async function shTitles(){const j=await shApi("?fields=sheets.properties.title");return(j.sheets||[]).map(s=>s.properties.title)}
+async function shGetRev(){const j=await shApi("/values/"+shRange("_meta")+"!A1:B2").catch(e=>{if(/400/.test(e.message))return{};throw e});const v=(j.values||[]);return{rev:+(v[0]&&v[0][1])||0,at:(v[1]&&v[1][1])||""}}
+async function shGet(){
+  const titles=await shTitles();
+  if(!titles.includes("_meta")||!titles.includes("cfg")){shRev=0;return null}
+  const want=titles.filter(t=>t==="tasks"||t==="budget"||t==="cfg"||t.startsWith("prof_"));
+  const j=await shApi("/values:batchGet?majorDimension=ROWS&valueRenderOption=UNFORMATTED_VALUE&"+want.map(t=>"ranges="+shRange(t)).join("&"));
+  const T={};(j.valueRanges||[]).forEach((vr,i)=>{T[want[i]]=(vr.values||[]).map(r=>r.map(c=>c===undefined?"":c))});
+  shRev=(await shGetRev()).rev;return shUnpack(T)}
+async function shPut(force){
+  const titles=await shTitles(),T=shPack(),names=Object.keys(T);
+  const cur=titles.includes("_meta")?await shGetRev():{rev:0};
+  if(!force&&shRev!==null&&cur.rev!==shRev)throw new Error("conflict");
+  const add=[...names,"_meta"].filter(t=>!titles.includes(t));
+  if(add.length)await shApi(":batchUpdate",{method:"POST",body:JSON.stringify({requests:add.map(t=>({addSheet:{properties:{title:t}}}))})});
+  const old=titles.filter(t=>t.startsWith("prof_")&&!names.includes(t));
+  const clear=[...names,...old].map(t=>"'"+t+"'");
+  await shApi("/values:batchClear",{method:"POST",body:JSON.stringify({ranges:clear})});
+  const nr=cur.rev+1,data=names.map(t=>({range:"'"+t+"'!A1",values:T[t]}));
+  data.push({range:"'_meta'!A1",values:[["rev",nr],["updated",new Date().toISOString()],["schema","phapche v2"]]});
+  await shApi("/values:batchUpdate",{method:"POST",body:JSON.stringify({valueInputOption:"RAW",data})});
+  shRev=nr;localStorage.removeItem(KDIRTY)}
+async function shPush(force){
+  if(!SH)return;if(shBusy){ghSchedule();return}shBusy=true;
+  try{ghStatus("Đang ghi lên Google Sheet…");await shPut(force);ghStatus("Đã đồng bộ Google Sheet lúc "+new Date().toLocaleTimeString("vi-VN"))}
+  catch(e){ghStatus(e.message==="conflict"?"Xung đột: Sheet có bản mới hơn từ máy khác. Mở “Đồng bộ Google Sheet” để tải về hoặc ghi đè.":"Lỗi Google Sheet: "+e.message,true)}
+  shBusy=false}
+async function shPull(){const d=await shGet();if(d===null)throw new Error("Sheet chưa có dữ liệu");ghApply(d);ghStatus("Đã tải từ Google Sheet lúc "+new Date().toLocaleTimeString("vi-VN"))}
+async function shInit(){
+  if(!SH){return}
+  ghStatus("Đang kết nối Google Sheet…");
+  try{
+    if(localStorage.getItem(KDIRTY)){await shGet();
+      if(confirm("Máy này có thay đổi chưa ghi lên Google Sheet.\nOK = ghi lên (ghi đè bản trên Sheet).\nCancel = bỏ thay đổi và tải bản từ Sheet.")){await shPush(true)}else{await shPull()}return}
+    const d=await shGet();if(d===null){await shPush(true);return}
+    ghApply(d);ghStatus("Đã tải từ Google Sheet lúc "+new Date().toLocaleTimeString("vi-VN"))
+  }catch(e){ghStatus("Lỗi Google Sheet: "+e.message+" (đang dùng dữ liệu của máy này)",true)}}
+const shDlg=document.createElement("dialog");
+shDlg.style.cssText=ghDlg.style.cssText;
+shDlg.innerHTML=`<h2 style="margin:0 0 8px;font-size:16px">Đồng bộ dữ liệu với Google Sheet</h2>
+<p style="margin:0 0 10px;color:var(--mute);font-size:12px">Mỗi mục dữ liệu là một tab trong Sheet của bạn. Đăng nhập Google bằng đúng tài khoản chủ Sheet; không có khóa nào lưu trong app. Chỉ chia sẻ Sheet cho người được phép xem dữ liệu cá nhân.</p>
+<div style="display:grid;gap:8px">
+<label>ID Google Sheet (đoạn giữa /d/ và /edit trong đường dẫn)<input id="sh_i" style="width:100%" autocomplete="off"></label>
+<label>OAuth Client ID (Google Cloud, loại Web)<input id="sh_c" style="width:100%" autocomplete="off" placeholder="xxxx.apps.googleusercontent.com"></label>
+</div>
+<div class="bar" style="margin-top:12px">
+<button class="primary" id="sh_save">Đăng nhập & kết nối</button>
+<button id="sh_pull">Tải từ Sheet</button>
+<button id="sh_push">Ghi đè lên Sheet</button>
+<button id="sh_off">Ngắt kết nối</button>
+<button id="sh_close">Đóng</button>
+</div>`;
+document.body.appendChild(shDlg);
+const sv=i=>shDlg.querySelector("#"+i).value.trim();
+(()=>{const b=document.createElement("button");b.id="shb";b.textContent="Đồng bộ Google Sheet";$("gh").after(b);
+  b.onclick=()=>{if(SH){shDlg.querySelector("#sh_i").value=SH.id;shDlg.querySelector("#sh_c").value=SH.client}shDlg.showModal()}})();
+shDlg.querySelector("#sh_close").onclick=()=>shDlg.close();
+shDlg.querySelector("#sh_save").onclick=async()=>{
+  const id=sv("sh_i").replace(/^.*\/d\//,"").replace(/\/.*$/,""),cl=sv("sh_c");
+  if(!id||!cl){alert("Cần nhập ID Sheet và OAuth Client ID.");return}
+  const old=SH;SH={id,client:cl};shTok=null;shRev=null;
+  try{
+    await shAuth(true);ghStatus("Đang kết nối Google Sheet…");
+    const d=await shGet();
+    if(d===null){await shPush(true)}
+    else{const n=(d.tasks||[]).length;
+      if(!(tasks.length||budget.length)||confirm("Sheet đã có dữ liệu ("+n+" công việc).\nOK = dùng dữ liệu trên Sheet thay cho dữ liệu máy này.\nCancel = ghi dữ liệu máy này lên Sheet, ghi đè.")){ghApply(d);ghStatus("Đã tải từ Google Sheet lúc "+new Date().toLocaleTimeString("vi-VN"))}
+      else{await shPush(true)}}
+    localStorage.setItem(KSH,JSON.stringify(SH));shDlg.close()
+  }catch(e){SH=old;ghStatus("Lỗi Google Sheet: "+e.message,true);alert("Không kết nối được: "+e.message)}};
+shDlg.querySelector("#sh_pull").onclick=async()=>{if(!SH)return alert("Chưa kết nối.");if(!confirm("Thay toàn bộ dữ liệu máy này bằng bản trên Sheet?"))return;try{await shAuth(true);await shPull();shDlg.close()}catch(e){ghStatus("Lỗi Google Sheet: "+e.message,true)}};
+shDlg.querySelector("#sh_push").onclick=async()=>{if(!SH)return alert("Chưa kết nối.");if(!confirm("Ghi đè dữ liệu trên Sheet bằng bản của máy này?"))return;try{await shAuth(true)}catch(e){return ghStatus("Lỗi Google Sheet: "+e.message,true)}await shPush(true);shDlg.close()};
+shDlg.querySelector("#sh_off").onclick=()=>{if(!confirm("Ngắt kết nối Google Sheet? Dữ liệu trên máy này vẫn giữ nguyên."))return;SH=null;shTok=null;localStorage.removeItem(KSH);localStorage.removeItem(KDIRTY);ghStatus("");shDlg.close()};
+window.addEventListener("beforeunload",e=>{if(SH&&localStorage.getItem(KDIRTY)){e.preventDefault();e.returnValue=""}});
+if(SH&&GH){GH=null;localStorage.removeItem(KGH)}
+if(SH)shInit();
+
 </script>
 <!-- ===== MODULE HỒ SƠ CÔNG TY ===== -->
 <style>
