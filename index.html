@@ -276,7 +276,7 @@ body.pd .act{cursor:default}
 #vprof .hspg{display:inline-block;margin:4px 14px 4px 0}
 /* tờ khai in */
 .fpage{page-break-after:always;color:#000;font-family:"Times New Roman",serif;font-size:13px;line-height:1.4;background:#fff}
-.fpage:last-child{page-break-after:auto}.fpage.uqp{min-height:250mm;display:flex;flex-direction:column;box-sizing:border-box}.fpage.uqp p{margin:4px 0}.fpage.uqp{line-height:1.35}.fpage.uqp .uqf{margin-top:auto;padding-top:8px;text-align:center;font-size:12px;font-style:italic}
+.fpage:last-child{page-break-after:auto}.fpage.uqp{box-sizing:border-box}.fpage.uqp p{margin:4px 0}.fpage.uqp{line-height:1.35}.fpage.uqp .uqf{margin-top:auto;padding-top:8px;text-align:center;font-size:12px;font-style:italic}
 .fh{text-align:center;margin:0 0 10px}.fh h2{margin:10px 0 2px;font-size:16px;color:#000}.fh .fs{font-size:12px;font-style:italic}.fq{font-size:12px}
 table.fm{border-collapse:collapse;width:100%;margin:6px 0;font-size:12px}
 table.fm th,table.fm td{border:1px solid #000;padding:4px 6px;text-align:center;vertical-align:middle;background:#fff!important;color:#000!important}
@@ -404,6 +404,13 @@ table.rt th{background:#2f4a73;color:#fff}
 [data-m12box] [hidden]{display:none!important}
 .mck{display:flex!important;flex-direction:row!important;align-items:flex-start;gap:8px;font-weight:400!important;font-size:13px;padding:3px 4px;border-radius:6px;cursor:pointer}.mck input{width:auto!important;margin-top:3px}.mck.sg{background:rgba(37,99,235,.10)}.mck.gn{opacity:.6}.mck i{font-style:normal;font-size:11px;padding:0 6px;border-radius:999px}.mck i.nw{background:#dbeafe;color:#1d4ed8}.mck i.gn{background:#e5e7eb;color:#6b7280}
 .fpage.nq p{margin:6px 0;text-align:justify;font-size:13px}.fpage.nq .pb{margin:4px 0 8px 18px;line-height:1.55}.fpage.nq h2{font-size:16px;margin:4px 0}.fpage.nq .fs{margin-bottom:8px}
+/* Cỡ chữ văn bản hành chính: 13pt (NĐ 30/2020), áp cho văn bản dọc tự soạn, không áp cho mẫu biểu có "Mẫu số" và bản ngang */
+.fpage.nq:not(.land):not(:has(.maulbl)){font-size:13pt;line-height:1.35}
+.fpage.nq:not(.land):not(:has(.maulbl)) p{font-size:13pt}
+.fpage.nq:not(.land):not(:has(.maulbl)) h2,.fpage.nq:not(.land):not(:has(.maulbl)) .fh h2{font-size:14pt}
+.fpage.nq:not(.land):not(:has(.maulbl)) .fs,.fpage.nq:not(.land):not(:has(.maulbl)) .fq{font-size:13pt}
+.fpage.nq:not(.land):not(:has(.maulbl)) .fh.fq,.fpage.nq:not(.land):not(:has(.maulbl)) .fh>.fq{font-size:13pt}.fpage.nq:not(.land):not(:has(.maulbl)) .fh>.fq b:first-child{font-size:12pt;white-space:nowrap}.fpage.nq:not(.land):not(:has(.maulbl)) .fh>div:first-child{width:42%!important}.fpage.nq:not(.land):not(:has(.maulbl)) .fh>.fq{width:58%!important}
+.fpage.nq:not(.land):not(:has(.maulbl)) tr{break-inside:avoid}
 .stgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px 12px;margin-top:8px}.stl{display:flex;flex-direction:column;font-size:12px;gap:2px;color:var(--mute)}.stl select,.stl input,.rpl select{font-size:13px;padding:5px 6px;color:var(--ink)}.rpl{font-size:12px;color:var(--mute)}
 .fpage .fh b,.fpage .fq b{text-wrap:balance}table.fm.m10t{table-layout:fixed;font-size:9.5px}table.fm.m10t th,table.fm.m10t td{padding:2px 3px;word-break:break-word;overflow-wrap:anywhere}.fpage.land{page:land;max-width:100%;overflow:visible}table.fm.ds{table-layout:fixed;width:100%;font-size:11px}table.fm.ds th,table.fm.ds td{padding:3px 4px;word-break:break-word;overflow-wrap:anywhere}
 
@@ -2945,7 +2952,7 @@ function wordSave(html,title){
   const u=URL.createObjectURL(new Blob(["\ufeff",doc],{type:"application/msword"})),a=document.createElement("a");a.href=u;a.download=fn+".doc";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)}
 function showSheet(html,opt){opt=opt||{};const prev=sec,t0=document.title;
   $("plist").innerHTML=html;$("pprint").innerHTML="";$("pstats").hidden=true;
-  const pg=document.createElement("style");pg.textContent="@page{size:A4 portrait;margin:18mm 15mm 16mm 20mm}@page land{size:A4 landscape;margin:12mm}@page mp{size:A4 portrait;margin:0}";document.head.appendChild(pg);
+  const pg=document.createElement("style");pg.textContent="@page{size:A4 portrait;margin:18mm 15mm 16mm 20mm}@page land{size:A4 landscape;margin:12mm}@page mp{size:A4 portrait;margin:0}"+(opt.pn?"@page{@bottom-center{content:\"Trang \" counter(page) \"/\" counter(pages);font:italic 11pt \"Times New Roman\",serif}}":"");document.head.appendChild(pg);
   document.title=opt.title||t0;document.body.classList.add("pp","pf","pv");$("plist").contentEditable="true";$("plist").spellcheck=false;
   let bar=$("pvbar");if(!bar){bar=document.createElement("div");bar.id="pvbar";document.body.appendChild(bar)}
   bar.hidden=false;bar.innerHTML=`<b>${esc(opt.title||"Xem trước")}</b><span>Bấm vào chữ để sửa trực tiếp; bấm vào một đoạn rồi “Xóa đoạn đang chọn” để bỏ cả dòng (VD dòng căn cứ Nghị quyết). Tải Word sẽ lấy đúng bản đã sửa. Chỉnh ở đây chỉ dùng để in, không lưu vào dữ liệu. Trong hộp thoại in, chọn lề "Mặc định" (hoặc "Không") và tắt "Đầu trang và chân trang".</span><button class="primary" id="pvprint">In / Lưu PDF</button><button id="pvdel" title="Bấm vào đoạn cần bỏ rồi bấm nút này">Xóa đoạn đang chọn</button><button id="pvundo">Hoàn tác</button><button id="pvword">Tải Word (.doc)</button><button id="pvclose">Đóng</button>`;
@@ -3382,11 +3389,11 @@ function uqDoc(o){
 <p>Bằng văn bản này, Bên A đồng ý ủy quyền và Bên B đồng ý nhận ủy quyền thực hiện các công việc sau đây:</p>
 <p><b>Điều 1. Phạm vi ủy quyền${o.mau==="nd"?"":" ký kết hợp đồng, giao dịch"}.</b><br>${esc(o.pv||UQ_PV).replace(/\n/g,"<br>")}</p>
 <p><b>Điều 2. Thời hạn ủy quyền:</b><br>Văn bản ủy quyền có hiệu lực kể từ ngày ký${o.hethan?" đến hết ngày "+fmt(o.hethan):""}.<br>Bên A có quyền đơn phương thu hồi, chấm dứt hoặc điều chỉnh nội dung ủy quyền này bất kỳ lúc nào bằng văn bản thông báo cho Bên B; việc thu hồi/chấm dứt có hiệu lực kể từ ngày Bên B nhận được thông báo, không ảnh hưởng đến các giao dịch đã được Bên B xác lập hợp pháp với bên thứ ba trước thời điểm đó.<br>Văn bản ủy quyền này đương nhiên hết hiệu lực khi Bên A hoặc Bên B không còn giữ chức danh nêu trên, trừ trường hợp có văn bản khác của Công ty quy định khác.</p>
-${pf(1)}</div><div class="fpage nq uqp">
+
 <p><b>Điều 3. Cam kết của các bên:</b><br>- Các bên cam kết thực hiện đúng và đầy đủ nghĩa vụ của mình theo nội dung của văn bản ủy quyền này.<br>- Bên B cam kết có đầy đủ năng lực trong việc thực hiện các công việc trong phạm vi ủy quyền và chịu trách nhiệm pháp lý trong việc thực hiện các công việc nhận ủy quyền.<br>- Bên B cam kết thực hiện đúng nội dung ủy quyền, thông báo cho Bên A tất cả các nội dung có liên quan đến công việc nhận ủy quyền cũng như tiến độ thực hiện các công việc đó.<br>- Bên A cam kết chịu trách nhiệm về các công việc được Bên B thực hiện với Bên Thứ Ba theo đúng nội dung đã thống nhất trong văn bản ủy quyền này.<br>- Bên B cam kết chịu trách nhiệm trước Bên A đối với các thiệt hại xảy ra do vi phạm nội dung ủy quyền.</p>
 ${o.mau==="nd"?`<p><b>Điều 4. Giới hạn ủy quyền:</b><br>${esc(UQ_PRE.nd.lim)}</p>`:""}
 <p>Văn bản ủy quyền này được lập thành 03 (ba) bản, có giá trị pháp lý như nhau, Bên A giữ 02 (hai) bản, Bên B giữ 01 (một) bản./.</p>
-<table style="width:100%;text-align:center;margin-top:10px"><tr><td style="width:50%"><b>BÊN NHẬN ỦY QUYỀN</b><br><i>(Ký, ghi rõ họ tên)</i><div style="height:80px"></div><b>${esc(cleanN(o.b))}</b></td><td><b>BÊN ỦY QUYỀN</b><br><i>(Ký, đóng dấu, ghi rõ họ tên)</i><div style="height:80px"></div><b>${esc(cleanN(o.a))}</b></td></tr></table>${pf(2)}</div>`}
+<table style="width:100%;text-align:center;margin-top:10px"><tr><td style="width:50%"><b>BÊN NHẬN ỦY QUYỀN</b><br><i>(Ký, ghi rõ họ tên)</i><div style="height:80px"></div><b>${esc(cleanN(o.b))}</b></td><td><b>BÊN ỦY QUYỀN</b><br><i>(Ký, đóng dấu, ghi rõ họ tên)</i><div style="height:80px"></div><b>${esc(cleanN(o.a))}</b></td></tr></table></div>`}
 function uqBoard(o){const t0=today(),seen=new Set();return PD().pos.filter(x=>same(x.co,o.co)&&activeP(x,t0)&&/hdqt|hoi dong/.test(nzs((x.role||"")+" "+(x.title||""))))
   .sort((a,b)=>(/chu tich/.test(nzs((b.role||"")+" "+(b.title||""))))-(/chu tich/.test(nzs((a.role||"")+" "+(a.title||"")))))
   .filter(x=>{const k=pn(x.name);if(seen.has(k))return false;seen.add(k);return true})}
@@ -3418,7 +3425,7 @@ function uqSet(o,w){const m={uq:uqDoc,nq:uqNQ,bb:uqBB};return w==="all"?uqBB(o)+
 function uqPrint(o,w){const ms=uqMissing(o);
   if(ms.length&&!confirm("Dữ liệu chưa đủ để điền hết văn bản:\n\n- "+ms.join("\n- ")+"\n\nBấm OK để in luôn (phần thiếu để dấu chấm điền tay), Hủy để bổ sung dữ liệu trước."))return;
   const h=uqSet(o,w);if(!h){alert("Mô hình công ty này không có văn bản đó.");return}
-  showSheet(h,{title:({all:"Bộ ủy quyền ",uq:"Văn bản ủy quyền ",nq:"Nghị quyết ủy quyền ",bb:"Biên bản họp ủy quyền "})[w]+o.co+(o.b?" - "+cleanN(o.b):"")})}
+  showSheet(h,{pn:w==="uq",title:({all:"Bộ ủy quyền ",uq:"Văn bản ủy quyền ",nq:"Nghị quyết ủy quyền ",bb:"Biên bản họp ủy quyền "})[w]+o.co+(o.b?" - "+cleanN(o.b):"")})}
 function uqSave(o){
   const d=PD();d.uq=d.uq||[];let x=d.uq.find(q=>same(q.co,o.co)&&same(q.b,o.b)&&same(q.so,o.so)&&q.ngay===o.ngay);
   if(!x){x={id:uid()};d.uq.push(x)}Object.assign(x,o,{st:x.st||"Đang hiệu lực"});
@@ -3726,7 +3733,8 @@ function setCtx(c,o){
   return{r,m,nw:np?[{name:np,title:o.nwt||""}]:[],old:o.old?{name:o.old,title:o.oldt||""}:null,H,rows,tot,par,pct,tt,w,yr,
     bbh:o.soBB||m.so||"",nqn:o.soNQ||nq0.so||"",guq:o.soGUQ||"",cv:o.soCV||"",ngGUQ:o.ngGUQ||"",ngCV:o.ngCV||"",
     chair:cleanN(o.chair||""),tk:cleanN(o.tk||m.tk||""),dia:diaOf(r)||"……………",cq:cqOf(r)||"Cơ quan đăng ký kinh doanh ……………",np,ntitle:o.nwt||""}}
-const mauLbl=n=>`<div style="text-align:right;font-size:12px;margin-bottom:6px"><b>Mẫu số ${n}</b><br><i>(Phụ lục I, ban hành kèm theo Thông tư số 68/2025/TT-BTC của Bộ trưởng Bộ Tài chính${[10,12].includes(n)?"; được thay thế theo Thông tư số 121/2026/TT-BTC":""})</i></div>`;
+window.__docs={uqDoc,dlpHtml,showSheet};
+const mauLbl=n=>`<div class="maulbl" style="text-align:right;font-size:12px;margin-bottom:6px"><b>Mẫu số ${n}</b><br><i>(Phụ lục I, ban hành kèm theo Thông tư số 68/2025/TT-BTC của Bộ trưởng Bộ Tài chính${[10,12].includes(n)?"; được thay thế theo Thông tư số 121/2026/TT-BTC":""})</i></div>`;
 const lh=(c,so,dia,ngay,tit)=>`<div class="fh" style="display:flex;justify-content:space-between;gap:20px;text-align:center"><div style="width:45%"><b>${esc((c.name||c.code).toUpperCase())}</b><br>------------------<br>Số: ${esc(so)||"……………"}</div><div class="fq" style="width:55%"><b>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><br><b>Độc lập - Tự do - Hạnh phúc</b><br>------------------<br><i>${esc(dia)}, ${ngay}</i></div></div>`;
 function setBBH(X){const {r,m,rows,tot,pct,tt}=X,ng=m.ngay,dd=m.dd||("tại trụ sở "+(r.name||r.code));
   const v=(Math.round(tot*pct/100)),ok=Math.round(v*tt/100),att=rows.length;
