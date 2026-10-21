@@ -1334,22 +1334,26 @@ if(!load("phapche_sh_v1",null))ghInit();
 const KSH="phapche_sh_v1";
 SH=load(KSH,null);let shTok=null,shExp=0,shRev=null,shBusy=false;
 const SHM="§",SHCH=40000;
-function shEnc(v){if(v===undefined||v===null)return"";if(typeof v==="number")return v;if(typeof v==="string")return v===""?SHM+"e":v.startsWith(SHM)?SHM+"s"+v:v;return SHM+JSON.stringify(v)}
+let shLong=[];
+function shEnc0(v){if(v===undefined||v===null)return"";if(typeof v==="number")return v;if(typeof v==="string")return v===""?SHM+"e":v.startsWith(SHM)?SHM+"s"+v:v;return SHM+JSON.stringify(v)}
+function shEnc(v){const o=shEnc0(v);if(typeof o==="string"&&o.length>SHCH){const k=shLong.length?shLong[shLong.length-1][0]+1:0;for(let i=0,n=0;i<o.length;i+=SHCH,n++)shLong.push([k,n,o.slice(i,i+SHCH)]);return SHM+"L"+k}return o}
 function shDec(c){if(c===undefined||c===null||c==="")return undefined;if(typeof c!=="string")return c;if(c===SHM+"e")return"";if(c.startsWith(SHM+"s"))return c.slice(2);if(c.startsWith(SHM))return JSON.parse(c.slice(1));return c}
 function shTable(arr){const keys=[];arr.forEach(r=>Object.keys(r||{}).forEach(k=>{if(!keys.includes(k))keys.push(k)}));if(!keys.length)keys.push("id");
   return [keys,...arr.map(r=>keys.map(k=>shEnc(r[k])))]}
-function shFromTable(v){if(!v||!v.length)return[];const h=v[0];return v.slice(1).filter(r=>r.some(c=>c!==""&&c!==undefined)).map(r=>{const o={};h.forEach((k,i)=>{const x=shDec(r[i]);if(x!==undefined)o[k]=x});return o})}
+let shLongMap={};
+function shFromTable(v){if(!v||!v.length)return[];const h=v[0];return v.slice(1).filter(r=>r.some(c=>c!==""&&c!==undefined)).map(r=>{const o={};h.forEach((k,i)=>{let c=r[i];if(typeof c==="string"&&/^§L\d+$/.test(c))c=shLongMap[c.slice(2)]||"";const x=shDec(c);if(x!==undefined)o[k]=x});return o})}
 const shIsRows=a=>Array.isArray(a)&&a.every(r=>r&&typeof r==="object"&&!Array.isArray(r));
 /* state -> {tab:[[...]]}; tab tên: tasks, budget, prof_<k>, cfg (key/seq/chunk) */
 function shPack(){
-  const T={tasks:shTable(tasks),budget:shTable(budget)},kv=[["key","seq","value"]];
+  shLong=[];const T={tasks:shTable(tasks),budget:shTable(budget)},kv=[["key","seq","value"]];
   const putKV=(k,v)=>{const s=JSON.stringify(v===undefined?null:v);for(let i=0,n=0;i<Math.max(s.length,1);i+=SHCH,n++)kv.push([k,n,s.slice(i,i+SHCH)])};
   Object.keys(CFG).forEach(k=>{
     if(k==="prof"&&CFG.prof&&typeof CFG.prof==="object"){
       Object.keys(CFG.prof).forEach(p=>{const v=CFG.prof[p];if(shIsRows(v)&&v.length)T["prof_"+p]=shTable(v);else putKV("prof."+p,v)})}
     else putKV(k,CFG[k])});
-  T.cfg=kv;return T}
+  T.cfg=kv;T._long=[["id","seq","value"],...shLong];return T}
 function shUnpack(T){
+  shLongMap={};const lg={};(T._long||[]).slice(1).forEach(r=>{(lg[r[0]]=lg[r[0]]||[]).push([+r[1],r[2]||""])});Object.keys(lg).forEach(k=>{shLongMap[k]=lg[k].sort((a,b)=>a[0]-b[0]).map(x=>x[1]).join("")});
   const o={tasks:shFromTable(T.tasks),budget:shFromTable(T.budget)},cfg={},prof={},kv={};
   (T.cfg||[]).slice(1).forEach(r=>{(kv[r[0]]=kv[r[0]]||[]).push([+r[1],r[2]||""])});
   Object.keys(kv).forEach(k=>{const v=JSON.parse(kv[k].sort((a,b)=>a[0]-b[0]).map(x=>x[1]).join("")||"null");if(k.startsWith("prof."))prof[k.slice(5)]=v;else cfg[k]=v});
@@ -1379,7 +1383,7 @@ async function shGetRev(){const j=await shApi("/values/"+shRange("_meta")+"!A1:B
 async function shGet(){
   const titles=await shTitles();
   if(!titles.includes("_meta")||!titles.includes("cfg")){shRev=0;return null}
-  const want=titles.filter(t=>t==="tasks"||t==="budget"||t==="cfg"||t.startsWith("prof_"));
+  const want=titles.filter(t=>t==="tasks"||t==="budget"||t==="cfg"||t==="_long"||t.startsWith("prof_"));
   const j=await shApi("/values:batchGet?majorDimension=ROWS&valueRenderOption=UNFORMATTED_VALUE&"+want.map(t=>"ranges="+shRange(t)).join("&"));
   const T={};(j.valueRanges||[]).forEach((vr,i)=>{T[want[i]]=(vr.values||[]).map(r=>r.map(c=>c===undefined?"":c))});
   shRev=(await shGetRev()).rev;return shUnpack(T)}
