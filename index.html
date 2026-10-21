@@ -585,6 +585,20 @@ const DEF={org:"CÔNG TY CỔ PHẦN ĐẦU TƯ FGROUP",unit:"Pháp chế",g1:["
 const TYPES=["Pháp lý doanh nghiệp","Pháp lý đầu tư","Pháp lý thương mại","Pháp lý lao động","Khác"],BASE=TYPES.slice(0,4);
 const TMAP={"Review hợp đồng":"Pháp lý thương mại","Rà soát pháp lý":"Pháp lý doanh nghiệp","Thủ tục hành chính":"Pháp lý doanh nghiệp"};
 const ST=["Mới","Đang xử lý","Chờ phản hồi","Tạm dừng","Hoàn thành"],DOC=["Chưa lập hồ sơ","Đang trình duyệt","Đã duyệt","Đã thu/chi xong"],VOU=["Có chứng từ","Không có chứng từ","Chờ bổ sung chứng từ"];
+
+/* ===== Danh sách chọn đọc từ tab danh_muc của Sheet (CFG.prof.dm); sửa mảng tại chỗ nên mọi nơi đang dùng đều thấy. Chưa có trên Sheet thì dùng mặc định và ghi lên Sheet ===== */
+const LISTS={},LISTS_DEF={};
+function regList(n,a){LISTS[n]=a;LISTS_DEF[n]=a.slice()}
+function listsRows(only){const out=[];Object.keys(LISTS_DEF).forEach(n=>{if(only&&!only.includes(n))return;LISTS_DEF[n].forEach((v,i)=>out.push({id:"dm"+n+i,nhom:n,stt:i+1,gia_tri:v,trang_thai:"hiệu lực"}))});return out}
+function listsApply(){
+  const rs=((CFG.prof||{}).dm||[]).filter(r=>r&&r.nhom&&LISTS[r.nhom]);
+  Object.keys(LISTS).forEach(n=>{const mine=rs.filter(r=>r.nhom===n);
+    const vals=mine.length?mine.filter(r=>!/hết hiệu lực|ngưng|tắt/i.test(String(r.trang_thai||""))).sort((a,b)=>(+a.stt||0)-(+b.stt||0)).map(r=>r.gia_tri==null?"":String(r.gia_tri)):LISTS_DEF[n];
+    LISTS[n].splice(0,LISTS[n].length,...vals)});
+  if(typeof BASE!=="undefined"&&LISTS.TYPES)BASE.splice(0,BASE.length,...LISTS.TYPES.slice(0,4))}
+function listsSeed(){if(!CFG.prof)CFG.prof={};const q=Array.isArray(CFG.prof.dm)?CFG.prof.dm:(CFG.prof.dm=[]);
+  const have=new Set(q.map(r=>r&&r.nhom)),miss=Object.keys(LISTS_DEF).filter(n=>!have.has(n));if(miss.length)q.push(...listsRows(miss));return miss.length}
+regList("TYPES",TYPES);regList("ST",ST);regList("DOC",DOC);regList("VOU",VOU);
 const KEY="phapche_tasks_v1",KB="phapche_budget_v1",KC="phapche_cfg_v1";
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -1263,7 +1277,7 @@ function ghApply(d){
   if(Array.isArray(d))t=d;else if(d){t=d.tasks||[];b=d.budget||[];c=d.cfg}
   tasks=t;budget=b;CFG=Object.assign({},DEF,c||{});migrate();
   localStorage.setItem(KEY,JSON.stringify(tasks));localStorage.setItem(KB,JSON.stringify(budget));localStorage.setItem(KC,JSON.stringify(CFG));
-  localStorage.removeItem(KDIRTY);initSel();render();
+  localStorage.removeItem(KDIRTY);try{window.__procApply&&window.__procApply()}catch(e){}try{listsApply()}catch(e){}initSel();render();
 }
 async function ghPull(){
   const d=await ghGet();
@@ -1334,7 +1348,7 @@ if(!load("phapche_sh_v1",null))ghInit();
 
 /* ---------- Đồng bộ Google Sheet (thay GitHub; mỗi mục dữ liệu là một tab) ---------- */
 const KSH="phapche_sh_v1";
-SH=load(KSH,null);let shTok=null,shExp=0,shRev=null,shBusy=false,shRO=false,shMail="";
+SH=load(KSH,null);let shTok=null,shExp=0,shRev=null,shRevB=null,shNoA=false,shBusy=false,shRO=false,shMail="";
 const SHM="§",SHCH=40000;
 let shLong=[];
 function shEnc0(v){if(v===undefined||v===null)return"";if(typeof v==="number")return v;if(typeof v==="string")return v===""?SHM+"e":v.startsWith(SHM)?SHM+"s"+v:v;return SHM+JSON.stringify(v)}
@@ -1346,20 +1360,41 @@ let shLongMap={};
 function shFromTable(v){if(!v||!v.length)return[];const h=v[0];return v.slice(1).filter(r=>r.some(c=>c!==""&&c!==undefined)).map(r=>{const o={};h.forEach((k,i)=>{let c=r[i];if(typeof c==="string"&&/^§L\d+$/.test(c))c=shLongMap[c.slice(2)]||"";const x=shDec(c);if(x!==undefined)o[k]=x});return o})}
 const shIsRows=a=>Array.isArray(a)&&a.every(r=>r&&typeof r==="object"&&!Array.isArray(r));
 /* state -> {tab:[[...]]}; tab tên: tasks, budget, prof_<k>, cfg (key/seq/chunk) */
-function shPack(){
-  shLong=[];const T={tasks:shTable(tasks),budget:shTable(budget)},kv=[["key","seq","value"]];
+/* ===== Quy tắc pháp lý đọc từ tab quy_tac của Sheet (CFG.prof.qt); không có thì dùng mặc định bên dưới và ghi mặc định lên Sheet ===== */
+const DEF_RULES=[{"nhom": "bo.nguong", "ma": "bo.nguong", "stt": 0, "gia_tri": 25, "don_vi": "%", "noi_dung": "Ngưỡng sở hữu xác định CSHHL (vốn điều lệ hoặc cổ phần có quyền biểu quyết)", "can_cu": "Điều 17, 18 NĐ 168/2025/NĐ-CP; NĐ 296/2026/NĐ-CP", "trang_thai": "hiệu lực"}, {"nhom": "bo.canh_bao", "ma": "bo.so_lieu_cu_ngay", "stt": 0, "gia_tri": 183, "don_vi": "ngày", "noi_dung": "Số liệu sở hữu vốn chốt quá số ngày này thì cảnh báo cần xác nhận lại cơ cấu cổ đông", "can_cu": "Quy tắc nội bộ phòng pháp chế", "trang_thai": "hiệu lực"},  {"nhom": "bo.can_cu", "ma": "bo.can_cu.1", "stt": 1, "gia_tri": "", "don_vi": "", "noi_dung": "Căn cứ: Luật Doanh nghiệp, Nghị định 168/2025/NĐ-CP về đăng ký doanh nghiệp (Điều 17, 18), được sửa đổi bởi Nghị định 296/2026/NĐ-CP. Biểu mẫu: Thông tư 68/2025/TT-BTC, sửa đổi bởi Thông tư 121/2026/TT-BTC từ 21/08/2026 (Mẫu 10 thay mới, Mẫu 11 bãi bỏ). Cần đối chiếu văn bản gốc trước khi kê khai chính thức.", "can_cu": "", "trang_thai": "hiệu lực"}, {"nhom": "bo.can_cu", "ma": "bo.can_cu.2", "stt": 2, "gia_tri": "", "don_vi": "", "noi_dung": "CSHHL là cá nhân trực tiếp hoặc gián tiếp sở hữu hoặc kiểm soát cuối cùng trên thực tế đối với doanh nghiệp. Người đại diện phần vốn nhà nước không được coi là CSHHL.", "can_cu": "", "trang_thai": "hiệu lực"}, {"nhom": "bo.can_cu", "ma": "bo.can_cu.3", "stt": 3, "gia_tri": "", "don_vi": "", "noi_dung": "Tiêu chí 1 (sở hữu): cá nhân sở hữu trực tiếp, gián tiếp hoặc cả hai từ 25% vốn điều lệ hoặc 25% tổng số cổ phần có quyền biểu quyết. Nhóm cá nhân có quan hệ gia đình hoặc hợp đồng cùng sở hữu mà tổng đạt 25% thì mọi thành viên trong nhóm đều là CSHHL. Công ty hợp danh: mọi thành viên hợp danh.", "can_cu": "", "trang_thai": "hiệu lực"}, {"nhom": "bo.can_cu", "ma": "bo.can_cu.4", "stt": 4, "gia_tri": "", "don_vi": "", "noi_dung": "Tiêu chí 2 (kiểm soát thực tế): áp dụng khi không có ai đạt tiêu chí 1, hoặc có căn cứ cho thấy người đạt tiêu chí 1 không phải CSHHL (quyền bổ nhiệm, miễn nhiệm đa số thành viên HĐQT, giám đốc; sửa đổi điều lệ; quyết định chính sách tài chính, đầu tư; tổ chức lại, giải thể).", "can_cu": "", "trang_thai": "hiệu lực"}, {"nhom": "bo.can_cu", "ma": "bo.can_cu.5", "stt": 5, "gia_tri": "", "don_vi": "", "noi_dung": "Tiêu chí 3 (dự phòng): xác định một người quản lý có quyền hạn cao nhất để hành động thay mặt doanh nghiệp.", "can_cu": "", "trang_thai": "hiệu lực"}, {"nhom": "bo.can_cu", "ma": "bo.can_cu.6", "stt": 6, "gia_tri": "", "don_vi": "", "noi_dung": "Khi cổ đông là pháp nhân, phải rà soát từng cấp đến cá nhân cuối cùng. Công cụ này tự cộng sở hữu gián tiếp qua các công ty trong hệ thống và coi mọi cổ phần là có quyền biểu quyết. Đặt \"Nhóm có quan hệ gia đình / hợp đồng\" tại tab Nhân sự để cộng gộp theo nhóm. Thời hạn thông báo khi có thay đổi: đối chiếu Nghị định 168/2025/NĐ-CP.", "can_cu": "", "trang_thai": "hiệu lực"}];
+const QT=()=>((CFG.prof&&CFG.prof.qt)||[]);
+const ruleOn=r=>r&&!/hết hiệu lực|ngưng|tắt/i.test(String(r.trang_thai||""));
+const ruleRow=ma=>QT().find(r=>r&&r.ma===ma&&ruleOn(r));
+const ruleNum=(ma,d)=>{const r=ruleRow(ma),v=r?parseFloat(String(r.gia_tri).replace(",",".")):NaN;return isFinite(v)?v:d};
+const ruleTxt=(ma,d)=>{const r=ruleRow(ma);return r&&r.noi_dung?String(r.noi_dung):d};
+const TH25=()=>ruleNum("bo.nguong",25);
+function boLaw(){const rs=QT().filter(r=>r&&r.nhom==="bo.can_cu"&&ruleOn(r)).sort((a,b)=>(+a.stt||0)-(+b.stt||0)).map(r=>String(r.noi_dung||"")).filter(Boolean);
+  return rs.length?rs:DEF_RULES.filter(r=>r.nhom==="bo.can_cu").map(r=>r.noi_dung)}
+function seedRules(){if(!CFG.prof)CFG.prof={};const q=CFG.prof.qt=Array.isArray(CFG.prof.qt)?CFG.prof.qt:[];let n=0;
+  DEF_RULES.forEach(d=>{if(!q.some(r=>r&&r.ma===d.ma)){q.push({id:"qt"+Math.random().toString(36).slice(2,8),...d});n++}});return n}
+const SH_TAB={qt:"quy_tac",tt:"thu_tuc",dm:"danh_muc"},SH_TAB_R={quy_tac:"qt",thu_tuc:"tt",danh_muc:"dm"};
+const SH_PRJ_PROF=["prj","pl"],shIsPrjTask=t=>String((t&&t.proj)||"").trim()!=="";
+/* tách 2 Sheet khi SH.id2 có: B = dự án (prof_prj, prof_pl, công việc có trường proj); A = phần còn lại */
+function shPackAll(){
+  try{seedRules()}catch(e){}
+  try{listsSeed()}catch(e){}
+  try{if(window.__procSeed)window.__procSeed()}catch(e){}
+  const two=!!(SH&&SH.id2);let B=null;
+  if(two){shLong=[];B={tasks:shTable(tasks.filter(shIsPrjTask))};const pj=(CFG.prof||{});
+    SH_PRJ_PROF.forEach(p=>{if(shIsRows(pj[p])&&pj[p].length)B["prof_"+p]=shTable(pj[p])});B._long=[["id","seq","value"],...shLong]}
+  shLong=[];const A={tasks:shTable(two?tasks.filter(t=>!shIsPrjTask(t)):tasks),budget:shTable(budget)},kv=[["key","seq","value"]];
   const putKV=(k,v)=>{const s=JSON.stringify(v===undefined?null:v);for(let i=0,n=0;i<Math.max(s.length,1);i+=SHCH,n++)kv.push([k,n,s.slice(i,i+SHCH)])};
   Object.keys(CFG).forEach(k=>{
     if(k==="prof"&&CFG.prof&&typeof CFG.prof==="object"){
-      Object.keys(CFG.prof).forEach(p=>{const v=CFG.prof[p];if(shIsRows(v)&&v.length)T["prof_"+p]=shTable(v);else putKV("prof."+p,v)})}
+      Object.keys(CFG.prof).forEach(p=>{if(two&&SH_PRJ_PROF.includes(p))return;const v=CFG.prof[p];if(shIsRows(v)&&v.length)A[SH_TAB[p]||"prof_"+p]=shTable(v);else putKV("prof."+p,v)})}
     else putKV(k,CFG[k])});
-  T.cfg=kv;T._long=[["id","seq","value"],...shLong];return T}
+  A.cfg=kv;A._long=[["id","seq","value"],...shLong];return{A,B}}
 function shUnpack(T){
   shLongMap={};const lg={};(T._long||[]).slice(1).forEach(r=>{(lg[r[0]]=lg[r[0]]||[]).push([+r[1],r[2]||""])});Object.keys(lg).forEach(k=>{shLongMap[k]=lg[k].sort((a,b)=>a[0]-b[0]).map(x=>x[1]).join("")});
   const o={tasks:shFromTable(T.tasks),budget:shFromTable(T.budget)},cfg={},prof={},kv={};
   (T.cfg||[]).slice(1).forEach(r=>{(kv[r[0]]=kv[r[0]]||[]).push([+r[1],r[2]||""])});
   Object.keys(kv).forEach(k=>{const v=JSON.parse(kv[k].sort((a,b)=>a[0]-b[0]).map(x=>x[1]).join("")||"null");if(k.startsWith("prof."))prof[k.slice(5)]=v;else cfg[k]=v});
-  Object.keys(T).forEach(t=>{if(t.startsWith("prof_"))prof[t.slice(5)]=shFromTable(T[t])});
+  Object.keys(T).forEach(t=>{if(t.startsWith("prof_"))prof[t.slice(5)]=shFromTable(T[t]);else if(SH_TAB_R[t])prof[SH_TAB_R[t]]=shFromTable(T[t])});
   if(Object.keys(prof).length)cfg.prof=prof;o.cfg=cfg;return o}
 /* ----- Google Identity Services ----- */
 function shLoadGsi(){return new Promise((ok,no)=>{if(window.google&&google.accounts&&google.accounts.oauth2)return ok();const s=document.createElement("script");s.src="https://accounts.google.com/gsi/client";s.onload=ok;s.onerror=()=>no(new Error("Không tải được thư viện đăng nhập Google"));document.head.appendChild(s)})}
@@ -1372,9 +1407,9 @@ async function shAuth(interactive){
       callback:r=>{if(r.error)return no(new Error(r.error==="interaction_required"||r.error==="popup_closed"?"Cần đăng nhập lại Google: bấm nút Đồng bộ Google Sheet":r.error));shTok=r.access_token;shExp=Date.now()+(+r.expires_in||3600)*1000;try{sessionStorage.setItem("phapche_sh_tok2",JSON.stringify({t:shTok,exp:shExp}))}catch(e){}ok(shTok)},
       error_callback:e=>no(new Error("Cần đăng nhập lại Google: bấm nút Đồng bộ Google Sheet"))});
     tc.requestAccessToken(interactive?{}:{prompt:""})})}
-async function shApi(path,opt){
+async function shApi(path,opt,sid){
   const tk=await shAuth(false);
-  const r=await fetch("https://sheets.googleapis.com/v4/spreadsheets/"+SH.id+path,{...(opt||{}),headers:{Authorization:"Bearer "+tk,"Content-Type":"application/json"}});
+  const r=await fetch("https://sheets.googleapis.com/v4/spreadsheets/"+(sid||SH.id)+path,{...(opt||{}),headers:{Authorization:"Bearer "+tk,"Content-Type":"application/json"}});
   if(r.status===401){shTok=null;try{sessionStorage.removeItem("phapche_sh_tok2")}catch(e){}throw new Error("Phiên Google hết hạn: bấm nút Đồng bộ Google Sheet để đăng nhập lại")}
   if(r.status===403){if(opt&&opt.method&&opt.method!=="GET"){shRO=true;shApplyRO()}throw new Error("Không đủ quyền với Sheet (403): tài khoản này chỉ được xem hoặc chưa được chia sẻ")}
   if(r.status===404)throw new Error("Không thấy Sheet (kiểm tra ID)");
@@ -1405,30 +1440,46 @@ document.addEventListener("click",e=>{
   if(b.matches("input[type=file]")||/^(Thêm|Sửa|Xóa|Xoá|Lưu|Nhập|Ghi nhận|Đồng bộ công việc|Ghi đè|Khôi phục|Cập nhật|Tạo|Đẩy lên)/i.test(t)&&!b.closest("dialog#shdlg")){
     e.preventDefault();e.stopPropagation();alert("Bạn đang ở chế độ chỉ xem nên không sửa được.")}},true);
 const shRange=t=>encodeURIComponent("'"+t+"'");
-async function shTitles(){const j=await shApi("?fields=sheets.properties.title");return(j.sheets||[]).map(s=>s.properties.title)}
-async function shGetRev(){const j=await shApi("/values/"+shRange("_meta")+"!A1:B2").catch(e=>{if(/400/.test(e.message))return{};throw e});const v=(j.values||[]);return{rev:+(v[0]&&v[0][1])||0,at:(v[1]&&v[1][1])||""}}
-async function shGet(){
-  const titles=await shTitles();
-  if(!titles.includes("_meta")||!titles.includes("cfg")){shRev=0;return null}
-  const want=titles.filter(t=>t==="tasks"||t==="budget"||t==="cfg"||t==="_long"||t.startsWith("prof_"));
-  const j=await shApi("/values:batchGet?majorDimension=ROWS&valueRenderOption=UNFORMATTED_VALUE&"+want.map(t=>"ranges="+shRange(t)).join("&"));
+async function shTitles(sid){const j=await shApi("?fields=sheets.properties.title",undefined,sid);return(j.sheets||[]).map(s=>s.properties.title)}
+async function shGetRev(sid){const j=await shApi("/values/"+shRange("_meta")+"!A1:B2",undefined,sid).catch(e=>{if(/400/.test(e.message))return{};throw e});const v=(j.values||[]);return{rev:+(v[0]&&v[0][1])||0,at:(v[1]&&v[1][1])||""}}
+async function shReadSheet(sid,isA){
+  const titles=await shTitles(sid);
+  if(!titles.includes("_meta")||(isA&&!titles.includes("cfg")))return{o:null,rev:0};
+  const want=titles.filter(t=>t==="tasks"||t==="budget"||t==="cfg"||t==="_long"||SH_TAB_R[t]||t.startsWith("prof_"));
+  const j=await shApi("/values:batchGet?majorDimension=ROWS&valueRenderOption=UNFORMATTED_VALUE&"+want.map(t=>"ranges="+shRange(t)).join("&"),undefined,sid);
   const T={};(j.valueRanges||[]).forEach((vr,i)=>{T[want[i]]=(vr.values||[]).map(r=>r.map(c=>c===undefined?"":c))});
-  shRev=(await shGetRev()).rev;const o=shUnpack(T);
+  const rev=(await shGetRev(sid)).rev;return{o:shUnpack(T),rev}}
+async function shGet(){
+  shNoA=false;let A=null,B=null;
+  try{A=await shReadSheet(SH.id,true)}catch(e){if(SH.id2&&/403/.test(e.message))shNoA=true;else throw e}
+  if(SH.id2)B=await shReadSheet(SH.id2,false);
+  shRev=A?A.rev:0;shRevB=B?B.rev:0;
+  document.body.classList.toggle("scopeprj",shNoA);
+  if(shNoA){shRO=true;shApplyRO()}
+  const o={tasks:[],budget:[],cfg:{}};
+  [A,B].forEach(x=>{if(!x||!x.o)return;o.tasks=o.tasks.concat(x.o.tasks);o.budget=o.budget.concat(x.o.budget);
+    const pf={...((o.cfg&&o.cfg.prof)||{}),...((x.o.cfg&&x.o.cfg.prof)||{})};o.cfg={...o.cfg,...x.o.cfg};if(Object.keys(pf).length)o.cfg.prof=pf});
   const has=o.tasks.length||o.budget.length||Object.values((o.cfg&&o.cfg.prof)||{}).some(v=>Array.isArray(v)&&v.length);
   return has?o:null}
-async function shPut(force){
-  const titles=await shTitles(),T=shPack(),names=Object.keys(T);
-  const cur=titles.includes("_meta")?await shGetRev():{rev:0};
-  if(!force&&shRev!==null&&cur.rev!==shRev)throw new Error("conflict");
+async function shPutSheet(sid,T,known,force){
+  const titles=await shTitles(sid),names=Object.keys(T);
+  const cur=titles.includes("_meta")?await shGetRev(sid):{rev:0};
+  if(!force&&known!==null&&cur.rev!==known)throw new Error("conflict");
   const add=[...names,"_meta"].filter(t=>!titles.includes(t));
-  if(add.length)await shApi(":batchUpdate",{method:"POST",body:JSON.stringify({requests:add.map(t=>({addSheet:{properties:{title:t}}}))})});
-  const old=titles.filter(t=>t.startsWith("prof_")&&!names.includes(t));
+  if(add.length)await shApi(":batchUpdate",{method:"POST",body:JSON.stringify({requests:add.map(t=>({addSheet:{properties:{title:t}}}))})},sid);
+  const old=titles.filter(t=>(t.startsWith("prof_")||SH_TAB_R[t])&&!names.includes(t));
   const clear=[...names,...old].map(t=>"'"+t+"'");
-  await shApi("/values:batchClear",{method:"POST",body:JSON.stringify({ranges:clear})});
+  await shApi("/values:batchClear",{method:"POST",body:JSON.stringify({ranges:clear})},sid);
   const nr=cur.rev+1,data=names.map(t=>({range:"'"+t+"'!A1",values:T[t]}));
   data.push({range:"'_meta'!A1",values:[["rev",nr],["updated",new Date().toISOString()],["schema","phapche v2"]]});
-  await shApi("/values:batchUpdate",{method:"POST",body:JSON.stringify({valueInputOption:"RAW",data})});
-  shRev=nr;localStorage.removeItem(KDIRTY)}
+  await shApi("/values:batchUpdate",{method:"POST",body:JSON.stringify({valueInputOption:"RAW",data})},sid);
+  return nr}
+async function shPut(force){
+  if(shNoA)throw new Error("Tài khoản này chỉ xem được phần pháp lý dự án nên không ghi được");
+  const {A,B}=shPackAll();
+  if(B)shRevB=await shPutSheet(SH.id2,B,shRevB,force);
+  shRev=await shPutSheet(SH.id,A,shRev,force);
+  localStorage.removeItem(KDIRTY)}
 async function shPush(force){
   if(!SH||shRO)return;if(shBusy){ghSchedule();return}shBusy=true;
   try{ghStatus("Đang ghi lên Google Sheet…");await shPut(force);ghStatus("Đã đồng bộ Google Sheet lúc "+new Date().toLocaleTimeString("vi-VN"))}
@@ -1453,24 +1504,26 @@ shDlg.innerHTML=`<h2 style="margin:0 0 8px;font-size:16px">Đồng bộ dữ li�
 <p style="margin:0 0 10px;color:var(--mute);font-size:12px">Mỗi mục dữ liệu là một tab trong Sheet của bạn. Đăng nhập Google bằng đúng tài khoản chủ Sheet; không có khóa nào lưu trong app. Chỉ chia sẻ Sheet cho người được phép xem dữ liệu cá nhân.</p>
 <div style="display:grid;gap:8px">
 <label>ID Google Sheet (đoạn giữa /d/ và /edit trong đường dẫn)<input id="sh_i" style="width:100%" autocomplete="off"></label>
+<label>ID Sheet thứ hai: pháp lý dự án (không bắt buộc)<input id="sh_i2" style="width:100%" autocomplete="off"></label>
 <label>OAuth Client ID (Google Cloud, loại Web)<input id="sh_c" style="width:100%" autocomplete="off" placeholder="xxxx.apps.googleusercontent.com"></label>
 </div>
 <div class="bar" style="margin-top:12px">
 <button class="primary" id="sh_save">Đăng nhập & kết nối</button>
 <button id="sh_pull">Tải từ Sheet</button>
 <button id="sh_push">Ghi đè lên Sheet</button>
+<button id="sh_split">Tách dự án sang Sheet 2</button>
 <button id="sh_off">Ngắt kết nối</button>
 <button id="sh_close">Đóng</button>
 </div>`;
 document.body.appendChild(shDlg);
 const sv=i=>shDlg.querySelector("#"+i).value.trim();
 (()=>{const b=document.createElement("button");b.id="shb";b.textContent="Đồng bộ Google Sheet";$("gh").after(b);
-  b.onclick=()=>{if(SH){shDlg.querySelector("#sh_i").value=SH.id;shDlg.querySelector("#sh_c").value=SH.client}shDlg.showModal()}})();
+  b.onclick=()=>{if(SH){shDlg.querySelector("#sh_i").value=SH.id;shDlg.querySelector("#sh_i2").value=SH.id2||"";shDlg.querySelector("#sh_c").value=SH.client}shDlg.showModal()}})();
 shDlg.querySelector("#sh_close").onclick=()=>shDlg.close();
 shDlg.querySelector("#sh_save").onclick=async()=>{
-  const id=sv("sh_i").replace(/^.*\/d\//,"").replace(/\/.*$/,""),cl=sv("sh_c");
+  const cleanId=x=>String(x||"").trim().replace(/^.*\/d\//,"").replace(/\/.*$/,""),id=cleanId(sv("sh_i")),id2=cleanId(sv("sh_i2")),cl=sv("sh_c");
   if(!id||!cl){alert("Cần nhập ID Sheet và OAuth Client ID.");return}
-  const old=SH;SH={id,client:cl};shTok=null;shRev=null;
+  const old=SH;SH={id,client:cl};if(id2)SH.id2=id2;shTok=null;shRev=null;shRevB=null;
   try{
     await shAuth(true);ghStatus("Đang kết nối Google Sheet…");await shRole();
     const d=await shGet();gateOpen();
@@ -1482,21 +1535,30 @@ shDlg.querySelector("#sh_save").onclick=async()=>{
   }catch(e){SH=old;ghStatus("Lỗi Google Sheet: "+e.message,true);alert("Không kết nối được: "+e.message)}};
 shDlg.querySelector("#sh_pull").onclick=async()=>{if(!SH)return alert("Chưa kết nối.");if(!confirm("Thay toàn bộ dữ liệu máy này bằng bản trên Sheet?"))return;try{await shAuth(true);await shPull();shDlg.close()}catch(e){ghStatus("Lỗi Google Sheet: "+e.message,true)}};
 shDlg.querySelector("#sh_push").onclick=async()=>{if(!SH)return alert("Chưa kết nối.");if(!confirm("Ghi đè dữ liệu trên Sheet bằng bản của máy này?"))return;try{await shAuth(true)}catch(e){return ghStatus("Lỗi Google Sheet: "+e.message,true)}await shPush(true);shDlg.close()};
+shDlg.querySelector("#sh_split").onclick=async()=>{
+  if(!SH)return alert("Hãy kết nối Google Sheet trước.");if(shRO)return alert("Chỉ quản trị mới tách được.");
+  const id2=String(shDlg.querySelector("#sh_i2").value||"").trim().replace(/^.*\/d\//,"").replace(/\/.*$/,"");
+  if(!id2)return alert("Nhập ID Sheet thứ hai (pháp lý dự án) vào ô trên.");
+  if(!confirm("Tách dữ liệu:\n- Sheet 2 nhận: tab Dự án, Pháp lý dự án/đất đai, các công việc có ghi dự án.\n- Sheet 1 giữ phần còn lại (pháp chế doanh nghiệp) và xóa phần dự án.\nTiếp tục?"))return;
+  const old=SH.id2;try{await shAuth(true);SH.id2=id2;shRevB=null;
+    if(!localStorage.getItem(KDIRTY)){const d=await shGet();if(d)ghApply(d)}
+    await shPush(true);localStorage.setItem(KSH,JSON.stringify(SH));shDlg.close();alert("Đã tách. Giờ vào Phân quyền để chọn phạm vi cho từng người, bấm Lưu.")}
+  catch(e){SH.id2=old;alert("Không tách được: "+e.message)}};
 shDlg.querySelector("#sh_off").onclick=()=>{if(!confirm("Ngắt kết nối Google Sheet? Dữ liệu trên máy này vẫn giữ nguyên."))return;SH=null;shTok=null;try{sessionStorage.removeItem("phapche_sh_tok2")}catch(e){}localStorage.removeItem(KSH);localStorage.removeItem(KDIRTY);ghStatus("");shDlg.close()};
 window.addEventListener("beforeunload",e=>{if(SH&&localStorage.getItem(KDIRTY)){e.preventDefault();e.returnValue=""}});
 /* link mời: ?sh=<ID Sheet>&cid=<Client ID> => người mới chỉ cần bấm Đăng nhập */
 (()=>{
-  const q=new URLSearchParams(location.search),qi=(q.get("sh")||"").trim(),qc=(q.get("cid")||"").trim();
+  const q=new URLSearchParams(location.search),qi=(q.get("sh")||"").trim(),qc=(q.get("cid")||"").trim(),qi2=(q.get("sh2")||"").trim();
   if(qi&&qc&&!SH){
     const b=document.createElement("div");b.id="inviteBar";b.style.cssText="background:#e8f1ff;color:#143a7b;border:1px solid #b6cdf2;border-radius:8px;padding:10px 14px;margin:8px 16px;font-size:14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap";
     b.innerHTML='<span>Bạn được mời xem dữ liệu pháp chế. Đăng nhập bằng tài khoản Google đã được chia sẻ.</span><button class="primary" id="inviteGo">Đăng nhập Google</button>';
     (document.querySelector("header")||document.body.firstElementChild).after(b);
-    b.querySelector("#inviteGo").onclick=()=>{shDlg.querySelector("#sh_i").value=qi;shDlg.querySelector("#sh_c").value=qc;shDlg.querySelector("#sh_save").click();
+    b.querySelector("#inviteGo").onclick=()=>{shDlg.querySelector("#sh_i").value=qi;shDlg.querySelector("#sh_i2").value=qi2;shDlg.querySelector("#sh_c").value=qc;shDlg.querySelector("#sh_save").click();
       const t=setInterval(()=>{if(SH){clearInterval(t);b.remove();try{history.replaceState(null,"",location.pathname)}catch(e){}}},500);setTimeout(()=>clearInterval(t),60000)}}
   const cp=document.createElement("button");cp.textContent="Sao chép link mời";cp.id="sh_inv";
   shDlg.querySelector("#sh_close").before(cp);
   cp.onclick=async()=>{if(!SH)return alert("Hãy kết nối Google Sheet trước.");
-    const u=location.origin+location.pathname+"?sh="+encodeURIComponent(SH.id)+"&cid="+encodeURIComponent(SH.client);
+    const u=location.origin+location.pathname+"?sh="+encodeURIComponent(SH.id)+(SH.id2?"&sh2="+encodeURIComponent(SH.id2):"")+"&cid="+encodeURIComponent(SH.client);
     try{await navigator.clipboard.writeText(u);alert("Đã sao chép link mời. Gửi link này cho người được chia sẻ Sheet và đã thêm vào Test users:\n\n"+u)}catch(e){prompt("Sao chép link mời:",u)}};
   $("ghst").addEventListener("click",()=>{if(SH&&/đăng nhập lại Google|hết hạn/i.test($("ghst").textContent)){shAuth(true).then(()=>shInit()).catch(e=>ghStatus("Lỗi Google Sheet: "+e.message,true))}});
   $("ghst").style.cursor="pointer";
@@ -1509,48 +1571,52 @@ function drvAuth(){return new Promise((ok,no)=>{if(drvTok&&Date.now()<drvExp-600
   google.accounts.oauth2.initTokenClient({client_id:SH.client,scope:"https://www.googleapis.com/auth/drive",
     callback:r=>{if(r.error)return no(new Error(r.error));drvTok=r.access_token;drvExp=Date.now()+(+r.expires_in||3600)*1000;ok(drvTok)},
     error_callback:()=>no(new Error("Chưa cấp quyền chia sẻ Drive"))}).requestAccessToken({})})}
-async function drvApi(path,opt){const tk=await drvAuth();
-  const r=await fetch("https://www.googleapis.com/drive/v3/files/"+SH.id+path,{...(opt||{}),headers:{Authorization:"Bearer "+tk,"Content-Type":"application/json"}});
+async function drvApi(path,opt,fid){const tk=await drvAuth();
+  const r=await fetch("https://www.googleapis.com/drive/v3/files/"+(fid||SH.id)+path,{...(opt||{}),headers:{Authorization:"Bearer "+tk,"Content-Type":"application/json"}});
   if(!r.ok)throw new Error("Drive "+r.status+" "+(await r.text()).slice(0,120));
   return r.status===204?{}:r.json()}
 /* Đồng bộ chia sẻ Drive theo danh sách vai trò; chỉ đụng tới email có trong _users cũ/mới, không đụng chủ sở hữu */
-async function drvSync(rows,oldMails){
-  const j=await drvApi("/permissions?fields=permissions(id,emailAddress,role)&supportsAllDrives=true"),cur={};
+async function drvSync(rows,oldMails,fid){
+  const j=await drvApi("/permissions?fields=permissions(id,emailAddress,role)&supportsAllDrives=true",undefined,fid),cur={};
   (j.permissions||[]).forEach(p=>{if(p.emailAddress)cur[p.emailAddress.toLowerCase()]=p});
   const log=[];
   for(const [e,v] of rows){const want=/quản trị/i.test(v)?"writer":"reader",p=cur[e];
     if(p&&p.role==="owner")continue;
-    if(!p){await drvApi("/permissions?sendNotificationEmail=false&supportsAllDrives=true",{method:"POST",body:JSON.stringify({type:"user",role:want,emailAddress:e})});log.push("+ "+e+" ("+want+")")}
-    else if(p.role!==want){await drvApi("/permissions/"+p.id+"?supportsAllDrives=true",{method:"PATCH",body:JSON.stringify({role:want})});log.push("~ "+e+" → "+want)}}
+    if(!p){await drvApi("/permissions?sendNotificationEmail=false&supportsAllDrives=true",{method:"POST",body:JSON.stringify({type:"user",role:want,emailAddress:e})},fid);log.push("+ "+e+" ("+want+")")}
+    else if(p.role!==want){await drvApi("/permissions/"+p.id+"?supportsAllDrives=true",{method:"PATCH",body:JSON.stringify({role:want})},fid);log.push("~ "+e+" → "+want)}}
   const keep=new Set(rows.map(r=>r[0]));
-  for(const e of oldMails){const p=cur[e];if(!keep.has(e)&&p&&p.role!=="owner"){await drvApi("/permissions/"+p.id+"?supportsAllDrives=true",{method:"DELETE"});log.push("- "+e+" (thu hồi)")}}
+  for(const e of oldMails){const p=cur[e];if(!keep.has(e)&&p&&p.role!=="owner"){await drvApi("/permissions/"+p.id+"?supportsAllDrives=true",{method:"DELETE"},fid);log.push("- "+e+" (thu hồi)")}}
   return log}
 (()=>{
   const d=document.createElement("dialog");d.id="permdlg";d.style.cssText=ghDlg.style.cssText.replace("480px","620px");
-  d.innerHTML='<h2 style="margin:0 0 8px;font-size:16px">Phân quyền xem / quản trị</h2><p style="margin:0 0 10px;color:var(--mute);font-size:12px">Vai trò trong app. Khi bấm Lưu, app tự chia sẻ Sheet trong Drive (quản trị = Người chỉnh sửa, xem = Người xem) và thu hồi quyền người bị xóa khỏi danh sách; sẽ hiện thêm một lần xin quyền Drive. Việc duy nhất còn lại ngoài app: thêm email vào Test users trong Google Cloud. Người không có tên trong danh sách chỉ được xem.</p><div id="perm_rows" style="display:grid;gap:6px"></div><div class="bar" style="margin-top:12px"><button id="perm_add">Thêm người</button><button class="primary" id="perm_save">Lưu</button><button id="perm_close">Đóng</button></div>';
+  d.innerHTML='<h2 style="margin:0 0 8px;font-size:16px">Phân quyền xem / quản trị</h2><p style="margin:0 0 10px;color:var(--mute);font-size:12px">Phạm vi "pháp lý dự án" chỉ thấy Sheet dự án (cần đã tách Sheet 2); "tất cả" thấy cả pháp chế doanh nghiệp. Vai trò trong app. Khi bấm Lưu, app tự chia sẻ Sheet trong Drive (quản trị = Người chỉnh sửa, xem = Người xem) và thu hồi quyền người bị xóa khỏi danh sách; sẽ hiện thêm một lần xin quyền Drive. Việc duy nhất còn lại ngoài app: thêm email vào Test users trong Google Cloud. Người không có tên trong danh sách chỉ được xem.</p><div id="perm_rows" style="display:grid;gap:6px"></div><div class="bar" style="margin-top:12px"><button id="perm_add">Thêm người</button><button class="primary" id="perm_save">Lưu</button><button id="perm_close">Đóng</button></div>';
   document.body.appendChild(d);
-  const rowH=(e,r,n)=>`<div class="pr" style="display:grid;grid-template-columns:1.6fr 110px 1fr;gap:6px"><input class="pe" value="${esc(e)}" placeholder="email@gmail.com"><select class="pv"><option${/quản trị/i.test(r)?" selected":""}>quản trị</option><option${/quản trị/i.test(r)?"":" selected"}>xem</option></select><input class="pn2" value="${esc(n)}" placeholder="ghi chú"></div>`;
+  const rowH=(e,r,n,sc)=>`<div class="pr" style="display:grid;grid-template-columns:1.5fr 90px 130px 1fr;gap:6px"><input class="pe" value="${esc(e)}" placeholder="email@gmail.com"><select class="pv"><option${/quản trị/i.test(r)?" selected":""}>quản trị</option><option${/quản trị/i.test(r)?"":" selected"}>xem</option></select><select class="ps"><option${/dự án/i.test(sc||"")?"":" selected"}>tất cả</option><option${/dự án/i.test(sc||"")?" selected":""}>pháp lý dự án</option></select><input class="pn2" value="${esc(n)}" placeholder="ghi chú"></div>`;
   const b=document.createElement("button");b.id="shperm";b.textContent="Phân quyền";$("shb").after(b);
   b.onclick=async()=>{
     if(!SH)return alert("Hãy kết nối Google Sheet trước.");
     if(shRO)return alert("Chỉ quản trị mới phân quyền được.");
     try{await shAuth(false);const t=await shTitles();let rows=[];
-      if(t.includes("_users")){const j=await shApi("/values/"+shRange("_users")+"!A:C");rows=(j.values||[]).slice(1)}
+      if(t.includes("_users")){const j=await shApi("/values/"+shRange("_users")+"!A:D");rows=(j.values||[]).slice(1)}
       d._old=rows.map(r=>String(r[0]||"").toLowerCase()).filter(Boolean);
-      $("perm_rows").innerHTML=rows.map(r=>rowH(r[0]||"",r[1]||"",r[2]||"")).join("")||rowH("","xem","");
+      $("perm_rows").innerHTML=rows.map(r=>rowH(r[0]||"",r[1]||"",r[2]||"",r[3]||"")).join("")||rowH("","xem","","");
       d.showModal()}catch(e){alert("Không đọc được danh sách: "+e.message)}};
-  d.querySelector("#perm_add").onclick=()=>$("perm_rows").insertAdjacentHTML("beforeend",rowH("","xem",""));
+  d.querySelector("#perm_add").onclick=()=>$("perm_rows").insertAdjacentHTML("beforeend",rowH("","xem","",""));
   d.querySelector("#perm_close").onclick=()=>d.close();
   d.querySelector("#perm_save").onclick=async()=>{
-    const rows=[...d.querySelectorAll(".pr")].map(r=>[r.querySelector(".pe").value.trim().toLowerCase(),r.querySelector(".pv").value,r.querySelector(".pn2").value.trim()]).filter(r=>r[0]);
+    const rows=[...d.querySelectorAll(".pr")].map(r=>[r.querySelector(".pe").value.trim().toLowerCase(),r.querySelector(".pv").value,r.querySelector(".pn2").value.trim(),/dự án/i.test(r.querySelector(".ps").value)?"pháp lý dự án":"tất cả"]).filter(r=>r[0]);
+    rows.forEach(r=>{if(/quản trị/i.test(r[1]))r[3]="tất cả"});
     if(rows.some(r=>!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(r[0])))return alert("Có email không hợp lệ.");
     if(!rows.some(r=>r[0]===shMail&&/quản trị/i.test(r[1])))return alert("Phải giữ tài khoản của bạn ("+shMail+") là quản trị, nếu không bạn sẽ mất quyền sửa.");
     try{const t=await shTitles();
       if(!t.includes("_users"))await shApi(":batchUpdate",{method:"POST",body:JSON.stringify({requests:[{addSheet:{properties:{title:"_users"}}}]})});
-      await shApi("/values:batchClear",{method:"POST",body:JSON.stringify({ranges:["'_users'!A1:C500"]})});
-      await shApi("/values:batchUpdate",{method:"POST",body:JSON.stringify({valueInputOption:"RAW",data:[{range:"'_users'!A1",values:[["email","vai_tro","ghi_chu"],...rows]}]})});
+      await shApi("/values:batchClear",{method:"POST",body:JSON.stringify({ranges:["'_users'!A1:D500"]})});
+      await shApi("/values:batchUpdate",{method:"POST",body:JSON.stringify({valueInputOption:"RAW",data:[{range:"'_users'!A1",values:[["email","vai_tro","ghi_chu","pham_vi"],...rows]}]})});
       let msg="Đã lưu phân quyền ("+rows.length+" người).";
-      try{const lg=await drvSync(rows,d._old||[]);msg+=lg.length?"\nDrive:\n"+lg.join("\n"):"\nDrive: đã khớp, không cần đổi."}
+      try{const old=d._old||[],rowsA=SH.id2?rows.filter(r=>r[3]!=="pháp lý dự án"):rows;
+        const lg=(await drvSync(rowsA,old,SH.id)).map(x=>"[Sheet 1] "+x);
+        if(SH.id2)lg.push(...(await drvSync(rows.map(r=>[r[0],r[1]]),old,SH.id2)).map(x=>"[Sheet 2] "+x));
+        msg+=lg.length?"\nDrive:\n"+lg.join("\n"):"\nDrive: đã khớp, không cần đổi."}
       catch(e){msg+="\nChưa chia sẻ được Drive tự động ("+e.message+"). Hãy chia sẻ Sheet thủ công."}
       d.close();alert(msg)}catch(e){alert("Không lưu được: "+e.message)}};
 })();
@@ -1579,6 +1645,7 @@ if(SH)shInit();
 #vprof .cc0{--cc:var(--c0)}#vprof .cc1{--cc:var(--c1)}#vprof .cc2{--cc:var(--c2)}#vprof .cc3{--cc:var(--c3)}#vprof .cc4{--cc:var(--c4)}#vprof .cc5{--cc:var(--c5)}#vprof .cc9{--cc:var(--c9)}
 #vprof .chip{display:inline-block;padding:0 9px;border-radius:99px;font-weight:600;font-size:12.5px;line-height:1.7;color:var(--ink);background:color-mix(in srgb,var(--cc,var(--c9)) 14%,var(--card));border:1px solid color-mix(in srgb,var(--cc,var(--c9)) 55%,var(--card))}
 #vprof #psub button{border-bottom:2px solid transparent;color:var(--mute);padding:7px 12px}
+body.scopeprj #psub button:not([data-s=prj]):not([data-s=pl]){display:none}
 #vprof #psub button.on{border-bottom-color:var(--brand);color:var(--ink);font-weight:600}
 #vprof .stats{grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;padding:8px 24px}
 #vprof .stats .stat{padding:6px 12px;border-left:3px solid var(--line)}
@@ -1660,6 +1727,7 @@ const DV_L=["Chi nhánh","Văn phòng đại diện","Địa điểm kinh doanh"
 const UQ_PRE={hd:{t:"ký kết hợp đồng, giao dịch",get pv(){return UQ_PV},l:"Ký kết hợp đồng, giao dịch"},nd:{t:"thực hiện quyền và nghĩa vụ của người đại diện theo pháp luật",pv:"Thay mặt và nhân danh Bên A thực hiện các quyền và nghĩa vụ của người đại diện theo pháp luật của Công ty, cụ thể:\n1. Đại diện Công ty trong quan hệ với cơ quan nhà nước, tổ chức tín dụng, ngân hàng, cơ quan thuế, hải quan, bảo hiểm và các tổ chức, cá nhân khác; ký các đơn từ, văn bản, tài liệu, báo cáo, chứng từ phát sinh trong hoạt động của Công ty.\n2. Ký kết, thực hiện, sửa đổi, bổ sung, thanh lý các hợp đồng, giao dịch của Công ty trong phạm vi thẩm quyền của người đại diện theo pháp luật theo quy định của pháp luật, Điều lệ và quy chế nội bộ của Công ty.\n3. Điều hành, tổ chức thực hiện các nghị quyết, quyết định của Đại hội đồng cổ đông, Hội đồng quản trị.\n4. Đại diện Công ty tham gia tố tụng, giải quyết tranh chấp, khiếu nại, tố cáo (nếu có văn bản ủy quyền riêng cho từng vụ việc).\n5. Ký tên, sử dụng con dấu của Công ty đối với các văn bản thuộc phạm vi ủy quyền.",l:"Thực hiện quyền và nghĩa vụ của người đại diện theo pháp luật",lim:"Những nội dung thuộc thẩm quyền của Đại hội đồng cổ đông, Hội đồng quản trị; việc thay đổi người đại diện theo pháp luật, sửa đổi Điều lệ, tăng, giảm vốn điều lệ, góp vốn, chuyển nhượng, thế chấp tài sản có giá trị lớn và các giao dịch phải được cơ quan có thẩm quyền của Công ty thông qua thì chỉ được thực hiện khi có nghị quyết hoặc quyết định tương ứng. Bên B không được ủy quyền lại cho người khác. Việc ủy quyền này không làm thay đổi người đại diện theo pháp luật của Công ty đã đăng ký; Bên A vẫn chịu trách nhiệm theo quy định của pháp luật với tư cách người đại diện theo pháp luật."}};
 const UQ_CQ=["Hội đồng quản trị","Hội đồng thành viên","Chủ sở hữu công ty","Không cần (người đại diện theo pháp luật tự ký)"],UQ_ST=["Đang hiệu lực","Đã thu hồi","Hết hiệu lực"];
 const DL_L=["Điều lệ đầy đủ","Phụ lục sửa đổi, bổ sung"],DL_S=["Đang hiệu lực","Đã được thay thế","Dự thảo"];
+regList("DKS",DKS);regList("CTL",CTL);regList("VAYS",VAYS);regList("VAYL",VAYL);regList("VAYD",VAYD);regList("UQ_ST",UQ_ST);regList("UQ_CQ",UQ_CQ);regList("PLU",PLU);regList("PLS",PLS);regList("PLL",PLL);regList("NQS",NQS);regList("MTS",MTS);regList("MTL",MTL);regList("MAS",MAS);regList("HSS",HSS);regList("GTB",GTB);regList("DV_S",DV_S);regList("DV_L",DV_L);regList("DL_S",DL_S);regList("DL_L",DL_L);regList("CTS",CTS);regList("CTR",CTR);regList("CPS",CPS);regList("CPL",CPL);regList("CPK",CPK);regList("BOTC",BOTC);regList("BBS",BBS);try{listsApply()}catch(e){}
 const lkA=(u,t)=>{u=String(u||"").trim();if(!u)return"";return /^(https?:|file:)/i.test(u)?`<a href="${esc(u)}" target="_blank" rel="noopener" data-dlopen style="font-size:12px">${esc(t||"Mở bản gốc")} ↗</a>`:`<small class="s clamp" title="${esc(u)}">${esc(u)}</small>`};
 const SEC={
   dl:{lab:"Điều lệ",one:"điều lệ, phụ lục điều lệ",req:["co","ten"],
@@ -2156,7 +2224,7 @@ function coCard(d,BOM){
    +r("NĐDPL",[...new Set(A.filter(p=>/nddpl|daidienphapluat/.test(norm(p.role))).map(p=>p.name))].map(esc).join("<br>")||'<span style="color:var(--mute)">chưa có</span>')
    +r("Chủ tịch HĐQT",by("Chủ tịch HĐQT"))+r("Tổng Giám đốc",by("Tổng Giám đốc"))
    +r("Cơ cấu sở hữu"+(g&&g.asof?` (chốt ${fmt(g.asof)})`:""),top)
-   +r("CSHHL (≥25%)",boTxt)
+   +r("CSHHL (≥"+TH25()+"%)",boTxt)
    +r("Ủy quyền hiệu lực",String(uqa.length))
    +r("Họp / nghị quyết",`${d.mt.length} cuộc họp, ${d.nq.length} nghị quyết`+(mts[0]?` · gần nhất ${fmt(mts[0].ngay)}`:""))
    +r("Hợp đồng / tuân thủ",`${d.ct.length} hợp đồng, ${d.cp.length} mục tuân thủ`)
@@ -2214,11 +2282,11 @@ function rDash(){
   d.ppl.forEach(x=>{if(!x.cccd&&act.some(p=>same(p.name,x.name)))W.push([x.name,"thiếu số CCCD","ppl"])});
   d.prj.forEach(x=>{const pc=prjCo(x),pf=pc?x.name+": ":"";if(!x.owner)W.push([pc||x.name,pf+"thiếu chủ đầu tư","prj",x.name]);if(!x.nddpl)W.push([pc||x.name,pf+"thiếu NĐDPL / người điều hành dự án","prj",x.name])});
   const BOM=boModel().out.filter(o=>!GCO||same(o.c,GCO));BOM.forEach(o=>o.warn.forEach(w=>{if(w.k==="miss")W.push([o.c,"CSHHL "+w.b.name+" ("+nf(w.b.t)+"%) đạt ngưỡng 25% nhưng chưa ghi nhận kê khai","bo"]);else if(w.k==="diff")W.push([o.c,"CSHHL "+w.b.name+": tỷ lệ đã kê khai "+nf(w.tl)+"% lệch với số tính từ sở hữu vốn "+nf(w.b.t)+"%, cần đối chiếu","bo"])}));
-  BOM.forEach(o=>{if(o.g&&o.g.asof&&(new Date(today())-new Date(o.g.asof))/864e5>183)W.push([o.c,"Số liệu sở hữu vốn chốt "+fmt(o.g.asof)+" đã quá 6 tháng, cần xác nhận lại cơ cấu cổ đông (ảnh hưởng xác định CSHHL)","own"])});
+  BOM.forEach(o=>{if(o.g&&o.g.asof&&(new Date(today())-new Date(o.g.asof))/864e5>ruleNum("bo.so_lieu_cu_ngay",183))W.push([o.c,"Số liệu sở hữu vốn chốt "+fmt(o.g.asof)+" đã quá 6 tháng, cần xác nhận lại cơ cấu cổ đông (ảnh hưởng xác định CSHHL)","own"])});
   hsGaps().filter(g=>!g.soft).forEach(g=>W.push([g.c,g.t,"hs"]));govGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"pos"]));cpGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"cp"]));intGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,wSecOf(g.t)]));
   const MG=mtGaps();MG.filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"mt"]));ctGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"ct"]));mauGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"mau"]));plGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"pl"]));vayGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"vay"]));(window.__nldGaps?window.__nldGaps():[]).filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"nld"]));(window.__invGaps?window.__invGaps():[]).filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"inv"]));
   const nBO=new Set(BOM.flatMap(o=>o.bo.map(b=>b.key))).size;
-  const pB=`<div class="panel full"><h3>Chủ sở hữu hưởng lợi theo doanh nghiệp (ngưỡng 25%)</h3>${BOM.length?BOM.map(o=>`<div class="act" style="cursor:pointer;align-items:flex-start" data-wgo="bo" data-wc="${esc(o.c)}" data-wt=""><span class="d">${chip(o.c)}</span><span style="flex:1">${o.bo.length?o.bo.map(b=>`<b>${esc(b.name)}</b> ${nf(b.t)}%${b.d>0&&b.i>0.005?` <small style="color:var(--mute)">(TT ${nf(b.d)}% + GT ${nf(b.i)}%)</small>`:""} ${(()=>{const s=boStat(o,b);return s==="Đã đăng ký"?'<small style="color:var(--ok)">đã kê khai</small>':s==="Đang thực hiện đăng ký"?'<span class="dkp">đang kê khai</span>':s==="Chưa đăng ký"?'<span class="wn1">⚠ chưa kê khai</span>':s==="Chưa ghi nhận"?'<span class="wn1">⚠ chưa ghi nhận kê khai</span>':""})()}`).join("<br>"):'<small style="color:var(--warn)">Chưa có cá nhân đạt 25%: xét tiêu chí kiểm soát</small>'}</span></div>`).join(""):'<small style="color:var(--mute)">Chưa có dữ liệu sở hữu vốn.</small>'}</div>`;
+  const pB=`<div class="panel full"><h3>Chủ sở hữu hưởng lợi theo doanh nghiệp (ngưỡng ${TH25()}%)</h3>${BOM.length?BOM.map(o=>`<div class="act" style="cursor:pointer;align-items:flex-start" data-wgo="bo" data-wc="${esc(o.c)}" data-wt=""><span class="d">${chip(o.c)}</span><span style="flex:1">${o.bo.length?o.bo.map(b=>`<b>${esc(b.name)}</b> ${nf(b.t)}%${b.d>0&&b.i>0.005?` <small style="color:var(--mute)">(TT ${nf(b.d)}% + GT ${nf(b.i)}%)</small>`:""} ${(()=>{const s=boStat(o,b);return s==="Đã đăng ký"?'<small style="color:var(--ok)">đã kê khai</small>':s==="Đang thực hiện đăng ký"?'<span class="dkp">đang kê khai</span>':s==="Chưa đăng ký"?'<span class="wn1">⚠ chưa kê khai</span>':s==="Chưa ghi nhận"?'<span class="wn1">⚠ chưa ghi nhận kê khai</span>':""})()}`).join("<br>"):'<small style="color:var(--warn)">Chưa có cá nhân đạt 25%: xét tiêu chí kiểm soát</small>'}</span></div>`).join(""):'<small style="color:var(--mute)">Chưa có dữ liệu sở hữu vốn.</small>'}</div>`;
   if(GCO){const k=W.filter(w=>same(w[0],GCO));W.length=0;W.push(...k)}
   const pW=`<div class="panel full${W.length?" warnp":""}"><h3>${W.length?"⚠ ":""}Cảnh báo cần xử lý (${W.length})</h3>${W.length?W.map(w=>`<div class="act wnrow" style="cursor:pointer"${w[2]?` data-wgo="${w[2]}" data-wc="${esc(w[3]||w[0])}" data-wt="${esc(w[1])}"`:""}><span class="d">${COS().some(c=>same(c,w[0]))?chip(w[0]):`<b class="late-d">${esc(w[0])}</b>`}</span><span>${esc(w[1])}</span></div>`).join(""):'<small style="color:var(--mute)">Hồ sơ đã đủ, không có cảnh báo.</small>'}</div>`;
   /* bảng pháp nhân */
@@ -2598,9 +2666,9 @@ function boModel(){
     const gt={};list.forEach(x=>{if(x.grp&&!x.ent)gt[x.grp]=(gt[x.grp]||0)+x.t});
     const bo=[];
     list.forEach(x=>{if(x.ent)return;
-      if(x.t>=25-1e-9)bo.push({name:x.name,key:x.key,t:x.t,d:x.d,i:x.i,how:"cá nhân"});
-      else if(x.grp&&gt[x.grp]>=25-1e-9)bo.push({name:x.name,key:x.key,t:x.t,d:x.d,i:x.i,how:"nhóm",grp:gname[x.grp],gt:gt[x.grp]})});
-    const ents=list.filter(x=>x.ent&&x.t>=25-1e-9);
+      if(x.t>=TH25()-1e-9)bo.push({name:x.name,key:x.key,t:x.t,d:x.d,i:x.i,how:"cá nhân"});
+      else if(x.grp&&gt[x.grp]>=TH25()-1e-9)bo.push({name:x.name,key:x.key,t:x.t,d:x.d,i:x.i,how:"nhóm",grp:gname[x.grp],gt:gt[x.grp]})});
+    const ents=list.filter(x=>x.ent&&x.t>=TH25()-1e-9);
     const mgr=d.pos.filter(p=>same(p.co,c)&&activeP(p,t0)&&/nddpl|daidienphapluat|tonggiamdoc|giamdoc|chutichhdqt|chutich/.test(norm(p.role)));
     const decl=d.bo.filter(x=>same(x.co,c));
     const warn=[];
@@ -2758,13 +2826,7 @@ function rBo(r,all){
   const{out}=boModel(),d=PD();
   const nMiss=out.reduce((s,o)=>s+o.warn.filter(w=>w.k==="miss").length,0),nTc1=out.filter(o=>o.bo.length).length,nNo=out.filter(o=>!o.bo.length).length;
   $("pstats").innerHTML=st(out.length,"Doanh nghiệp được phân tích")+st(out.reduce((s,o)=>s+o.bo.length,0),"CSHHL xác định theo tiêu chí sở hữu 25%")+st(nNo,"Chưa có cá nhân đạt 25% (xét tiêu chí kiểm soát)",nNo?"":"")+st(nMiss,"CSHHL đạt ngưỡng nhưng chưa ghi nhận kê khai",nMiss?"late":"")+st(all.filter(x=>x.dk==="Đang thực hiện đăng ký").length,"Đang thực hiện kê khai, thông báo")+st(all.length,"Dòng đã ghi nhận");
-  const law=`<details class="bo-law"><summary>Căn cứ và tiêu chí xác định CSHHL</summary><ul>
-<li>Căn cứ: Luật Doanh nghiệp, Nghị định 168/2025/NĐ-CP về đăng ký doanh nghiệp (Điều 17, 18), được sửa đổi bởi Nghị định 296/2026/NĐ-CP. Biểu mẫu: Thông tư 68/2025/TT-BTC, sửa đổi bởi Thông tư 121/2026/TT-BTC từ 21/08/2026 (Mẫu 10 thay mới, Mẫu 11 bãi bỏ). Cần đối chiếu văn bản gốc trước khi kê khai chính thức.</li>
-<li>CSHHL là cá nhân trực tiếp hoặc gián tiếp sở hữu hoặc kiểm soát cuối cùng trên thực tế đối với doanh nghiệp. Người đại diện phần vốn nhà nước không được coi là CSHHL.</li>
-<li>Tiêu chí 1 (sở hữu): cá nhân sở hữu trực tiếp, gián tiếp hoặc cả hai từ 25% vốn điều lệ hoặc 25% tổng số cổ phần có quyền biểu quyết. Nhóm cá nhân có quan hệ gia đình hoặc hợp đồng cùng sở hữu mà tổng đạt 25% thì mọi thành viên trong nhóm đều là CSHHL. Công ty hợp danh: mọi thành viên hợp danh.</li>
-<li>Tiêu chí 2 (kiểm soát thực tế): áp dụng khi không có ai đạt tiêu chí 1, hoặc có căn cứ cho thấy người đạt tiêu chí 1 không phải CSHHL (quyền bổ nhiệm, miễn nhiệm đa số thành viên HĐQT, giám đốc; sửa đổi điều lệ; quyết định chính sách tài chính, đầu tư; tổ chức lại, giải thể).</li>
-<li>Tiêu chí 3 (dự phòng): xác định một người quản lý có quyền hạn cao nhất để hành động thay mặt doanh nghiệp.</li>
-<li>Khi cổ đông là pháp nhân, phải rà soát từng cấp đến cá nhân cuối cùng. Công cụ này tự cộng sở hữu gián tiếp qua các công ty trong hệ thống và coi mọi cổ phần là có quyền biểu quyết. Đặt "Nhóm có quan hệ gia đình / hợp đồng" tại tab Nhân sự để cộng gộp theo nhóm. Thời hạn thông báo khi có thay đổi: đối chiếu Nghị định 168/2025/NĐ-CP.</li></ul></details>`;
+  const law=`<details class="bo-law"><summary>Căn cứ và tiêu chí xác định CSHHL</summary><ul>${boLaw().map(t=>"<li>"+esc(t)+"</li>").join("")}</ul></details>`;
   const cards=out.map(o=>{
     const rows=o.list.filter(x=>x.t>=5||x.grp).slice(0,12);
     const isBo=x=>o.bo.some(b=>b.key===x.key);
@@ -2948,6 +3010,29 @@ const PROC={
  "Phản hồi kết quả rà soát thông tin ĐKDN":{m:[20],s:[],a:[["Thông báo phản hồi kết quả rà soát thông tin ĐKDN, tình trạng pháp lý (Mẫu 20)",K_BB,"Mẫu 20 Phụ lục I, Thông tư 68/2025/TT-BTC"],["Thông báo rà soát của cơ quan đăng ký (số, ngày) để điền vào Mẫu 20",K_BB,"Mẫu 20"],OPT_AUTH],n:""},
  "Dừng thực hiện thủ tục đăng ký doanh nghiệp":{m:[33],s:[],a:[["Giấy đề nghị dừng thực hiện thủ tục đăng ký doanh nghiệp (Mẫu 33)",K_BB,"Mẫu 33 Phụ lục I, Thông tư 68/2025/TT-BTC"],OPT_AUTH],n:""},
  "Cam kết mục tiêu xã hội, môi trường":{m:[34,35,36],s:[],a:[["Cam kết thực hiện mục tiêu xã hội, môi trường (Mẫu 34)",K_BB,"Mẫu 34 Phụ lục I, Thông tư 68/2025/TT-BTC"],["Thông báo thay đổi nội dung cam kết (Mẫu 35) / chấm dứt (Mẫu 36)",K_CB,"Mẫu 35, Mẫu 36"],OPT_AUTH],n:"Mẫu 34, 35, 36 dành cho doanh nghiệp xã hội. Chỉ in nếu công ty thuộc diện này."}};
+/* ===== Danh mục thủ tục đọc từ tab thu_tuc của Sheet (CFG.prof.tt); không có thì dùng bộ mặc định trong file và ghi mặc định lên Sheet ===== */
+const PROC_DEF=JSON.parse(JSON.stringify(PROC)),HLIM_DEF=JSON.parse(JSON.stringify(HLIM));
+function procToRows(P,H){const out=[];let n=0;const id=()=>"tt"+(n++).toString(36)+Math.random().toString(36).slice(2,6);
+  Object.keys(P).forEach(k=>{const v=P[k],h=H[k]||{};
+    out.push({id:id(),thu_tuc:k,loai:"thủ tục",stt:0,ten:"",muc:"",can_cu:"",mau:(v.m||[]).join(";"),co:(v.s||[]).join(";"),iss:v.iss||"",phu:"",ghi_chu:v.n||"",
+      han_ngay:h.n===undefined?"":h.n,han_loai:h.k||"",han_su_kien:h.ev||"",han_noi_dung:h.b||"",han_truoc:h.before?1:"",trang_thai:"hiệu lực"});
+    (v.a||[]).forEach((a,i)=>out.push({id:id(),thu_tuc:k,loai:"hồ sơ",stt:i+1,ten:a[0],muc:a[1],can_cu:a[2]||"",mau:"",co:"",iss:"",phu:a.length>3?JSON.stringify(a.slice(3)):"",ghi_chu:"",
+      han_ngay:"",han_loai:"",han_su_kien:"",han_noi_dung:"",han_truoc:"",trang_thai:"hiệu lực"}))});
+  return out}
+const procOn=r=>r&&!/hết hiệu lực|ngưng|tắt/i.test(String(r.trang_thai||""));
+function procApply(){
+  const rs=(((CFG.prof||{}).tt)||[]).filter(r=>r&&r.thu_tuc);
+  Object.keys(PROC).forEach(k=>delete PROC[k]);Object.keys(HLIM).forEach(k=>delete HLIM[k]);
+  if(!rs.length){Object.assign(PROC,JSON.parse(JSON.stringify(PROC_DEF)));Object.assign(HLIM,JSON.parse(JSON.stringify(HLIM_DEF)));return}
+  const by={};rs.forEach(r=>{(by[r.thu_tuc]=by[r.thu_tuc]||[]).push(r)});
+  Object.keys(by).forEach(k=>{const hd=by[k].find(r=>r.loai==="thủ tục");if(!hd||!procOn(hd))return;
+    const sp=x=>String(x||"").split(";").map(t=>t.trim()).filter(Boolean);
+    const docs=by[k].filter(r=>r.loai==="hồ sơ"&&procOn(r)).sort((a,b)=>(+a.stt||0)-(+b.stt||0)).map(r=>{let ex=[];try{ex=r.phu?JSON.parse(r.phu):[]}catch(e){}return[r.ten,r.muc,r.can_cu,...ex]});
+    const p={m:sp(hd.mau).map(Number).filter(x=>x===x),s:sp(hd.co),a:docs,n:String(hd.ghi_chu||"")};if(hd.iss)p.iss=hd.iss;PROC[k]=p;
+    if(hd.han_ngay!==""&&hd.han_ngay!==undefined&&isFinite(+hd.han_ngay)){const h={n:+hd.han_ngay,k:hd.han_loai||"c",ev:hd.han_su_kien||"",b:hd.han_noi_dung||""};if(+hd.han_truoc)h.before=1;HLIM[k]=h}})}
+window.__procSeed=()=>{if(!CFG.prof)CFG.prof={};const q=CFG.prof.tt;if(Array.isArray(q)&&q.length)return 0;CFG.prof.tt=procToRows(PROC_DEF,HLIM_DEF);return CFG.prof.tt.length};
+window.__procApply=procApply;window.__procDump=()=>({PROC,HLIM});window.__listsDump=()=>JSON.parse(JSON.stringify(LISTS));
+try{procApply()}catch(e){}
 function procMissing(c,it,o){const r=coRec(c),m=[],S=o.s||{},t0=today();
   if(!r.msdn)m.push("Thiếu mã số doanh nghiệp (tab Pháp nhân)");
   if(!r.addr)m.push("Thiếu địa chỉ trụ sở: không xác định được địa danh và cơ quan đăng ký (tab Pháp nhân)");
