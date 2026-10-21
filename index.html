@@ -1407,17 +1407,17 @@ function shUnpack(T){
 function shLoadGsi(){return new Promise((ok,no)=>{if(window.google&&google.accounts&&google.accounts.oauth2)return ok();const s=document.createElement("script");s.src="https://accounts.google.com/gsi/client";s.onload=ok;s.onerror=()=>no(new Error("Không tải được thư viện đăng nhập Google"));document.head.appendChild(s)})}
 async function shAuth(interactive){
   if(shTok&&Date.now()<shExp-60000)return shTok;
-  try{const m=JSON.parse(sessionStorage.getItem("phapche_sh_tok2")||"null");if(m&&m.exp-60000>Date.now()){shTok=m.t;shExp=m.exp;return shTok}}catch(e){}
+  try{const m=JSON.parse(sessionStorage.getItem("phapche_sh_tok2")||localStorage.getItem("phapche_sh_tok2")||"null");if(m&&m.exp-60000>Date.now()){shTok=m.t;shExp=m.exp;return shTok}}catch(e){}
   await shLoadGsi();
   return new Promise((ok,no)=>{
-    const tc=google.accounts.oauth2.initTokenClient({client_id:SH.client,scope:"https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/userinfo.email",prompt:interactive?"":"none",
-      callback:r=>{if(r.error)return no(new Error(r.error==="interaction_required"||r.error==="popup_closed"?"Cần đăng nhập lại Google: bấm nút Đồng bộ Google Sheet":r.error));shTok=r.access_token;shExp=Date.now()+(+r.expires_in||3600)*1000;try{sessionStorage.setItem("phapche_sh_tok2",JSON.stringify({t:shTok,exp:shExp}))}catch(e){}ok(shTok)},
-      error_callback:e=>no(new Error("Cần đăng nhập lại Google: bấm nút Đồng bộ Google Sheet"))});
+    const tc=google.accounts.oauth2.initTokenClient({client_id:SH.client,hint:(()=>{try{return localStorage.getItem("phapche_sh_mail")||undefined}catch(e){return undefined}})(),scope:"https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/userinfo.email",prompt:interactive?"":"none",
+      callback:r=>{if(r.error)return no(new Error(r.error==="interaction_required"||r.error==="popup_closed"?"Phiên đăng nhập đã hết hạn: bấm Đăng nhập Google (một lần bấm)":r.error));shTok=r.access_token;shExp=Date.now()+(+r.expires_in||3600)*1000;try{const v=JSON.stringify({t:shTok,exp:shExp});sessionStorage.setItem("phapche_sh_tok2",v);localStorage.setItem("phapche_sh_tok2",v)}catch(e){}ok(shTok)},
+      error_callback:e=>no(new Error("Phiên đăng nhập đã hết hạn: bấm Đăng nhập Google (một lần bấm)"))});
     tc.requestAccessToken(interactive?{}:{prompt:""})})}
 async function shApi(path,opt,sid){
   const tk=await shAuth(false);
   const r=await fetch("https://sheets.googleapis.com/v4/spreadsheets/"+(sid||SH.id)+path,{...(opt||{}),headers:{Authorization:"Bearer "+tk,"Content-Type":"application/json"}});
-  if(r.status===401){shTok=null;try{sessionStorage.removeItem("phapche_sh_tok2")}catch(e){}throw new Error("Phiên Google hết hạn: bấm nút Đồng bộ Google Sheet để đăng nhập lại")}
+  if(r.status===401){shTok=null;try{sessionStorage.removeItem("phapche_sh_tok2");localStorage.removeItem("phapche_sh_tok2")}catch(e){}throw new Error("Phiên Google hết hạn: bấm nút Đồng bộ Google Sheet để đăng nhập lại")}
   if(r.status===403){if(opt&&opt.method&&opt.method!=="GET"){shRO=true;shApplyRO()}throw new Error("Không đủ quyền với Sheet (403): tài khoản này chỉ được xem hoặc chưa được chia sẻ")}
   if(r.status===404)throw new Error("Không thấy Sheet (kiểm tra ID)");
   if(!r.ok)throw new Error("Google Sheets "+r.status+" "+(await r.text()).slice(0,120));
@@ -1425,7 +1425,7 @@ async function shApi(path,opt,sid){
 async function shEmailGet(){
   if(shMail)return shMail;const tk=await shAuth(false);
   const r=await fetch("https://www.googleapis.com/oauth2/v3/userinfo",{headers:{Authorization:"Bearer "+tk}});
-  if(!r.ok)throw new Error("userinfo "+r.status);shMail=String((await r.json()).email||"").toLowerCase();return shMail}
+  if(!r.ok)throw new Error("userinfo "+r.status);shMail=String((await r.json()).email||"").toLowerCase();try{localStorage.setItem("phapche_sh_mail",shMail)}catch(e){}return shMail}
 function shApplyRO(){
   document.body.classList.toggle("ro",!!shRO);
   let b=document.getElementById("roBar");
@@ -1499,7 +1499,7 @@ async function shInit(){
   if(!SH){return}
   ghStatus("Đang kết nối Google Sheet…");
   try{
-    await shRole();
+    await shRole();try{await shEmailGet()}catch(e){}
     if(localStorage.getItem(KDIRTY)){await shGet();gateOpen();
       if(confirm("Máy này có thay đổi chưa ghi lên Google Sheet.\nOK = ghi lên (ghi đè bản trên Sheet).\nCancel = bỏ thay đổi và tải bản từ Sheet.")){await shPush(true)}else{await shPull()}return}
     const d=await shGet();gateOpen();if(d===null){await shPush(true);return}
@@ -1551,7 +1551,7 @@ shDlg.querySelector("#sh_split").onclick=async()=>{
     if(!localStorage.getItem(KDIRTY)){const d=await shGet();if(d)ghApply(d)}
     await shPush(true);localStorage.setItem(KSH,JSON.stringify(SH));shDlg.close();alert("Đã tách. Giờ vào Phân quyền để chọn phạm vi cho từng người, bấm Lưu.")}
   catch(e){SH.id2=old;alert("Không tách được: "+e.message)}};
-shDlg.querySelector("#sh_off").onclick=()=>{if(!confirm("Ngắt kết nối Google Sheet? Dữ liệu trên máy này vẫn giữ nguyên."))return;SH=null;shTok=null;try{sessionStorage.removeItem("phapche_sh_tok2")}catch(e){}localStorage.removeItem(KSH);localStorage.removeItem(KDIRTY);ghStatus("");shDlg.close()};
+shDlg.querySelector("#sh_off").onclick=()=>{if(!confirm("Ngắt kết nối Google Sheet? Dữ liệu trên máy này vẫn giữ nguyên."))return;SH=null;shTok=null;try{sessionStorage.removeItem("phapche_sh_tok2");localStorage.removeItem("phapche_sh_tok2")}catch(e){}localStorage.removeItem(KSH);localStorage.removeItem(KDIRTY);ghStatus("");shDlg.close()};
 window.addEventListener("beforeunload",e=>{if(SH&&localStorage.getItem(KDIRTY)){e.preventDefault();e.returnValue=""}});
 /* link mời: ?sh=<ID Sheet>&cid=<Client ID> => người mới chỉ cần bấm Đăng nhập */
 (()=>{
@@ -1635,9 +1635,10 @@ async function drvSync(rows,oldMails,fid){
     gateMsg("Đang đăng nhập…");shAuth(true).then(()=>shInit()).catch(e=>gateMsg(e.message))};
   cf.onclick=ev=>{ev.preventDefault();$("gate").style.display="none";$("shb").click();
     const o=new MutationObserver(()=>{if(!shDlg.open){o.disconnect();if($("gate"))$("gate").style.display="flex"}});o.observe(shDlg,{attributes:true,attributeFilter:["open"]})};
+  if(SH){const once=ev=>{document.removeEventListener("pointerdown",once,true);if($("gate")&&!ev.target.closest("#gate_cfg,#gate_go"))go.click()};document.addEventListener("pointerdown",once,true)}
   const lo=document.createElement("button");lo.id="shout";lo.textContent="Đăng xuất";$("shb").after(lo);
   lo.onclick=()=>{if(!confirm("Đăng xuất Google? Trang sẽ tải lại và yêu cầu đăng nhập lại."))return;
-    try{sessionStorage.removeItem("phapche_sh_tok2")}catch(e){}
+    try{sessionStorage.removeItem("phapche_sh_tok2");localStorage.removeItem("phapche_sh_tok2")}catch(e){}
     try{if(window.google&&google.accounts&&shTok)google.accounts.oauth2.revoke(shTok,()=>{})}catch(e){}
     location.reload()};
 })();
@@ -2925,7 +2926,7 @@ function mauPos(n,o){const D=window.MPG&&MPG[n];if(!D)return"";const r=coRec(o.c
 function wordInline(root){
   const src=[root,...root.querySelectorAll("*")],cl=root.cloneNode(true),dst=[cl,...cl.querySelectorAll("*")],pg=root.querySelector(".fpage")||root,cs0=getComputedStyle(pg),cw=(pg.clientWidth-parseFloat(cs0.paddingLeft)-parseFloat(cs0.paddingRight))||642,pt=v=>(parseFloat(v)*0.75).toFixed(2)+"pt";
   const fp=[...root.querySelectorAll(".fpage")];
-  const P=["font-family","font-weight","font-style","text-align","text-decoration-line","vertical-align","color"],B=["top","right","bottom","left"];
+  const P=["font-family","font-weight","font-style","text-align","text-decoration-line","vertical-align","color","white-space"],B=["top","right","bottom","left"];
   src.forEach((e,k)=>{const d=dst[k];if(e.nodeType!==1||/^(SCRIPT|STYLE|BUTTON|INPUT|SELECT|TEXTAREA)$/.test(e.tagName)){return}
     const cs=getComputedStyle(e),o=[];
     P.forEach(a=>{const v=cs.getPropertyValue(a);if(v&&v!=="normal"&&v!=="none"&&v!=="start")o.push(a+":"+v)});
@@ -2934,20 +2935,29 @@ function wordInline(root){
     if(!/^(SPAN|B|I|U|STRONG|EM|SUP|SUB|BR|TD|TH|TR|TBODY|THEAD)$/.test(e.tagName)&&!e.classList.contains("fpage")){B.forEach(x=>{const m=parseFloat(cs["margin-"+x])||0;if((m||(e.tagName==="P"&&(x==="top"||x==="bottom")))&&!(x==="left"&&e.tagName==="DIV"&&e.offsetWidth<cw-2))o.push("margin-"+x+":"+pt(m))});const pd=B.map(x=>parseFloat(cs["padding-"+x])||0);if(pd.some(Boolean))o.push("padding:"+pd.map(v=>(v*0.75).toFixed(1)+"pt").join(" "))}
     if(/^(TD|TH|TABLE)$/.test(e.tagName)){B.forEach(x=>{const w=parseFloat(cs["border-"+x+"-width"]);if(w&&cs["border-"+x+"-style"]!=="none")o.push("border-"+x+":"+(w*0.75).toFixed(2)+"pt solid "+cs["border-"+x+"-color"])});const pd=B.map(x=>parseFloat(cs["padding-"+x])||0);o.push("padding:"+pd.map(v=>(v*0.75).toFixed(1)+"pt").join(" "))}
     if(/^(DIV|TABLE)$/.test(e.tagName)&&!e.classList.contains("fpage")&&e.offsetWidth&&e.offsetWidth<cw-2){o.push("width:"+(e.offsetWidth/cw*100).toFixed(1)+"%");const ml=parseFloat(cs.marginLeft);if(ml>0)o.push("margin-left:"+(ml/cw*100).toFixed(1)+"%")}
-    if(e.tagName==="TABLE")o.push("border-collapse:collapse");if(/^(TD|TH)$/.test(e.tagName)){const tb=e.closest("table");if(tb&&tb.offsetWidth)o.push("width:"+(e.offsetWidth/tb.offsetWidth*100).toFixed(1)+"%")}if(e.tagName==="TABLE")o.push("table-layout:fixed");
+    if(e.tagName==="TABLE"&&e.offsetWidth>=cw-2&&!/width:/.test(o.join(";")))o.push("width:100%");if(e.tagName==="TABLE")o.push("border-collapse:collapse");if(/^(TD|TH)$/.test(e.tagName)){const tb=e.closest("table");if(tb&&tb.offsetWidth)o.push("width:"+(e.offsetWidth/tb.offsetWidth*100).toFixed(1)+"%")}if(e.tagName==="TABLE")o.push("table-layout:fixed");
     if(e.style&&e.style.height&&!e.children.length)o.push("height:"+pt(e.style.height));
     if(e.classList.contains("fpage")&&e!==fp[fp.length-1])o.push("page-break-after:always");
-    d.setAttribute("style",o.join(";"));d.removeAttribute("contenteditable");d.removeAttribute("class")});
+    d.setAttribute("style",o.join(";"));if(/^(TD|TH|TABLE)$/.test(e.tagName)){const m=o.join(";").match(/(?:^|;)width:([\d.]+%)/);if(m)d.setAttribute("width",m[1])}d.removeAttribute("contenteditable");d.removeAttribute("class")});
   for(let k=src.length-1;k>=0;k--){const e=src[k],d=dst[k];if(e.nodeType!==1||getComputedStyle(e).display!=="flex"||!d.parentNode)continue;
     const tb=document.createElement("table"),tr=document.createElement("tr"),w=e.offsetWidth||1;tb.setAttribute("style","border-collapse:collapse;width:100%;table-layout:fixed");tb.appendChild(document.createElement("tbody")).appendChild(tr);
-    [...d.children].forEach((c,i)=>{const oc=e.children[i],td=document.createElement("td");td.setAttribute("style","vertical-align:top;padding:0;width:"+((oc?oc.offsetWidth:w/d.children.length)/w*100).toFixed(1)+"%");c.style.width="auto";c.style.marginLeft="0";td.appendChild(c);tr.appendChild(td)});
+    [...d.children].forEach((c,i)=>{const oc=e.children[i],td=document.createElement("td");const wp=((oc?oc.offsetWidth:w/d.children.length)/w*100).toFixed(1)+"%";td.setAttribute("style","vertical-align:top;padding:0;width:"+wp);td.setAttribute("width",wp);c.style.width="auto";c.style.marginLeft="0";td.appendChild(c);tr.appendChild(td)});
     d.parentNode.replaceChild(tb,d)}
+  cl.querySelectorAll("div").forEach(dv=>{const m=(dv.getAttribute("style")||"").match(/(?:^|;)height:([\d.]+)pt/);if(!m||dv.children.length||dv.textContent.trim())return;
+    const q=document.createElement("p");q.setAttribute("style","margin:0;font-size:2pt;line-height:"+m[1]+"pt;mso-line-height-rule:exactly");q.innerHTML="&nbsp;";dv.replaceWith(q)});
+  cl.querySelectorAll("p").forEach(p=>{if(!p.querySelector("br"))return;
+    const segs=[[]];[...p.childNodes].forEach(n=>{if(n.nodeType===1&&n.tagName==="BR")segs.push([]);else segs[segs.length-1].push(n)});
+    if(segs.length<2)return;const st=p.getAttribute("style")||"",prev=p.parentNode;
+    segs.forEach((sg,i)=>{const q=document.createElement("p");let t=st;
+      if(i>0)t=t.replace(/margin-top:[^;]*;?/,"")+";margin-top:0pt";if(i<segs.length-1)t=t.replace(/margin-bottom:[^;]*;?/,"")+";margin-bottom:0pt";
+      q.setAttribute("style",t);sg.forEach(n=>q.appendChild(n));if(!q.childNodes.length)q.appendChild(document.createTextNode("\u00a0"));prev.insertBefore(q,p)});p.remove()});
   return cl.innerHTML.replace(/<hr[^>]*>/g,"")}
-function wordSave(html,title){
+function wordSave(html,title,pn){
   let h;if(typeof html==="string"){const bx=document.createElement("div");bx.style.cssText="position:absolute;left:-9999px;top:0;width:170mm";bx.innerHTML=html;document.body.appendChild(bx);try{h=wordInline(bx)}finally{bx.remove()}}else h=wordInline(html);
-  const css='@page WordSection1{size:21cm 29.7cm;margin:1.8cm 1.5cm 1.6cm 2cm}div.WordSection1{page:WordSection1}body{font-family:"Times New Roman",serif}';
+  const css='@page WordSection1{size:21cm 29.7cm;margin:1.8cm 1.5cm 1.6cm 2cm'+(pn?';mso-footer:f1':'')+'}div.WordSection1{page:WordSection1}body{font-family:"Times New Roman",serif}';
+  const ft=pn?'<div style="mso-element:footer" id="f1"><p align="center" style="text-align:center;margin:0"><i><span style="font-size:11pt;font-family:\'Times New Roman\'">Trang <span style="mso-field-code:\' PAGE \'">1</span>/<span style="mso-field-code:\' NUMPAGES \'">1</span></span></i></p></div>':"";
   html=h.replace(/(<div style="[^"]*">)/,"$1");
-  const doc='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>'+esc(title||"Văn bản")+'</title><!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]--><style>'+css+'</style></head><body><div class="WordSection1">'+html+'</div></body></html>';
+  const doc='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>'+esc(title||"Văn bản")+'</title><!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]--><style>'+css+'</style></head><body><div class="WordSection1">'+html+'</div>'+ft+'</body></html>';
   const fn=String(title||"van-ban").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D").replace(/[^A-Za-z0-9]+/g,"_").replace(/^_+|_+$/g,"")||"van-ban";
   const u=URL.createObjectURL(new Blob(["\ufeff",doc],{type:"application/msword"})),a=document.createElement("a");a.href=u;a.download=fn+".doc";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)}
 function showSheet(html,opt){opt=opt||{};const prev=sec,t0=document.title;
@@ -2961,7 +2971,7 @@ function showSheet(html,opt){opt=opt||{};const prev=sec,t0=document.title;
   $("pvdel").onclick=()=>{const sl=getSelection();let n=sl&&sl.anchorNode;if(n&&n.nodeType===3)n=n.parentNode;const bl=n&&n.closest&&n.closest("#plist p, #plist li, #plist .pb, #plist tr, #plist .fsig");if(!bl||!$("plist").contains(bl)){alert("Bấm vào đoạn cần bỏ trước.");return}
     const r=document.createRange();r.selectNode(bl);sl.removeAllRanges();sl.addRange(r);document.execCommand("delete")||bl.remove()};
   $("pvundo").onclick=()=>document.execCommand("undo");
-  $("pvword").onclick=()=>wordSave($("plist"),opt.title);$("pvclose").onclick=close;window.scrollTo(0,0)}
+  $("pvword").onclick=()=>wordSave($("plist"),opt.title,opt.pn);$("pvclose").onclick=close;window.scrollTo(0,0)}
 /* ===== Mẫu 7, Mẫu 8: danh sách cổ đông sáng lập / cổ đông là nhà đầu tư nước ngoài ===== */
 function m78Rows(c,sel){const H=gmHolders(c),par=H.g?+H.g.par||10000:10000,tot=H.rows.reduce((s,x)=>s+x.sh,0)||1;
   return H.rows.filter(x=>!sel||sel.includes(x.n)).map(x=>({...x,info:holderInfo({n:x.n,rec:(H.g.rows.find(y=>y.holder===x.n)||{}),sh:x.sh}),par,pct:x.sh/tot*100,val:x.sh*par}))}
