@@ -81,6 +81,9 @@ table.rt tr.sec td{background:#f1f1ec;font-weight:700;text-align:center}
 [data-wgo]:hover{background:rgba(0,0,0,.04)}[data-wgo]::after{content:"→";margin-left:auto;color:var(--mute);padding-left:8px}tr.flash td{animation:wflash 2.6s ease}@keyframes wflash{0%,60%{background:#ffe9a8}100%{background:transparent}}
 .act:last-child{border:0}.act .d{min-width:92px;font-size:12px}.act small{color:var(--mute)}
 @media(max-width:560px){.grid{grid-template-columns:1fr}header,.stats,.filters,.wrap,.tabs,.dash{padding-left:12px;padding-right:12px}}
+/* mobile: thanh tab cuộn ngang, nút đủ lớn để bấm */
+.tabs,nav.tcsub{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin}.tabs button,nav.tcsub button{white-space:nowrap;flex:0 0 auto}
+@media(max-width:700px){.tabs button,nav.tcsub button,.hsn button{min-height:40px}#vprof button,#vprof select{min-height:36px}}
 #sdlg{width:100vw;height:100vh;max-width:none;max-height:none;margin:0;padding:0;border:0;border-radius:0;background:#1d1d1f;color:#fff}
 #sdlg[open]{display:flex;flex-direction:column}
 #sstage{flex:1;position:relative;overflow:hidden}
