@@ -5801,6 +5801,118 @@ function render(){
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot();
 })();
 
+
+/* ===== Thẩm quyền ký theo Luật Doanh nghiệp: đọc từ tab prof_tq của Sheet (CFG.prof.tq); chỉ xem, sửa nội dung ở Sheet ===== */
+(function(){
+function boot(){
+const tptc=document.getElementById("tptc");
+if(!tptc){console.error("Module Thẩm quyền ký: không tìm thấy thanh tab");return}
+const nav=tptc.parentNode;
+const TYPES=[
+  {k:"cp",lab:"Công ty cổ phần",lh:"Công ty cổ phần"},
+  {k:"t2",lab:"TNHH hai thành viên trở lên",lh:"TNHH hai thành viên trở lên"},
+  {k:"t1",lab:"TNHH một thành viên (tổ chức)",lh:"TNHH một thành viên (chủ sở hữu là tổ chức)"},
+  {k:"lq",lab:"Giao dịch với người có liên quan",lh:null},
+  {k:"nt",lab:"Nguyên tắc và phạm vi",lh:null}
+];
+const NH_GT="Giấy tờ, quyết định",NH_LQ="Giao dịch với người có liên quan";
+const TQ=()=>(((typeof CFG!=="undefined"&&CFG.prof)||{}).tq||[]).filter(r=>r&&r.giay_to&&!/hết hiệu lực|ngưng|tắt/i.test(String(r.trang_thai||"")));
+const srt=(a,b)=>(+a.stt||0)-(+b.stt||0);
+const e=s=>esc(s==null?"":String(s));
+const nhan=s=>{s=String(s||"").trim();if(!s)return"";
+  return s.split(/;\s*/).map(x=>{const c=/^Chưa/i.test(x)?"tq-no":/^Suy/i.test(x)?"tq-sy":"tq-ro";return`<span class="tq-n ${c}">${e(x)}</span>`}).join("")};
+
+const css=document.createElement("style");
+css.textContent=`
+#vtq{padding-bottom:48px}
+#vtq .tq-head{padding:14px 24px 4px}
+#vtq .tq-head h2{margin:0 0 4px;font-size:18px}
+#vtq .tq-head p{margin:2px 0;color:var(--mute);font-size:13px;line-height:1.5;max-width:100ch}
+#vtq .tcsub{display:flex;gap:6px;flex-wrap:wrap;padding:8px 24px 4px}
+#vtq .tcsub button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:6px 16px;cursor:pointer}
+#vtq .tcsub button.on{background:var(--brand);border-color:var(--brand);color:var(--bg);font-weight:600}
+#vtq .tq-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:6px 24px}
+#vtq .tq-bar input{flex:1 1 220px;min-width:0;max-width:420px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+#vtq .tq-leg{font-size:12.5px;color:var(--mute);display:flex;gap:4px 14px;flex-wrap:wrap}#vtq .tq-lg{white-space:nowrap}
+#vtq .tq-w{padding:6px 24px;overflow-x:auto}
+#vtq table.tq{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:var(--r,10px);font-size:13.5px;line-height:1.5}
+#vtq table.tq th{position:sticky;top:0;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--mute);background:var(--card);border-bottom:2px solid var(--line);padding:8px 10px}
+#vtq table.tq td{vertical-align:top;border-top:1px solid var(--line);padding:9px 10px;overflow-wrap:anywhere}
+#vtq table.tq td.g{font-weight:600;width:20%}
+#vtq table.tq td.c{width:13%;color:var(--mute);font-size:12.5px}
+#vtq table.tq td.n{width:15%}
+#vtq .tq-n{display:inline-block;margin:0 4px 3px 0;padding:2px 8px;border-radius:8px;font-size:11.5px;font-weight:600;white-space:normal;border:1px solid}
+#vtq .tq-ro{color:#1b6e3c;background:#e5f4e4;border-color:#b9dfb7}
+#vtq .tq-sy{color:#7a5200;background:#fff7e6;border-color:#f0d9a8}
+#vtq .tq-no{color:#a02a2a;background:#fbebeb;border-color:#efbdbd}
+@media (prefers-color-scheme:dark){#vtq .tq-ro{color:#8fd3a3;background:#16301f;border-color:#2c5a3b}#vtq .tq-sy{color:#f0c978;background:#33290f;border-color:#5c4a1c}#vtq .tq-no{color:#f0a0a0;background:#351818;border-color:#6a2c2c}}
+#vtq .tq-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,420px),1fr));gap:12px;padding:8px 24px}
+#vtq .tq-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r,10px);padding:12px 14px;overflow-wrap:anywhere;line-height:1.55;font-size:13.5px}
+#vtq .tq-card h4{margin:0 0 6px;font-size:14px;text-transform:none;letter-spacing:0;color:var(--ink)}
+#vtq .tq-card .cc{font-size:12px;color:var(--mute);margin-top:6px}
+#vtq h3.tq-g{margin:14px 24px 0;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--mute)}
+#vtq .tq-note{margin:8px 24px;padding:10px 12px;border-radius:10px;background:#fff7e6;border:1px solid #f0d9a8;color:#7a5200;font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+@media (prefers-color-scheme:dark){#vtq .tq-note{background:#33290f;border-color:#5c4a1c;color:#f0c978}}
+#vtq .tq-empty{margin:18px 24px;color:var(--mute)}
+@media(max-width:760px){
+  #vtq .tq-head,#vtq .tcsub,#vtq .tq-bar,#vtq .tq-w,#vtq .tq-cards{padding-left:12px;padding-right:12px}
+  #vtq h3.tq-g,#vtq .tq-note,#vtq .tq-empty{margin-left:12px;margin-right:12px}
+  #vtq .tq-w{overflow-x:visible}
+  #vtq table.tq,#vtq table.tq tbody,#vtq table.tq tr,#vtq table.tq td{display:block;width:auto}
+  #vtq table.tq thead{display:none}
+  #vtq table.tq{border:0;background:transparent}
+  #vtq table.tq tr{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:0 0 10px;padding:8px 12px}
+  #vtq table.tq td{border:0;padding:4px 0;width:auto!important}
+  #vtq table.tq td::before{content:attr(data-l);display:block;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--mute)}
+  #vtq table.tq td.g{font-size:14.5px}
+}`;
+document.head.appendChild(css);
+
+const tab=document.createElement("button");tab.id="tptq";tab.textContent="Thẩm quyền ký";nav.appendChild(tab);
+const v=document.createElement("div");v.id="vtq";v.hidden=true;
+v.innerHTML=`<div class="tq-head"><h2>Thẩm quyền ký các loại giấy tờ theo Luật Doanh nghiệp</h2>
+<p>Căn cứ: bản hợp nhất Luật DN 67/VBHN-VPQH (Công báo số 1105+1106 ngày 31-8-2025). Ngưỡng tính trên tổng tài sản ở báo cáo tài chính gần nhất; Điều lệ công ty có thể quy định khác nên phải đối chiếu Điều lệ trước khi ký. Chỉ xem: nội dung sửa ở tab prof_tq của Google Sheet.</p></div>
+<nav class="tcsub" id="tqsub">${TYPES.map(t=>`<button data-k="${t.k}">${e(t.lab)}</button>`).join("")}</nav>
+<div class="tq-bar"><input id="tqq" type="search" placeholder="Tìm giấy tờ, người ký, Điều luật…" aria-label="Tìm trong bảng"><span class="tq-leg"><span class="tq-lg"><span class="tq-n tq-ro">Rõ</span> Luật nêu trực tiếp</span><span class="tq-lg"><span class="tq-n tq-sy">Suy ra</span> suy từ cấu trúc Luật</span><span class="tq-lg"><span class="tq-n tq-no">Chưa XM</span> chưa xác minh</span></span></div>
+<div id="tqbody"></div>`;
+const anchor=document.getElementById("vinv")||document.getElementById("vtc")||document.getElementById("vprof")||nav;
+anchor.after(v);
+
+let cur="cp";
+const hide=()=>{v.hidden=true;tab.classList.remove("on")};
+[...nav.querySelectorAll("button")].forEach(b=>{if(b!==tab)b.addEventListener("click",hide)});
+tab.onclick=()=>{["vlist","vbud","vdash","vprof","vtc","vinv"].forEach(i=>{const x=document.getElementById(i);if(x)x.hidden=true});
+  nav.querySelectorAll("button").forEach(b=>b.classList.remove("on"));v.hidden=false;tab.classList.add("on");render()};
+document.getElementById("tqsub").onclick=ev=>{const b=ev.target.closest("[data-k]");if(b){cur=b.dataset.k;render()}};
+document.getElementById("tqq").oninput=()=>render();
+
+function match(r,q){if(!q)return true;return[r.giay_to,r.nguoi_ky,r.dieu_kien,r.can_cu,r.nhan,r.loai_hinh].join(" ").toLowerCase().includes(q)}
+function table(rows){
+  return`<div class="tq-w"><table class="tq"><thead><tr><th>Loại giấy tờ, quyết định</th><th>Người ký, cơ quan quyết định</th><th>Điều kiện, ngưỡng</th><th>Căn cứ</th><th>Nhãn</th></tr></thead><tbody>${rows.map(r=>`<tr><td class="g" data-l="Loại giấy tờ, quyết định">${e(r.giay_to)}</td><td data-l="Người ký, cơ quan quyết định">${e(r.nguoi_ky)}</td><td data-l="Điều kiện, ngưỡng">${e(r.dieu_kien)}</td><td class="c" data-l="Căn cứ">${e(r.can_cu)}</td><td class="n" data-l="Nhãn">${nhan(r.nhan)}</td></tr>`).join("")}</tbody></table></div>`}
+function render(){
+  document.querySelectorAll("#tqsub [data-k]").forEach(b=>b.classList.toggle("on",b.dataset.k===cur));
+  const q=String(document.getElementById("tqq").value||"").trim().toLowerCase(),all=TQ(),body=document.getElementById("tqbody");
+  if(!all.length){body.innerHTML=`<p class="tq-empty">Chưa có dữ liệu thẩm quyền ký. Dữ liệu nằm ở tab prof_tq của Google Sheet pháp chế; bấm Đồng bộ (hoặc đăng nhập Google) để tải.</p>`;return}
+  const T=TYPES.find(t=>t.k===cur);let out="";
+  if(T.lh){
+    const rs=all.filter(r=>r.loai_hinh===T.lh&&r.nhom===NH_GT).sort(srt).filter(r=>match(r,q));
+    const nt=all.filter(r=>r.loai_hinh===T.lh&&r.nhom!==NH_GT&&r.nhom!==NH_LQ).sort(srt);
+    out=(rs.length?table(rs):`<p class="tq-empty">Không có dòng nào khớp.</p>`)+nt.map(r=>`<p class="tq-note"><b>${e(r.giay_to)}:</b> ${e(r.nguoi_ky)}. ${e(r.dieu_kien)} <i>(${e(r.can_cu)})</i></p>`).join("");
+  }else if(cur==="lq"){
+    const rs=all.filter(r=>r.nhom===NH_LQ).sort(srt),crit=[];rs.forEach(r=>{if(!crit.includes(r.giay_to))crit.push(r.giay_to)});
+    const cell=(lh,c)=>{const r=rs.find(x=>x.loai_hinh===lh&&x.giay_to===c);return r?`${e(r.nguoi_ky)}${r.dieu_kien?`<div class="cc">${e(r.dieu_kien)}</div>`:""}<div class="cc">${e(r.can_cu)}</div>`:"—"};
+    const ok=c=>!q||rs.some(r=>r.giay_to===c&&match(r,q));
+    out=`<p class="tq-note">Hợp đồng, giao dịch với người có liên quan phải được cơ quan nêu dưới đây chấp thuận trước. Nếu ký sai, Tòa án có thể tuyên vô hiệu và người ký phải bồi thường, hoàn trả lợi ích thu được.</p><div class="tq-w"><table class="tq"><thead><tr><th>Nội dung</th>${TYPES.slice(0,3).map(t=>`<th>${e(t.lab)}</th>`).join("")}</tr></thead><tbody>${crit.filter(ok).map(c=>`<tr><td class="g" data-l="Nội dung">${e(c)}</td>${TYPES.slice(0,3).map(t=>`<td data-l="${e(t.lab)}">${cell(t.lh,c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+  }else{
+    const rs=all.filter(r=>r.loai_hinh==="Chung").sort(srt).filter(r=>match(r,q)),gs=[];rs.forEach(r=>{if(!gs.includes(r.nhom))gs.push(r.nhom)});
+    out=gs.map(g=>`<h3 class="tq-g">${e(g)}</h3><div class="tq-cards">${rs.filter(r=>r.nhom===g).map(r=>`<div class="tq-card"><h4>${e(r.giay_to)}</h4>${e(r.nguoi_ky)}${r.can_cu?`<div class="cc">${e(r.can_cu)}</div>`:""}<div>${nhan(r.nhan)}</div></div>`).join("")}</div>`).join("")||`<p class="tq-empty">Không có dòng nào khớp.</p>`;
+  }
+  body.innerHTML=out}
+window.__tqRender=render;
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot();
+})();
+
 </script>
 </body>
 </html>
