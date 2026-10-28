@@ -5913,6 +5913,220 @@ window.__tqRender=render;
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot();
 })();
 
+/* ===== Trợ lý AI (Gemini): hỏi đáp trên dữ liệu app. Khóa API và model đọc từ tab ai_cfg của Sheet pháp chế
+   (chỉ giữ trong bộ nhớ trang, không ghi vào CFG, localStorage, sao lưu JSON hay GitHub). CCCD và số tài khoản được che trước khi gửi. ===== */
+(function(){
+function boot(){
+const tptc=document.getElementById("tptc");
+if(!tptc){console.error("Module Trợ lý AI: không tìm thấy thanh tab");return}
+const nav=tptc.parentNode;
+const e=s=>esc(s==null?"":String(s));
+const API="https://generativelanguage.googleapis.com/v1beta/models/";
+const MODELS=["gemini-3.8-flash","gemini-4-argon"];
+let KEY="",MODEL="",LIMIT=400000,chat=[],busy=false,lastCtx=null;
+
+const css=document.createElement("style");
+css.textContent=`
+#vai{padding-bottom:48px}
+#vai .ai-head{padding:14px 24px 4px}
+#vai .ai-head h2{margin:0 0 4px;font-size:18px}
+#vai .ai-head p{margin:2px 0;color:var(--mute);font-size:13px;line-height:1.5;max-width:100ch}
+#vai .ai-bar{display:flex;gap:8px 12px;align-items:center;flex-wrap:wrap;padding:6px 24px}
+#vai .ai-bar select{padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);max-width:100%}
+#vai .ai-stat{font-size:12.5px;color:var(--mute);flex:1 1 220px;min-width:0;overflow-wrap:anywhere}
+#vai .ai-chips{display:flex;gap:6px;flex-wrap:wrap;padding:4px 24px}
+#vai .ai-chips button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:5px 14px;font-size:13px;text-align:left;white-space:normal}
+#vai .ai-log{padding:6px 24px;display:flex;flex-direction:column;gap:10px}
+#vai .ai-m{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;line-height:1.6;font-size:14px;overflow-wrap:anywhere;max-width:100%}
+#vai .ai-m.u{background:color-mix(in srgb,var(--brand) 8%,var(--card))}
+#vai .ai-m .w{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--mute);margin-bottom:4px}
+#vai .ai-m ul{margin:4px 0 4px 18px;padding:0}
+#vai .ai-m div{margin:0 0 6px}#vai .ai-m .w,#vai .ai-m .meta{margin-bottom:0}
+#vai .ai-m .meta{margin-top:8px;font-size:12px;color:var(--mute)}
+#vai .ai-m.err{border-color:var(--seal);color:var(--seal)}
+#vai .ai-form{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;padding:8px 24px}
+#vai .ai-form textarea{flex:1 1 320px;min-width:0;min-height:64px;max-height:260px;resize:vertical;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font:inherit}
+#vai .ai-empty{margin:10px 24px;color:var(--mute)}
+@media(max-width:760px){
+  #vai .ai-head,#vai .ai-bar,#vai .ai-chips,#vai .ai-log,#vai .ai-form,#vai .ai-empty{padding-left:12px;padding-right:12px;margin-left:0;margin-right:0}
+  #vai .ai-form button{flex:1 1 100%}
+}`;
+document.head.appendChild(css);
+
+const tab=document.createElement("button");tab.id="tpai";tab.textContent="Trợ lý AI";nav.appendChild(tab);
+const v=document.createElement("div");v.id="vai";v.hidden=true;
+v.innerHTML=`<div class="ai-head"><h2>Trợ lý AI (Gemini)</h2>
+<p>Hỏi đáp dựa trên dữ liệu đang có trong app. Dữ liệu được gửi tới Google Gemini; CCCD và số tài khoản được che trước khi gửi. Cuộc trò chuyện chỉ nằm trong trang này, tải lại trang là mất. Câu trả lời là bản tham khảo, cần đối chiếu văn bản gốc trước khi dùng.</p></div>
+<div class="ai-bar"><label>Model <select id="aimodel" aria-label="Chọn model Gemini"></select></label><span class="ai-stat" id="aistat">Chưa tải khóa.</span><button id="aireload" type="button">Tải lại khóa và dữ liệu</button><button id="aiclear" type="button">Xóa cuộc trò chuyện</button></div>
+<div class="ai-chips" id="aichips"></div>
+<div class="ai-log" id="ailog"><p class="ai-empty">Nhập câu hỏi bên dưới. Ví dụ: tóm tắt các việc quá hạn, hoặc hỏi về một công ty, dự án, hồ sơ trong app.</p></div>
+<form class="ai-form" id="aiform"><textarea id="aiq" rows="3" placeholder="Nhập câu hỏi. Enter để gửi, Shift+Enter xuống dòng." aria-label="Câu hỏi cho Trợ lý AI"></textarea><button class="primary" id="aisend" type="submit">Gửi</button></form>`;
+const anchor=document.getElementById("vtq")||document.getElementById("vinv")||document.getElementById("vtc")||document.getElementById("vprof")||nav;
+anchor.after(v);
+
+const hide=()=>{v.hidden=true;tab.classList.remove("on")};
+[...nav.querySelectorAll("button")].forEach(b=>{if(b!==tab)b.addEventListener("click",hide)});
+tab.onclick=()=>{["vlist","vbud","vdash","vprof","vtc","vinv","vtq"].forEach(i=>{const x=document.getElementById(i);if(x)x.hidden=true});
+  nav.querySelectorAll("button").forEach(b=>b.classList.remove("on"));v.hidden=false;tab.classList.add("on");init()};
+
+const $=id=>document.getElementById(id);
+const CHIPS=["Tóm tắt các việc đang quá hạn hoặc sắp đến hạn","Liệt kê những hồ sơ, giấy tờ sắp hết hạn","Tóm tắt cơ cấu sở hữu vốn của các công ty trong app"];
+$("aichips").innerHTML=CHIPS.map(c=>`<button type="button">${e(c)}</button>`).join("");
+$("aichips").onclick=ev=>{const b=ev.target.closest("button");if(b){$("aiq").value=b.textContent;$("aiq").focus()}};
+
+function setModels(){
+  const sel=$("aimodel"),list=MODELS.slice();if(MODEL&&!list.includes(MODEL))list.unshift(MODEL);
+  sel.innerHTML=list.map(m=>`<option value="${e(m)}">${e(m)}${m==="gemini-4-argon"?" (suy luận mạnh)":m==="gemini-3.8-flash"?" (nhanh)":""}</option>`).join("");
+  sel.value=MODEL||list[0];
+}
+const stat=t=>{$("aistat").textContent=t};
+
+/* ---- che dữ liệu nhạy cảm ---- */
+let masked=0;
+const COLRE=/cccd|cmnd|cmt|can_?cuoc|căn cước|passport|ho_?chieu|hộ chiếu|so_?tk|stk|tai_?khoan|tài khoản|account|iban|swift|mat_?khau|mật khẩu|password|token|secret|api_?key|khoa_?api/i;
+function maskText(s){
+  return String(s)
+    .replace(/(?<![\p{L}\d])(stk|số tài khoản|số tk|tài khoản số|tk)(\s*[:.\-]?\s*)(\d[\d .\-]{5,}\d)/giu,(m,a,b)=>{masked++;return a+b+"[đã che]"})
+    .replace(/(?<!\d)\d{12}(?!\d)/g,()=>{masked++;return "[CCCD đã che]"})
+    .replace(/(?<!\d)\d{14,19}(?!\d)/g,()=>{masked++;return "[số dài đã che]"});
+}
+function cell(k,val){
+  if(val==null||val==="")return "";
+  if(COLRE.test(String(k))){masked++;return "[đã che]"}
+  let s=typeof val==="object"?JSON.stringify(val):String(val);
+  s=maskText(s).replace(/\s*\n\s*/g," ⏎ ");
+  return s.length>600?s.slice(0,600)+"…":s;
+}
+function rowsBlock(name,rows){
+  const keys=[];rows.forEach(r=>{if(r&&typeof r==="object")Object.keys(r).forEach(k=>{if(!keys.includes(k)&&r[k]!==""&&r[k]!=null&&!(Array.isArray(r[k])&&!r[k].length))keys.push(k)})});
+  if(!keys.length)return null;
+  const head="## "+name+" ("+rows.length+" dòng). Cột: "+keys.join(" | ");
+  const body=rows.filter(r=>r&&typeof r==="object").map(r=>keys.map(k=>cell(k,r[k])).join(" | "));
+  return{name,text:head+"\n"+body.join("\n")};
+}
+function buildContext(){
+  masked=0;const blocks=[];
+  const G=typeof CFG!=="undefined"?CFG:{};
+  const cfgTop={};Object.keys(G).forEach(k=>{if(k!=="prof"&&k!=="key"&&k!=="seq"&&k!=="chunk"&&G[k]!=null&&G[k]!==""){cfgTop[k]=G[k]}});
+  if(Object.keys(cfgTop).length)blocks.push({name:"Cấu hình chung",text:"## Cấu hình chung\n"+cell("cfg",cfgTop)});
+  if(typeof tasks!=="undefined"&&Array.isArray(tasks)&&tasks.length){const b=rowsBlock("Công việc (tab tasks)",tasks);if(b)blocks.push(b)}
+  if(typeof budget!=="undefined"&&Array.isArray(budget)&&budget.length){const b=rowsBlock("Ngân sách (tab budget)",budget);if(b)blocks.push(b)}
+  const P=G.prof||{};
+  Object.keys(P).forEach(k=>{
+    const val=P[k],tabName=((typeof SH_TAB!=="undefined"&&SH_TAB&&SH_TAB[k])||"prof_"+k);
+    if(Array.isArray(val)){if(val.length&&val.every(x=>x&&typeof x==="object")){const b=rowsBlock("Tab "+tabName,val);if(b)blocks.push(b)}}
+    else if(val&&typeof val==="object"){blocks.push({name:"Tab "+tabName,text:"## Tab "+tabName+"\n"+cell(k,val)})}
+    else if(val!==""&&val!=null){blocks.push({name:"Tab "+tabName,text:"## Tab "+tabName+"\n"+cell(k,val)})}
+  });
+  let total=blocks.reduce((a,b)=>a+b.text.length,0),cut=0;
+  if(total>LIMIT){
+    blocks.forEach(b=>{const allow=Math.max(800,Math.floor(LIMIT*b.text.length/total));if(b.text.length>allow){cut+=b.text.length-allow;b.text=b.text.slice(0,allow)+"\n…(đã cắt bớt "+(b.text.length-allow)+" ký tự do giới hạn dung lượng)"}});
+  }
+  const text=blocks.map(b=>b.text).join("\n\n");
+  return{text,chars:text.length,blocks:blocks.length,cut,masked};
+}
+function sysText(ctx){
+  const d=new Date().toLocaleDateString("vi-VN");
+  return `Bạn là trợ lý pháp chế doanh nghiệp, hỗ trợ Trưởng Pháp chế của CTCP Đầu tư FGroup và các công ty con. Hôm nay là ${d}.
+Quy tắc trả lời:
+1. Trả lời bằng tiếng Việt, kết luận trước rồi giải thích ngắn gọn.
+2. Chỉ dựa vào DỮ LIỆU APP bên dưới. Điều gì dữ liệu không có thì nói rõ "Dữ liệu app không có", không suy đoán, không bịa số hiệu văn bản, ngày tháng, Điều khoản, tên người.
+3. Mỗi nhận định ghi nguồn là tên tab và id (hoặc tên dòng) trong dữ liệu.
+4. Gắn nhãn cho nhận định pháp lý: "quy định rõ", "quan điểm hoặc thực tiễn", hoặc "chưa xác minh". Dữ liệu app là dữ liệu nội bộ chưa đối chiếu văn bản gốc, nên nhắc đối chiếu khi cần.
+5. Một số thông tin nhạy cảm (CCCD, số tài khoản) đã bị che, đừng cố đoán.
+6. Khi có rủi ro pháp lý, nêu ngắn gọn rủi ro và phương án, ưu tiên bảo vệ công ty.
+
+DỮ LIỆU APP:
+${ctx.text}`;
+}
+
+/* ---- khóa và cấu hình từ Sheet ---- */
+async function loadCfg(){
+  if(typeof SH==="undefined"||!SH||typeof shApi!=="function")throw new Error("Chưa kết nối Google Sheet: bấm Đồng bộ Google Sheet để đăng nhập, rồi mở lại tab này.");
+  let j;
+  try{j=await shApi("/values/"+encodeURIComponent("'ai_cfg'")+"!A1:C30")}
+  catch(err){if(/400|Unable to parse range|not found/i.test(err.message))throw new Error("Chưa có tab ai_cfg trong Sheet pháp chế.");throw err}
+  const o={};(j.values||[]).slice(1).forEach(r=>{if(r[0])o[String(r[0]).trim()]=String(r[1]==null?"":r[1]).trim()});
+  KEY=o.gemini_api_key||"";MODEL=o.gemini_model||MODELS[0];
+  const lim=parseInt(o.gioi_han_ky_tu,10);if(lim>20000)LIMIT=Math.min(lim,1500000);
+  if(!KEY)throw new Error("Chưa có khóa Gemini: dán khóa vào ô gia_tri của dòng gemini_api_key trong tab ai_cfg của Sheet pháp chế, rồi bấm Tải lại khóa và dữ liệu.");
+}
+let inited=false;
+async function init(force){
+  if(inited&&!force)return;
+  stat("Đang tải khóa từ Sheet…");
+  try{await loadCfg();setModels();lastCtx=buildContext();inited=true;
+    stat("Sẵn sàng. Sẽ gửi khoảng "+lastCtx.chars.toLocaleString("vi-VN")+" ký tự dữ liệu ("+lastCtx.blocks+" nhóm)"+(lastCtx.cut?", có cắt bớt "+lastCtx.cut.toLocaleString("vi-VN")+" ký tự":"")+", che "+lastCtx.masked+" chuỗi nhạy cảm.")}
+  catch(err){inited=false;KEY="";setModels();stat(err.message)}
+}
+$("aireload").onclick=()=>init(true);
+$("aiclear").onclick=()=>{chat=[];$("ailog").innerHTML=`<p class="ai-empty">Đã xóa cuộc trò chuyện.</p>`};
+
+/* ---- hiển thị ---- */
+function md(s){
+  const lines=e(s).split("\n"),out=[];let inul=false;
+  lines.forEach(l=>{
+    const b=l.replace(/\*\*(.+?)\*\*/g,"<b>$1</b>");
+    const m=/^\s*[-*•]\s+(.*)$/.exec(b);
+    if(m){if(!inul){out.push("<ul>");inul=true}out.push("<li>"+m[1]+"</li>")}
+    else{if(inul){out.push("</ul>");inul=false}if(b.trim())out.push("<div>"+b+"</div>")}
+  });
+  if(inul)out.push("</ul>");return out.join("");
+}
+function add(cls,who,html,meta){
+  const log=$("ailog");const emp=log.querySelector(".ai-empty");if(emp)emp.remove();
+  const d=document.createElement("div");d.className="ai-m "+cls;
+  d.innerHTML=`<div class="w">${e(who)}</div>${html}${meta?`<div class="meta">${e(meta)}</div>`:""}`;
+  log.appendChild(d);d.scrollIntoView({block:"end",behavior:"smooth"});return d;
+}
+
+/* ---- gọi Gemini ---- */
+function errMsg(status,body){
+  if(status===400&&/API key|API_KEY_INVALID/i.test(body))return "Khóa Gemini không hợp lệ. Kiểm tra ô gemini_api_key trong tab ai_cfg.";
+  if(status===400)return "Gemini từ chối yêu cầu (400). Có thể dữ liệu gửi quá lớn: giảm gioi_han_ky_tu trong tab ai_cfg. "+body.slice(0,160);
+  if(status===403)return "Khóa Gemini không có quyền hoặc bị giới hạn tên miền (403). Kiểm tra giới hạn khóa trong Google AI Studio.";
+  if(status===404)return "Không thấy model "+MODEL+" (404). Đổi gemini_model trong tab ai_cfg.";
+  if(status===429)return "Đã vượt hạn mức Gemini (429). Chờ một lúc rồi hỏi lại.";
+  return "Lỗi Gemini "+status+": "+body.slice(0,160);
+}
+async function ask(q){
+  if(busy)return;
+  if(!inited)await init(true);
+  if(!KEY){add("err","Lỗi",e($("aistat").textContent));return}
+  MODEL=$("aimodel").value||MODEL;
+  const qm=maskText(q);
+  busy=true;$("aisend").disabled=true;
+  add("u","Câu hỏi",md(qm));
+  const wait=add("","Gemini","<div>Đang trả lời…</div>");
+  try{
+    lastCtx=buildContext();
+    const contents=chat.concat([{role:"user",parts:[{text:qm}]}]);
+    const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),180000);
+    const r=await fetch(API+encodeURIComponent(MODEL)+":generateContent",{method:"POST",signal:ctl.signal,
+      headers:{"Content-Type":"application/json","x-goog-api-key":KEY},
+      body:JSON.stringify({systemInstruction:{parts:[{text:sysText(lastCtx)}]},contents,generationConfig:{temperature:0.2}})});
+    clearTimeout(to);
+    const raw=await r.text();
+    if(!r.ok){if(r.status===400&&/API key|API_KEY_INVALID/i.test(raw)){KEY="";inited=false}throw new Error(errMsg(r.status,raw))}
+    let j;try{j=JSON.parse(raw)}catch(x){throw new Error("Gemini trả về dữ liệu không đọc được")}
+    const cand=(j.candidates||[])[0],txt=cand&&cand.content&&cand.content.parts?cand.content.parts.map(p=>p.text||"").join(""):"";
+    if(!txt){const why=(j.promptFeedback&&j.promptFeedback.blockReason)||(cand&&cand.finishReason)||"không rõ";throw new Error("Gemini không trả lời (lý do: "+why+")")}
+    chat.push({role:"user",parts:[{text:qm}]},{role:"model",parts:[{text:txt}]});
+    if(chat.length>20)chat=chat.slice(-20);
+    wait.remove();
+    add("","Gemini · "+MODEL,md(txt),"Đã gửi "+lastCtx.chars.toLocaleString("vi-VN")+" ký tự dữ liệu"+(lastCtx.cut?" (có cắt bớt)":"")+", che "+lastCtx.masked+" chuỗi nhạy cảm. Cần đối chiếu văn bản gốc.");
+  }catch(err){
+    wait.remove();add("err","Lỗi",e(err.name==="AbortError"?"Hết thời gian chờ Gemini (180 giây)":err.message));
+  }
+  busy=false;$("aisend").disabled=false;
+}
+$("aiform").onsubmit=ev=>{ev.preventDefault();const q=$("aiq").value.trim();if(!q)return;$("aiq").value="";ask(q)};
+$("aiq").addEventListener("keydown",ev=>{if(ev.key==="Enter"&&!ev.shiftKey&&!ev.isComposing){ev.preventDefault();$("aiform").requestSubmit()}});
+window.__aiBuild=buildContext;window.__aiMask=maskText;
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot();
+})();
+
 </script>
 </body>
 </html>
