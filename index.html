@@ -5923,7 +5923,7 @@ const nav=tptc.parentNode;
 const e=s=>esc(s==null?"":String(s));
 const API="https://generativelanguage.googleapis.com/v1beta/models/";
 const MODELS=["gemini-3.8-flash","gemini-3.6-flash","gemini-4-argon"],FALLBACK="gemini-3.6-flash";
-let KEY="",MODEL="",LIMIT=150000,chat=[],busy=false,lastCtx=null;
+let KEY="",MODEL="",LIMIT=150000,LIMIT_AQ=100000,chat=[],busy=false,lastCtx=null,AQD=null,AQERR="";
 
 const css=document.createElement("style");
 css.textContent=`
@@ -5956,8 +5956,8 @@ document.head.appendChild(css);
 const tab=document.createElement("button");tab.id="tpai";tab.textContent="Trợ lý AI";nav.appendChild(tab);
 const v=document.createElement("div");v.id="vai";v.hidden=true;
 v.innerHTML=`<div class="ai-head"><h2>Trợ lý AI (Gemini)</h2>
-<p>Hỏi đáp dựa trên dữ liệu đang có trong app. Dữ liệu được gửi tới Google Gemini; CCCD và số tài khoản được che trước khi gửi. Cuộc trò chuyện chỉ nằm trong trang này, tải lại trang là mất. Câu trả lời là bản tham khảo, cần đối chiếu văn bản gốc trước khi dùng.</p></div>
-<div class="ai-bar"><label>Model <select id="aimodel" aria-label="Chọn model Gemini"></select></label><label>Chế độ <select id="aimode" aria-label="Chọn chế độ"><option value="tuvan">Tư vấn (dữ liệu app + kiến thức pháp luật)</option><option value="tracuu">Tra cứu (chỉ dữ liệu app)</option></select></label><span class="ai-stat" id="aistat">Chưa tải khóa.</span><button id="aireload" type="button">Tải lại khóa và dữ liệu</button><button id="aiclear" type="button">Xóa cuộc trò chuyện</button></div>
+<p>Công cụ rà soát dữ liệu trong app: đối chiếu dữ liệu app với kho văn bản pháp luật Aqua (số hiệu, hiệu lực, điều khoản trích, link gốc). Căn cứ pháp lý chỉ lấy từ Aqua, không dùng kiến thức ngoài kho. Dữ liệu được gửi tới Google Gemini; CCCD và số tài khoản được che trước khi gửi. Cuộc trò chuyện chỉ nằm trong trang này, tải lại trang là mất. Câu trả lời là bản tham khảo, cần đối chiếu văn bản gốc trước khi dùng.</p></div>
+<div class="ai-bar"><label>Model <select id="aimodel" aria-label="Chọn model Gemini"></select></label><label>Chế độ <select id="aimode" aria-label="Chọn chế độ"><option value="raso">Rà soát (dữ liệu app đối chiếu văn bản Aqua)</option><option value="tracuu">Tra cứu (chỉ dữ liệu app)</option></select></label><span class="ai-stat" id="aistat">Chưa tải khóa.</span><button id="aireload" type="button">Tải lại khóa và dữ liệu</button><button id="aiclear" type="button">Xóa cuộc trò chuyện</button></div>
 <div class="ai-chips" id="aichips"></div>
 <div class="ai-log" id="ailog"><p class="ai-empty">Nhập câu hỏi bên dưới. Ví dụ: tóm tắt các việc quá hạn, hoặc hỏi về một công ty, dự án, hồ sơ trong app.</p></div>
 <form class="ai-form" id="aiform"><textarea id="aiq" rows="3" placeholder="Nhập câu hỏi. Enter để gửi, Shift+Enter xuống dòng." aria-label="Câu hỏi cho Trợ lý AI"></textarea><button class="primary" id="aisend" type="submit">Gửi</button></form>`;
@@ -5970,7 +5970,7 @@ tab.onclick=()=>{["vlist","vbud","vdash","vprof","vtc","vinv","vtq"].forEach(i=>
   nav.querySelectorAll("button").forEach(b=>b.classList.remove("on"));v.hidden=false;tab.classList.add("on");init()};
 
 const $=id=>document.getElementById(id);
-const CHIPS=["Tóm tắt các việc đang quá hạn hoặc sắp đến hạn","Liệt kê những hồ sơ, giấy tờ sắp hết hạn","Tóm tắt cơ cấu sở hữu vốn của các công ty trong app"];
+const CHIPS=["Rà soát các việc quá hạn hoặc sắp đến hạn, kèm căn cứ pháp lý nếu có","Rà soát các văn bản pháp luật được viện dẫn trong app còn hiệu lực không","Tóm tắt cơ cấu sở hữu vốn của các công ty trong app"];
 $("aichips").innerHTML=CHIPS.map(c=>`<button type="button">${e(c)}</button>`).join("");
 $("aichips").onclick=ev=>{const b=ev.target.closest("button");if(b){$("aiq").value=b.textContent;$("aiq").focus()}};
 
@@ -6036,22 +6036,25 @@ function buildContext(q){
   const text=blocks.map(b=>b.text).join("\n\n");
   return{text,chars:text.length,full,blocks:blocks.length,cut:Math.max(0,full-text.length),rowsAll,rowsSent,masked};
 }
-function sysText(ctx,mode){
+function sysText(ctx,mode,aq){
   const d=new Date().toLocaleDateString("vi-VN");
-  const head=`Bạn là trợ lý pháp chế doanh nghiệp, hỗ trợ Trưởng Pháp chế của CTCP Đầu tư FGroup và các công ty con. Hôm nay là ${d}.\n`;
+  const head=`Bạn là công cụ rà soát dữ liệu cho Trưởng Pháp chế của CTCP Đầu tư FGroup và các công ty con, hoạt động bên trong app quản lý pháp chế. Hôm nay là ${d}.\n`;
+  const nhay="Một số thông tin nhạy cảm (CCCD, số tài khoản) đã bị che, đừng cố đoán.";
   const rules=mode==="tracuu"?`Chế độ TRA CỨU. Quy tắc:
 1. Trả lời bằng tiếng Việt, kết luận trước rồi giải thích ngắn gọn.
 2. Chỉ dựa vào DỮ LIỆU APP bên dưới. Điều gì dữ liệu không có thì nói rõ "Dữ liệu app không có", không suy đoán, không bịa số hiệu văn bản, ngày tháng, Điều khoản, tên người.
 3. Mỗi nhận định ghi nguồn là tên tab và id (hoặc tên dòng) trong dữ liệu.
-4. Gắn nhãn cho nhận định pháp lý: "quy định rõ", "quan điểm hoặc thực tiễn", hoặc "chưa xác minh". Dữ liệu app là dữ liệu nội bộ chưa đối chiếu văn bản gốc, nên nhắc đối chiếu khi cần.
-5. Một số thông tin nhạy cảm (CCCD, số tài khoản) đã bị che, đừng cố đoán.`:`Chế độ TƯ VẤN. Quy tắc:
-1. Trả lời bằng tiếng Việt, kết luận Có/Không (hoặc kết luận chính) trước rồi giải thích ngắn gọn; người hỏi là luật sư cấp cao nên không giảng kiến thức cơ bản.
-2. Dùng DỮ LIỆU APP bên dưới làm sự kiện nền và ghi nguồn là tên tab và id dòng. Được vận dụng kiến thức pháp luật Việt Nam để tư vấn trên các sự kiện đó. Không bịa sự kiện: dữ liệu app không có thì nói "Dữ liệu app không có" và nêu câu hỏi cần làm rõ.
-3. Căn cứ pháp lý: chỉ ghi tên văn bản, số hiệu, Điều, Khoản, Điểm khi chắc chắn; nếu không chắc thì ghi "chưa xác minh, cần tra lại", tuyệt đối không bịa số hiệu, ngày ban hành. Nhắc kiểm tra văn bản có bị sửa đổi, thay thế, hết hiệu lực chưa. Mỗi nhận định gắn nhãn "quy định rõ", "quan điểm hoặc thực tiễn" hoặc "chưa xác minh".
-4. Bố cục: Kết luận; Căn cứ (dữ liệu app và căn cứ pháp lý); Rủi ro; Phương án đề xuất, ưu tiên bảo vệ công ty; Phản bác dự kiến của bên đối tác hoặc cơ quan nhà nước (ngắn) kèm cách đáp; Việc cần làm và mốc thời hạn pháp lý nếu có. Phần nào không liên quan thì bỏ.
-5. Một số thông tin nhạy cảm (CCCD, số tài khoản) đã bị che, đừng cố đoán.
-6. Đây là ý kiến tham khảo cho luật sư, không thay thế việc đối chiếu văn bản gốc.`;
-  return head+rules+"\n\nDỮ LIỆU APP:\n"+ctx.text;
+4. Không đưa ra căn cứ pháp lý nằm ngoài dữ liệu app; cần căn cứ thì khuyên chuyển sang chế độ Rà soát.
+5. ${nhay}`:`Chế độ RÀ SOÁT. Bạn chỉ là công cụ đối chiếu DỮ LIỆU APP với KHO VĂN BẢN AQUA, không phải nguồn kiến thức pháp luật. Quy tắc:
+1. Trả lời bằng tiếng Việt, kết luận trước rồi giải thích ngắn gọn; người hỏi là luật sư cấp cao nên không giảng kiến thức cơ bản.
+2. Sự kiện chỉ lấy từ DỮ LIỆU APP (ghi tên tab và id dòng). Dữ liệu không có thì nói "Dữ liệu app không có", không suy đoán.
+3. Căn cứ pháp lý CHỈ lấy từ KHO VĂN BẢN AQUA. Tuyệt đối không dùng kiến thức pháp luật ngoài kho, không nêu số hiệu, Điều, Khoản, ngày không có trong kho. Khi cần căn cứ mà kho không có, viết: "Aqua chưa có căn cứ này, cần bổ sung vào Aqua" kèm tên loại văn bản cần tìm, không nêu số hiệu.
+4. Mỗi căn cứ nêu: số hiệu, tên văn bản, Điều/Khoản (nếu có trong phần điều khoản trích), tình trạng hiệu lực theo các cột ngày trong kho (có ngày hết hiệu lực hoặc "bị thay thế bởi" thì cảnh báo rõ), và link gốc nếu kho có (chỉ dùng đúng link trong kho).
+5. Nhãn: "quy định rõ" khi dựa vào điều khoản trích có nhãn quy định rõ; "chưa xác minh" khi chỉ có tóm tắt hoặc nhãn của kho ghi chưa xác minh. Nhắc đối chiếu bản gốc qua link.
+6. Bố cục: Kết luận; Phát hiện (mỗi phát hiện gồm: dữ liệu app, căn cứ Aqua, đánh giá phù hợp / chưa phù hợp / thiếu thông tin, đề xuất xử lý, ưu tiên bảo vệ công ty); Chỗ thiếu căn cứ trong Aqua; Điều cần người dùng xác nhận. Phần nào không liên quan thì bỏ.
+7. Không đưa quan điểm riêng ngoài dữ liệu và kho; ngoài phạm vi thì nói rõ là ngoài phạm vi rà soát.
+8. ${nhay}`;
+  return head+rules+"\n\nDỮ LIỆU APP:\n"+ctx.text+(mode==="tracuu"||!aq?"":"\n\n"+aq.text);
 }
 
 /* ---- khóa và cấu hình từ Sheet ---- */
@@ -6063,14 +6066,53 @@ async function loadCfg(){
   const o={};(j.values||[]).slice(1).forEach(r=>{if(r[0])o[String(r[0]).trim()]=String(r[1]==null?"":r[1]).trim()});
   KEY=o.gemini_api_key||"";MODEL=o.gemini_model||MODELS[0];
   const lim=parseInt(o.gioi_han_ky_tu,10);if(lim>20000)LIMIT=Math.min(lim,1500000);
+  const la=parseInt(o.gioi_han_aqua,10);if(la>10000)LIMIT_AQ=Math.min(la,600000);
   if(!KEY)throw new Error("Chưa có khóa Gemini: dán khóa vào ô gia_tri của dòng gemini_api_key trong tab ai_cfg của Sheet pháp chế, rồi bấm Tải lại khóa và dữ liệu.");
 }
+/* ---- kho văn bản Aqua (nguồn căn cứ pháp lý duy nhất của chế độ Rà soát) ---- */
+const un=t=>String(t==null?"":t).replace(/&amp;/g,"&");
+async function loadAqua(){
+  AQD=null;AQERR="";
+  try{
+    if(typeof aqId!=="function")throw new Error("không tìm thấy cấu hình Sheet Aqua");
+    const j=await shApi("/values:batchGet?majorDimension=ROWS&valueRenderOption=FORMATTED_VALUE&ranges="+shRange("Văn bản")+"&ranges="+shRange("Trích điều khoản"),undefined,aqId());
+    const vr=j.valueRanges||[],tbl=x=>{const v=(x&&x.values)||[],h=(v[0]||[]).map(c=>String(c).trim());return{h,rows:v.slice(1)}};
+    const dv=tbl(vr[0]),dk=tbl(vr[1]),ix=(t,n)=>t.h.indexOf(n),g=(t,r,n)=>{const k=ix(t,n);return k>=0?un(r[k]):""};
+    const docs=[],arts=[];
+    dv.rows.forEach(r=>{const so=g(dv,r,"Số hiệu");if(!so)return;if(/^(x|có|true|1|ẩn)$/i.test(g(dv,r,"Ẩn").trim()))return;
+      const cut=(t,n)=>t.length>n?t.slice(0,n)+"…":t;
+      docs.push({so,line:"[VB] "+[so,g(dv,r,"Loại"),g(dv,r,"Tên văn bản"),"tóm tắt: "+g(dv,r,"Tóm tắt"),"ban hành: "+g(dv,r,"Ngày ban hành"),"hiệu lực: "+g(dv,r,"Ngày hiệu lực"),"hết hiệu lực: "+g(dv,r,"Ngày hết hiệu lực"),"thay thế/sửa đổi: "+cut(g(dv,r,"Thay thế / sửa đổi"),300),"bị thay thế bởi: "+g(dv,r,"Bị thay thế bởi"),"lĩnh vực: "+g(dv,r,"Lĩnh vực"),"lưu ý: "+g(dv,r,"Lưu ý"),"kiểm hiệu lực lần cuối: "+g(dv,r,"Kiểm hiệu lực lần cuối"),"link gốc: "+g(dv,r,"Link văn bản gốc"),"nội dung chính: "+cut(g(dv,r,"Nội dung chính").replace(/\s*\n\s*/g," ⏎ "),500)].map(x=>String(x).replace(/\s+(?=[,|])/g,"")).join(" | ")})});
+    dk.rows.forEach(r=>{const so=g(dk,r,"Số hiệu văn bản");if(!so)return;
+      arts.push({so,line:"[ĐK] "+[so,g(dk,r,"Điều"),g(dk,r,"Khoản/Điểm"),g(dk,r,"Chủ đề"),"nội dung: "+g(dk,r,"Nội dung trích (tóm lược sát văn bản)"),"nhãn: "+g(dk,r,"Nhãn"),"link: "+g(dk,r,"Link tới bản gốc"),"ghi chú: "+g(dk,r,"Ghi chú")].join(" | ")})});
+    if(!docs.length)throw new Error("tab Văn bản trống hoặc đổi tên cột");
+    AQD={docs,arts};
+  }catch(err){AQERR=err.message||String(err)}
+}
+const REFRE=/\d{1,4}\/\d{4}\/[A-Za-zĐđ][A-Za-zĐđ0-9\-]*/g;
+function buildAqua(q,appText){
+  if(!AQD)return null;
+  const nz=x=>nrm(x).replace(/[^a-z0-9\/]/g,"");
+  const refs=new Set((String(appText||"").match(REFRE)||[]).map(nz));
+  (String(q||"").match(REFRE)||[]).forEach(x=>refs.add(nz(x)));
+  const qt=[...new Set(nrm(q||"").split(/[^a-z0-9]+/).filter(w=>w.length>=3&&!STOP.has(w)))];
+  const items=[];
+  const add=(arr,kind)=>arr.forEach((it,li)=>{const n=nrm(it.line);let sc=refs.has(nz(it.so))?5:0;qt.forEach(w=>{if(n.includes(w))sc++});if(sc>0)items.push({kind,li,sc,len:it.line.length+1})});
+  add(AQD.docs,"d");add(AQD.arts,"a");
+  items.sort((x,y)=>y.sc-x.sc||(x.kind===y.kind?x.li-y.li:(x.kind==="d"?-1:1)));
+  let room=LIMIT_AQ;const kd=new Set(),ka=new Set();
+  for(const it of items){if(room<it.len)continue;room-=it.len;(it.kind==="d"?kd:ka).add(it.li)}
+  const ld=AQD.docs.filter((x,i)=>kd.has(i)).map(x=>x.line),la=AQD.arts.filter((x,i)=>ka.has(i)).map(x=>x.line);
+  const text="## KHO VĂN BẢN AQUA: nguồn căn cứ pháp lý duy nhất ("+ld.length+"/"+AQD.docs.length+" văn bản và "+la.length+"/"+AQD.arts.length+" điều khoản trích, chọn theo câu hỏi và theo số hiệu được viện dẫn trong dữ liệu app)\n"+
+    (ld.length?ld.join("\n"):"(không có văn bản nào khớp câu hỏi)")+"\n"+(la.length?"\n## Điều khoản trích từ Aqua\n"+la.join("\n"):"");
+  return{text,chars:text.length,docs:ld.length,docsAll:AQD.docs.length,arts:la.length,artsAll:AQD.arts.length};
+}
+
 let inited=false;
 async function init(force){
   if(inited&&!force)return;
   stat("Đang tải khóa từ Sheet…");
-  try{await loadCfg();setModels();lastCtx=buildContext();inited=true;
-    stat("Sẵn sàng. Dữ liệu app "+lastCtx.full.toLocaleString("vi-VN")+" ký tự ("+lastCtx.blocks+" nhóm); mỗi câu hỏi gửi tối đa "+LIMIT.toLocaleString("vi-VN")+" ký tự, chọn lọc theo câu hỏi. Che "+lastCtx.masked+" chuỗi nhạy cảm.")}
+  try{await loadCfg();setModels();await loadAqua();lastCtx=buildContext();inited=true;
+    stat("Sẵn sàng. Dữ liệu app "+lastCtx.full.toLocaleString("vi-VN")+" ký tự ("+lastCtx.blocks+" nhóm); mỗi câu hỏi gửi tối đa "+LIMIT.toLocaleString("vi-VN")+" ký tự, chọn lọc theo câu hỏi. Che "+lastCtx.masked+" chuỗi nhạy cảm. "+(AQD?"Kho Aqua: "+AQD.docs.length+" văn bản, "+AQD.arts.length+" điều khoản trích.":"Chưa đọc được kho Aqua ("+AQERR+"): chế độ Rà soát chưa dùng được, chỉ Tra cứu."))}
   catch(err){inited=false;KEY="";setModels();stat(err.message)}
 }
 $("aireload").onclick=()=>init(true);
@@ -6078,9 +6120,15 @@ $("aiclear").onclick=()=>{chat=[];$("ailog").innerHTML=`<p class="ai-empty">Đã
 
 /* ---- hiển thị ---- */
 function md(s){
+  const known=(lastCtx?lastCtx.text+(lastCtx.aq?lastCtx.aq.text:""):"");
+  const okUrl=u=>{const r=un(u).replace(/[.,;:)]+$/,"");return r.length>12&&known.includes(r)};
   const lines=e(s).split("\n"),out=[];let inul=false;
+  const link=(u,t)=>{const clean=u.replace(/[.,;:)]+$/,""),tail=u.slice(clean.length);
+    return okUrl(clean)?`<a href="${clean}" target="_blank" rel="noopener noreferrer">${t||clean}</a>${tail}`:(t?t+" ("+clean+")":clean)+tail};
   lines.forEach(l=>{
-    const b=l.replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/(^|[\s(])\*([^*\s][^*]*?)\*(?=[\s).,;:]|$)/g,"$1<i>$2</i>").replace(/`([^`]+)`/g,"<code>$1</code>").replace(/^#{1,4}\s+(.*)$/,"<b>$1</b>");
+    let b=l.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,(m,t,u)=>link(u,t));
+    b=b.replace(/(^|[\s(])(https?:\/\/[^\s<"]+)/g,(m,pre,u)=>pre+link(u,""));
+    b=b.replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/(^|[\s(])\*([^*\s][^*]*?)\*(?=[\s).,;:]|$)/g,"$1<i>$2</i>").replace(/`([^`]+)`/g,"<code>$1</code>").replace(/^#{1,4}\s+(.*)$/,"<b>$1</b>");
     const m=/^\s*[-*•]\s+(.*)$/.exec(b);
     if(m){if(!inul){out.push("<ul>");inul=true}out.push("<li>"+m[1]+"</li>")}
     else{if(inul){out.push("</ul>");inul=false}if(b.trim())out.push("<div>"+b+"</div>")}
@@ -6118,8 +6166,11 @@ async function ask(q){
   const tick=setInterval(()=>{const d=wait.querySelector("div:not(.w)");if(d)d.textContent=phase+"… "+Math.round((Date.now()-t0)/1000)+" giây"},1000);
   try{
     lastCtx=buildContext(qm);
+    const mode=$("aimode").value,aq=mode==="raso"?buildAqua(qm,lastCtx.text):null;
+    if(mode==="raso"&&!aq)throw new Error("Chưa đọc được kho Aqua"+(AQERR?" ("+AQERR+")":"")+". Chế độ Rà soát cần Aqua làm nguồn căn cứ: kiểm tra quyền xem Sheet Aqua rồi bấm Tải lại khóa và dữ liệu, hoặc chuyển sang Tra cứu.");
+    lastCtx.aq=aq;
     const contents=chat.concat([{role:"user",parts:[{text:qm}]}]);
-    const payload=JSON.stringify({systemInstruction:{parts:[{text:sysText(lastCtx,$("aimode").value)}]},contents,generationConfig:{temperature:0.2}});
+    const payload=JSON.stringify({systemInstruction:{parts:[{text:sysText(lastCtx,mode,aq)}]},contents,generationConfig:{temperature:0.2}});
     const busyCode=c=>c===500||c===503||c===504;
     const order=[MODEL].concat(MODEL!==FALLBACK?[FALLBACK]:[]);
     let r=null,raw="",used=MODEL,timedOut=false;
@@ -6144,7 +6195,7 @@ async function ask(q){
     chat.push({role:"user",parts:[{text:qm}]},{role:"model",parts:[{text:txt}]});
     if(chat.length>20)chat=chat.slice(-20);
     wait.remove();
-    add("","Gemini · "+used+" · "+($("aimode").value==="tuvan"?"tư vấn":"tra cứu"),md(txt),(used!==MODEL?"Model "+MODEL+" không trả lời kịp nên đã dùng "+used+". ":"")+"Đã gửi "+lastCtx.chars.toLocaleString("vi-VN")+"/"+lastCtx.full.toLocaleString("vi-VN")+" ký tự dữ liệu"+(lastCtx.rowsSent<lastCtx.rowsAll?" ("+lastCtx.rowsSent+"/"+lastCtx.rowsAll+" dòng, chọn theo câu hỏi)":"")+", che "+lastCtx.masked+" chuỗi nhạy cảm, trong "+Math.round((Date.now()-t0)/1000)+" giây. Cần đối chiếu văn bản gốc.");
+    add("","Gemini · "+used+" · "+($("aimode").value==="raso"?"rà soát":"tra cứu"),md(txt),(used!==MODEL?"Model "+MODEL+" không trả lời kịp nên đã dùng "+used+". ":"")+"Đã gửi "+lastCtx.chars.toLocaleString("vi-VN")+"/"+lastCtx.full.toLocaleString("vi-VN")+" ký tự dữ liệu app"+(lastCtx.aq?" và "+lastCtx.aq.chars.toLocaleString("vi-VN")+" ký tự từ Aqua ("+lastCtx.aq.docs+" văn bản, "+lastCtx.aq.arts+" điều khoản)":"")+(lastCtx.rowsSent<lastCtx.rowsAll?" ("+lastCtx.rowsSent+"/"+lastCtx.rowsAll+" dòng, chọn theo câu hỏi)":"")+", che "+lastCtx.masked+" chuỗi nhạy cảm, trong "+Math.round((Date.now()-t0)/1000)+" giây. Cần đối chiếu văn bản gốc.");
   }catch(err){
     wait.remove();add("err","Lỗi",e(err.message));
   }
