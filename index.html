@@ -1410,7 +1410,7 @@ function shUnpack(T){
 function shLoadGsi(){return new Promise((ok,no)=>{if(window.google&&google.accounts&&google.accounts.oauth2)return ok();const s=document.createElement("script");s.src="https://accounts.google.com/gsi/client";s.onload=ok;s.onerror=()=>no(new Error("Không tải được thư viện đăng nhập Google"));document.head.appendChild(s)})}
 async function shAuth(interactive,fresh){
   if(!fresh&&shTok&&Date.now()<shExp-60000)return shTok;
-  if(!fresh)try{const m=JSON.parse(sessionStorage.getItem("phapche_sh_tok2")||localStorage.getItem("phapche_sh_tok2")||"null");if(m&&m.exp-60000>Date.now()){shTok=m.t;shExp=m.exp;return shTok}}catch(e){}
+  if(!fresh)for(const S of [sessionStorage,localStorage])try{const m=JSON.parse(S.getItem("phapche_sh_tok2")||"null");if(m&&m.t&&m.exp-60000>Date.now()){shTok=m.t;shExp=m.exp;return shTok}}catch(e){}
   await shLoadGsi();
   return new Promise((ok,no)=>{
     const tc=google.accounts.oauth2.initTokenClient({client_id:SH.client,hint:fresh?undefined:(()=>{try{return localStorage.getItem("phapche_sh_mail")||undefined}catch(e){return undefined}})(),scope:"https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/userinfo.email",prompt:interactive?"":"none",
