@@ -932,6 +932,7 @@ const rndSel=()=>Array.isArray(CFG.rnd)?CFG.rnd.filter(x=>RND.includes(x)):RND.s
 const rndOk=t=>rndSel().includes(ndOf(t));
 function rndDraw(){const el=$("rnd");if(!el)return;const s=rndSel();
   el.innerHTML='<span class="rndl">Nội dung tính vào báo cáo:</span>'+RND.map(n=>`<label class="rndc"><input type="checkbox" data-nd="${esc(n)}"${s.includes(n)?" checked":""}> ${esc(n)} <small>(${tasks.filter(t=>ndOf(t)===n).length})</small></label>`).join("")+'<button type="button" data-ndall="1">Chọn tất cả</button><button type="button" data-ndall="0">Bỏ chọn</button><label class="rndc" style="margin-left:auto">Chức danh ký: <select data-sig>'+[["t","Trưởng phòng"],["p","Phó phòng"],["n","Không ghi chức danh"]].map(([v,l])=>`<option value="${v}"${(CFG.sigT||"t")===v?" selected":""}>${l}</option>`).join("")+'</select></label>'}
+const repFn=(lab,a,b)=>{const f=x=>{const p=String(x).split("-");return p[2]+"-"+p[1]},g=x=>{const p=String(x).split("-");return p[2]+"-"+p[1]+"-"+p[0]},y=String(a).slice(0,4)!==String(b).slice(0,4);return String(b).replace(/-/g,"")+" "+lab+" từ "+(y?g(a):f(a))+" đến "+(y?g(b):f(b))};
 function bm02(p,off,co){
   const [a,b]=range(p,off),[na,nb]=range(p,off-1);
   const TK=tasks.filter(rndOk);
@@ -997,7 +998,7 @@ function bm02(p,off,co){
   const ndT=ndR.reduce((y,r)=>({r:y.r+r.r,d:y.d+r.d,o:y.o+r.o,l:y.l+r.l,h:y.h+r.h}),{r:0,d:0,o:0,l:0,h:0});
   const nd=ndR.length?`<table class="rt" style="min-width:0;margin-bottom:14px"><thead><tr><th colspan="6" style="text-align:left">SỐ LIỆU THEO NỘI DUNG CÔNG VIỆC ĐƯỢC CHỌN</th></tr><tr><th>Nội dung</th><th>Tiếp nhận</th><th>Hoàn thành</th><th>Tồn cuối kỳ</th><th>Quá hạn</th><th>Hợp đồng đã kiểm tra</th></tr></thead><tbody>${ndR.map(r=>`<tr>${td(r.n,{cls:"l"})}${td(r.r)}${td(r.d)}${td(r.o)}${td(r.l)}${td(r.h)}</tr>`).join("")}<tr class="sec">${td("Tổng cộng",{cls:"l"})}${td(ndT.r)}${td(ndT.d)}${td(ndT.o)}${td(ndT.l)}${td(ndT.h)}</tr></tbody></table>`:'<p class="hint" style="color:var(--seal)">Chưa tick nội dung nào, báo cáo không có công việc.</p>';
   const head=`<div class="rh"><b>BÁO CÁO CÔNG VIỆC ${plab(p,a,b,1)} ${esc(CFG.org)}</b><br>Đơn vị: ${esc(CFG.unit)}${co?" - "+esc(co):""}</div>`;
-  $("rbody").dataset.name="BM02_Bao_cao_cong_viec_"+a+"_den_"+b;
+  $("rbody").dataset.name=repFn("Báo cáo BM02",a,b);
   return head+nd+sm+`<table class="rt"><colgroup><col style="width:4%"><col style="width:10%"><col style="width:11%"><col style="width:11%"><col style="width:36%"><col style="width:12%"><col style="width:8%"><col style="width:8%"></colgroup><thead><tr><th>STT</th><th>HẠNG MỤC CÔNG VIỆC</th><th>ĐƠN VỊ</th><th>NỘI DUNG CÔNG VIỆC</th><th>CHI TIẾT</th><th>KẾT QUẢ MỤC TIÊU</th><th>BẮT ĐẦU</th><th>KẾT THÚC</th></tr></thead><tbody>${s}</tbody></table>`+(()=>{const k=kteam(),m=k.find(x=>x.me)||k.find(x=>/trưởng/i.test(x.r||""))||k[0]||{},d=String(b).split("-"),sg=CFG.sigT||"t",bt=/^Trưởng/i.test(m.r||"")?m.r:"Trưởng phòng "+CFG.unit,sgT=sg==="n"?"":sg==="p"?bt.replace(/^Trưởng/i,"Phó"):bt;return `<div class="fsig" style="break-inside:avoid;page-break-inside:avoid;margin-top:22px"><div><i>Ngày ${+d[2]} tháng ${+d[1]} năm ${d[0]}</i></div><b>NGƯỜI BÁO CÁO</b><br><i>(${esc(sgT?sgT+" - ":"")}ký, ghi rõ họ tên)</i><div style="height:70px"></div><b>${esc(String(m.n||"").toUpperCase())}</b></div>`})();
 }
 function bm01(p,off,co){
@@ -1010,7 +1011,7 @@ function bm01(p,off,co){
   const adv=sumK(it,"Tạm ứng"),tc=sumK(it,"Chi"),ret=sumK(it,"Hoàn ứng"),bal=o0+adv-tc-ret,cC=sumK(v("Có chứng từ"),"Chi"),cN=sumK(v("Không có chứng từ"),"Chi");
   const sr=(l,n,bd)=>{const c=bd?(bal>0?"rgIII":bal<0?"rgIV":"rgII"):"";return `<tr>${td(l,{cls:("l "+c).trim()})}${td(money(n),{cls:c})}</tr>`};
   const sm=`<table class="rt" style="min-width:0;max-width:440px;margin-top:14px"><thead><tr><th colspan="2" style="text-align:left">TỔNG HỢP TẠM ỨNG VÀ HOÀN ỨNG</th></tr></thead><tbody>${sr("Số dư đầu kỳ chuyển sang",o0)}${sr("(+) Tạm ứng nhận trong kỳ",adv)}${sr("(-) Chi có chứng từ",cC)}${sr("(-) Chi không có chứng từ",cN)}${sr("(-) Chi chờ bổ sung chứng từ",tc-cC-cN)}${sr("(-) Đã hoàn ứng cho công ty",ret)}${sr(bal>0?"CÒN DƯ CẦN HOÀN ỨNG":bal<0?"CHI VƯỢT TẠM ỨNG (CÔNG TY BÙ)":"ĐÃ CÂN ĐỐI",Math.abs(bal),1)}</tbody></table>`;
-  $("rbody").dataset.name="BM01_Tam_ung_chi_tieu_"+a+"_den_"+b;
+  $("rbody").dataset.name=repFn("Báo cáo BM01",a,b);
   return `<div class="rh"><b>BẢNG THEO DÕI TẠM ỨNG VÀ CHI TIÊU ${lab}</b><br>Đơn vị: PHÒNG ${esc(CFG.unit.toUpperCase())}${co?" - "+esc(co):""}<br>Đvt: đồng</div><table class="rt"><thead><tr><th>STT</th><th>Công ty</th><th>Nội dung</th><th>Số tiền</th><th>Ngày</th><th>Đối tác</th><th>Dự án</th><th>Chứng từ</th><th>Ghi chú</th></tr></thead><tbody>${grp("I","TẠM ỨNG NHẬN TRONG KỲ",it.filter(x=>x.kind==="Tạm ứng"))}${grp("II","CHI CÓ CHỨNG TỪ",v("Có chứng từ"))}${grp("III","CHI KHÔNG CÓ CHỨNG TỪ",v("Không có chứng từ"))}${grp("IV","CHI CHỜ BỔ SUNG CHỨNG TỪ",v("Chờ bổ sung chứng từ"))}${grp("V","HOÀN ỨNG CHO CÔNG TY",it.filter(x=>x.kind==="Hoàn ứng"))}</tbody></table>${sm}`;
 }
 const togCus=()=>{const c=$("rper").value==="custom";$("rcus").hidden=!c;$("rkp").hidden=c};
