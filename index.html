@@ -2579,6 +2579,7 @@ function ltAuto(z){
   if(/nddpl|nguoidaidien/.test(t)){const t0=today(),a=d.pos.filter(p=>same(p.co,co)&&/nddpl|daidienphapluat/.test(norm(p.role))&&activeP(p,t0));return a.map(p=>p.name+(p.title?" ("+p.title+")":"")+(p.from?" từ "+fmt(p.from):"")).join("; ")}
   if(/nganh/.test(t)){const a=g.filter(x=>/ngành/i.test(x.tx));return a.length?sh(a):""}
   if(/truso|diachi/.test(t)){const a=g.filter(x=>/trụ sở|địa chỉ/i.test(x.tx));return a.length?sh(a):""}
+  if(/giayphep|hoso.*khac/.test(t)){const a=(d.cp||[]).filter(x=>same(x.co,co)),gp=a.filter(x=>/giấy phép|điều kiện/i.test(x.loai||"")),nb=a.length-gp.length;return (gp.length?gp.length+" giấy phép/điều kiện kinh doanh: "+gp.map(x=>x.ten).join("; ")+". ":"Chưa ghi nhận giấy phép con/điều kiện kinh doanh nào. ")+(nb?nb+" hồ sơ nội bộ đang theo dõi: "+a.filter(x=>!gp.includes(x)).map(x=>x.ten.split(":")[0]).join("; ")+".":"")}
   if(/gcn|dkkd/.test(t)&&g.length)return "ghi nhận "+g.length+" lần: "+g[0].lan+" ("+fmt(g[0].ngay)+") đến "+g[g.length-1].lan+" ("+fmt(g[g.length-1].ngay)+")";
   return "";
 }
