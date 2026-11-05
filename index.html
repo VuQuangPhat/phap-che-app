@@ -1409,12 +1409,13 @@ function shUnpack(T){
 /* ----- Google Identity Services ----- */
 function shLoadGsi(){return new Promise((ok,no)=>{if(window.google&&google.accounts&&google.accounts.oauth2)return ok();const s=document.createElement("script");s.src="https://accounts.google.com/gsi/client";s.onload=ok;s.onerror=()=>no(new Error("Không tải được thư viện đăng nhập Google"));document.head.appendChild(s)})}
 let shAuthP=null;
+function shCachedOk(){for(const S of [sessionStorage,localStorage])try{const m=JSON.parse(S.getItem("phapche_sh_tok2")||"null");if(m&&m.t&&m.exp-60000>Date.now())return true}catch(e){}return false}
 async function shAuth(interactive,fresh){
   if(!fresh&&shTok&&Date.now()<shExp-60000)return shTok;
   if(!fresh)for(const S of [sessionStorage,localStorage])try{const m=JSON.parse(S.getItem("phapche_sh_tok2")||"null");if(m&&m.t&&m.exp-60000>Date.now()){shTok=m.t;shExp=m.exp;return shTok}}catch(e){}
   try{const d=[];for(const [n,S] of [["session",sessionStorage],["local",localStorage]])try{const m=JSON.parse(S.getItem("phapche_sh_tok2")||"null");d.push(n+": "+(m?Math.round((m.exp-Date.now())/60000)+" phút":"trống"))}catch(e){d.push(n+": lỗi")}
     let x=document.getElementById("authdbg");if(!x){x=document.createElement("div");x.id="authdbg";x.style.cssText="position:fixed;left:6px;bottom:6px;z-index:99999;max-width:92vw;background:#fff4d6;color:#6b4e00;border:1px solid #e7cf8a;border-radius:8px;padding:6px 10px;font-size:12px;line-height:1.4;cursor:pointer;overflow-wrap:anywhere";x.title="Bấm để ẩn";x.onclick=()=>x.remove();document.body.appendChild(x)}
-    x.textContent="Đang xin token Google mới ("+(fresh?"bấm nút":interactive?"có tương tác":"tự động")+"). Token đã lưu: "+d.join("; ")+". Bản 05/11-e."}catch(e){}
+    x.textContent="Đang xin token Google mới ("+(fresh?"bấm nút":interactive?"có tương tác":"tự động")+"). Token đã lưu: "+d.join("; ")+". Bản 05/11-f."}catch(e){}
   if(!interactive&&!fresh&&shAuthP)return shAuthP;
   await shLoadGsi();
   const pr=new Promise((ok,no)=>{
@@ -1512,7 +1513,7 @@ async function shInit(){
       if(confirm("Máy này có thay đổi chưa ghi lên Google Sheet.\nOK = ghi lên (ghi đè bản trên Sheet).\nCancel = bỏ thay đổi và tải bản từ Sheet.")){await shPush(true)}else{await shPull()}return}
     const d=await shGet();gateOpen();if(d===null){await shPush(true);return}
     ghApply(d);ghStatus("Đã tải từ Google Sheet lúc "+new Date().toLocaleTimeString("vi-VN"))
-  }catch(e){if(/403/.test(e.message)){shTok=null;shExp=0;shMail="";try{sessionStorage.removeItem("phapche_sh_tok2");localStorage.removeItem("phapche_sh_tok2");localStorage.removeItem("phapche_sh_mail")}catch(_){}}gateMsg("Không vào được: "+e.message);ghStatus("Lỗi Google Sheet: "+e.message+" (đang dùng dữ liệu của máy này)",true)}}
+  }catch(e){const gg=$("gate_go");if(gg)gg.style.visibility="";if(/403/.test(e.message)){shTok=null;shExp=0;shMail="";try{sessionStorage.removeItem("phapche_sh_tok2");localStorage.removeItem("phapche_sh_tok2");localStorage.removeItem("phapche_sh_mail")}catch(_){}}gateMsg("Không vào được: "+e.message);ghStatus("Lỗi Google Sheet: "+e.message+" (đang dùng dữ liệu của máy này)",true)}}
 const shDlg=document.createElement("dialog");
 shDlg.id="shdlg";shDlg.style.cssText=ghDlg.style.cssText;
 shDlg.innerHTML=`<h2 style="margin:0 0 8px;font-size:16px">Đồng bộ dữ liệu với Google Sheet</h2>
@@ -1672,7 +1673,8 @@ async function drvSync(rows,oldMails,fid){
 
 /* Cổng đăng nhập: chặn toàn bộ giao diện cho tới khi đăng nhập Google và đọc được Sheet */
 (()=>{const go=$("gate_go"),cf=$("gate_cfg");if(!go)return;
-  go.onclick=ev=>{const fresh=!!(ev&&ev.isTrusted&&ev.target&&ev.target.closest&&ev.target.closest("#gate_go"));const inv=$("inviteGo");if(inv){inv.click();return}
+  if(SH&&shCachedOk()){go.style.visibility="hidden";gateMsg("Đang kết nối Google Sheet…")}
+  go.onclick=ev=>{const fresh=!!(ev&&ev.isTrusted&&ev.target&&ev.target.closest&&ev.target.closest("#gate_go"))&&!shCachedOk();const inv=$("inviteGo");if(inv){inv.click();return}
     if(!SH){gateMsg("Chưa có cấu hình kết nối. Hãy mở bằng link mời do quản trị gửi, hoặc bấm cấu hình lần đầu nếu bạn là quản trị.");return}
     gateMsg("Đang đăng nhập…");shAuth(true,fresh).then(()=>shInit()).catch(e=>gateMsg(e.message))};
   cf.onclick=ev=>{ev.preventDefault();$("gate").style.display="none";$("shb").click();
