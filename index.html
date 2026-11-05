@@ -435,6 +435,7 @@ body.pv .mp{border-bottom:2px dashed #aab;margin-bottom:0}
 table.fm.m78{table-layout:fixed;font-size:8.5px;width:100%}table.fm.m78 th,table.fm.m78 td{padding:2px 3px;word-break:break-word;overflow-wrap:anywhere}
 .m78f{font-size:8.5px;line-height:1.3;margin-top:8px;border-top:1px solid #000;padding-top:3px;text-align:justify}
 @media print{#pvbar{display:none!important}body.pv #vprof{padding-top:0!important}html,body.pv{background:#fff!important}body.pv #plist{width:auto;min-width:0;max-width:none;margin:0;box-shadow:none;overflow:visible}body.pv .fpage,body.pv .fpage.land{padding:0;border:0}body.pv .mp{border:0}}
+#rnd .rndl{font-size:12px;color:var(--mute);font-weight:600}#rnd .rndc{display:inline-flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;white-space:nowrap}#rnd .rndc small{color:var(--mute)}#rnd button{padding:3px 10px;font-size:12px}
 </style>
 </head>
 <body>
@@ -547,6 +548,7 @@ table.fm.m78{table-layout:fixed;font-size:8.5px;width:100%}table.fm.m78 th,table
     <select id="rkp"><option value="0">Kỳ hiện tại</option><option value="1">Kỳ trước</option></select>
     <select id="rco"></select>
   </div>
+  <div id="rnd" class="bar" style="margin-bottom:10px;flex-wrap:wrap;gap:6px 12px;align-items:center"></div>
   <div id="rbody"></div>
   <p class="hint">Số việc tồn và quá hạn tính tại ngày cuối kỳ. Trạng thái chi tiết (Chờ phản hồi, Tạm dừng) lấy theo hiện tại. Xuất Excel tạo file mở được bằng Excel, có thể có cảnh báo định dạng khi mở.</p>
   <div class="foot"><button id="pedit" style="margin-right:auto">Chỉnh kế hoạch công việc</button><button id="rxls">Xuất Excel</button><button id="rprint">In / PDF</button><button class="primary" id="rclose">Đóng</button></div>
@@ -884,7 +886,7 @@ const planOv=(p,off,e)=>(CFG.plans||{})[planKey(p,off,e.cs)]||null;
 function planGoal(p,off,cs,pre){
   const [a,b]=range(p,off),[na,nb]=range(p,off-1);
   const notDone=t=>!(t.st==="Hoàn thành"&&t.done&&t.done<=b);
-  const l=tasks.filter(t=>cs.includes(t.co)&&notDone(t)).sort((x,y)=>(+x.pri-+y.pri)||((x.due||"9")<(y.due||"9")?-1:1)).map(t=>(pre?t.co+": ":"")+t.title+(t.due?` (hạn ${fmt(t.due)})`:"")+(t.pri==="1"?" - ưu tiên 1":"")+(t.st==="Tạm dừng"?" [tạm dừng]":""));
+  const l=tasks.filter(rndOk).filter(t=>cs.includes(t.co)&&notDone(t)).sort((x,y)=>(+x.pri-+y.pri)||((x.due||"9")<(y.due||"9")?-1:1)).map(t=>(pre?t.co+": ":"")+t.title+(t.due?` (hạn ${fmt(t.due)})`:"")+(t.pri==="1"?" - ưu tiên 1":"")+(t.st==="Tạm dừng"?" [tạm dừng]":""));
   l.push(`Thực hiện các công việc khác theo chỉ đạo của Lãnh đạo và công việc theo mục tiêu năm ${na.slice(0,4)} của Phòng`);
   return `Mục tiêu kế hoạch ${plab(p,na,nb)}:\n`+l.map((x,i)=>`${i+1}/ ${x}`).join("\n");
 }
@@ -912,8 +914,24 @@ $("psave").onclick=()=>{
   saveC();$("pdlg").close();genReport();
 };
 $("pcancel").onclick=()=>$("pdlg").close();
+/* Nội dung công việc để chọn tính vào báo cáo: lấy theo hồ sơ nguồn liên kết, nếu không có thì theo đầu tiêu đề */
+const RND=["Review HĐ","Hồ sơ nộp Sở TC","Nghị quyết","Đầu tư","Việc khác"];
+function ndOf(t){const P=CFG.prof||{};
+  if((P.hs||[]).some(h=>h.tid===t.id))return "Hồ sơ nộp Sở TC";
+  if((P.nq||[]).some(h=>h.tid===t.id))return "Nghị quyết";
+  if((P.ct||[]).some(h=>h.tid===t.id))return "Review HĐ";
+  if(isInvTask(t))return "Đầu tư";
+  const s=String(t.title||"");
+  if(/^Hồ sơ nộp Sở TC/i.test(s))return "Hồ sơ nộp Sở TC";
+  if(/^Review (HĐ|hợp đồng)/i.test(s))return "Review HĐ";
+  return "Việc khác"}
+const rndSel=()=>Array.isArray(CFG.rnd)?CFG.rnd.filter(x=>RND.includes(x)):RND.slice();
+const rndOk=t=>rndSel().includes(ndOf(t));
+function rndDraw(){const el=$("rnd");if(!el)return;const s=rndSel();
+  el.innerHTML='<span class="rndl">Nội dung tính vào báo cáo:</span>'+RND.map(n=>`<label class="rndc"><input type="checkbox" data-nd="${esc(n)}"${s.includes(n)?" checked":""}> ${esc(n)} <small>(${tasks.filter(t=>ndOf(t)===n).length})</small></label>`).join("")+'<button type="button" data-ndall="1">Chọn tất cả</button><button type="button" data-ndall="0">Bỏ chọn</button>'}
 function bm02(p,off,co){
   const [a,b]=range(p,off),[na,nb]=range(p,off-1);
+  const TK=tasks.filter(rndOk);
   const inR=s=>s&&s>=a&&s<=b;
   const openAt=t=>(!t.recv||t.recv<=b)&&!(t.st==="Hoàn thành"&&t.done&&t.done<=b);
   const rel=t=>inR(t.recv)||inR(t.done)||openAt(t);
@@ -929,7 +947,7 @@ function bm02(p,off,co){
     const st=list.map(t=>t.recv).filter(Boolean).sort()[0]||a,en=list.map(t=>openAt(t)?(t.due||b):(t.done||b)).sort().pop();
     return{d:head.concat(body).join("\n"),r:op.length?`Đang xử lý (hoàn thành ${dn}/${list.length})`:`Hoàn thành ${dn}/${list.length}`,s:fmt(st),e:fmt(en)};
   };
-  const block=(cs,pre)=>{const list=tasks.filter(t=>cs.includes(t.co)&&rel(t));return(list.some(t=>t.type==="Khác")?TYPES:BASE).map(ty=>({ty,...cell(list.filter(t=>t.type===ty),ty,pre)}))};
+  const block=(cs,pre)=>{const list=TK.filter(t=>cs.includes(t.co)&&rel(t));return(list.some(t=>t.type==="Khác")?TYPES:BASE).map(ty=>({ty,...cell(list.filter(t=>t.type===ty),ty,pre)}))};
   const sec=(t,c)=>`<tr class="sec"><td colspan="8" class="${c}">${esc(t)}</td></tr>`;
   const emit=(hm,ents)=>{const tot=ents.reduce((x,e)=>x+e.rows.length,0);let first=true,o="";
     ents.forEach(e=>e.rows.forEach((r,i)=>{o+=`<tr>${td(++n)}${first?td(hm,{rs:tot}):""}${i===0?td(e.label,{rs:e.rows.length,cls:rcl(e.label)}):""}${td(r.ty)}${td(r.d,{cls:"l"})}${td(r.r,{cls:/^Hoàn thành/.test(r.r)?"rok":"rwip"})}${td(r.s)}${td(r.e)}</tr>`;first=false}));return o};
@@ -962,13 +980,17 @@ function bm02(p,off,co){
   let sm="";
   if(p==="custom"){
     const asOf=b<today()?b:today(),cs=co?[co]:COS();
-    const rw=cs.map(c=>{const x=tasks.filter(t=>t.co===c&&rel(t));return{c,n:x.filter(t=>inR(t.recv)).length,d:x.filter(t=>t.st==="Hoàn thành"&&inR(t.done)).length,o:x.filter(openAt).length,l:x.filter(t=>openAt(t)&&t.due&&t.due<asOf).length,h:x.filter(t=>inR(t.done||t.recv)).reduce((y,t)=>y+(+t.hd||0),0)}}).filter(r=>r.n||r.d||r.o||r.h);
+    const rw=cs.map(c=>{const x=TK.filter(t=>t.co===c&&rel(t));return{c,n:x.filter(t=>inR(t.recv)).length,d:x.filter(t=>t.st==="Hoàn thành"&&inR(t.done)).length,o:x.filter(openAt).length,l:x.filter(t=>openAt(t)&&t.due&&t.due<asOf).length,h:x.filter(t=>inR(t.done||t.recv)).reduce((y,t)=>y+(+t.hd||0),0)}}).filter(r=>r.n||r.d||r.o||r.h);
     const tt=rw.reduce((y,r)=>({n:y.n+r.n,d:y.d+r.d,o:y.o+r.o,l:y.l+r.l,h:y.h+r.h}),{n:0,d:0,o:0,l:0,h:0});
     sm=`<table class="rt" style="min-width:0;margin-bottom:14px"><thead><tr><th colspan="6" style="text-align:left">TỔNG HỢP KẾT QUẢ CÔNG VIỆC TRONG KỲ</th></tr><tr><th>Đơn vị</th><th>Tiếp nhận</th><th>Hoàn thành</th><th>Tồn cuối kỳ</th><th>Quá hạn</th><th>Hợp đồng đã kiểm tra</th></tr></thead><tbody>${rw.map(r=>`<tr>${td(r.c)}${td(r.n)}${td(r.d)}${td(r.o)}${td(r.l)}${td(r.h)}</tr>`).join("")}<tr class="sec">${td("Tổng cộng")}${td(tt.n)}${td(tt.d)}${td(tt.o)}${td(tt.l)}${td(tt.h)}</tr></tbody></table>`;
   }
+  const asN=b<today()?b:today(),csN=co?[co]:COS();
+  const ndR=rndSel().map(n=>{const x=tasks.filter(t=>ndOf(t)===n&&csN.includes(t.co)&&rel(t));return{n,r:x.filter(t=>inR(t.recv)).length,d:x.filter(t=>t.st==="Hoàn thành"&&inR(t.done)).length,o:x.filter(openAt).length,l:x.filter(t=>openAt(t)&&t.due&&t.due<asN).length,h:x.filter(t=>inR(t.done||t.recv)).reduce((y,t)=>y+(+t.hd||0),0)}});
+  const ndT=ndR.reduce((y,r)=>({r:y.r+r.r,d:y.d+r.d,o:y.o+r.o,l:y.l+r.l,h:y.h+r.h}),{r:0,d:0,o:0,l:0,h:0});
+  const nd=ndR.length?`<table class="rt" style="min-width:0;margin-bottom:14px"><thead><tr><th colspan="6" style="text-align:left">SỐ LIỆU THEO NỘI DUNG CÔNG VIỆC ĐƯỢC CHỌN</th></tr><tr><th>Nội dung</th><th>Tiếp nhận</th><th>Hoàn thành</th><th>Tồn cuối kỳ</th><th>Quá hạn</th><th>Hợp đồng đã kiểm tra</th></tr></thead><tbody>${ndR.map(r=>`<tr>${td(r.n,{cls:"l"})}${td(r.r)}${td(r.d)}${td(r.o)}${td(r.l)}${td(r.h)}</tr>`).join("")}<tr class="sec">${td("Tổng cộng",{cls:"l"})}${td(ndT.r)}${td(ndT.d)}${td(ndT.o)}${td(ndT.l)}${td(ndT.h)}</tr></tbody></table>`:'<p class="hint" style="color:var(--seal)">Chưa tick nội dung nào, báo cáo không có công việc.</p>';
   const head=`<div class="rh"><b>BÁO CÁO CÔNG VIỆC ${plab(p,a,b,1)} ${esc(CFG.org)}</b><br>Đơn vị: ${esc(CFG.unit)}${co?" - "+esc(co):""}</div>`;
   $("rbody").dataset.name="BM02_Bao_cao_cong_viec_"+a;
-  return head+sm+`<table class="rt"><colgroup><col style="width:4%"><col style="width:10%"><col style="width:11%"><col style="width:11%"><col style="width:36%"><col style="width:12%"><col style="width:8%"><col style="width:8%"></colgroup><thead><tr><th>STT</th><th>HẠNG MỤC CÔNG VIỆC</th><th>ĐƠN VỊ</th><th>NỘI DUNG CÔNG VIỆC</th><th>CHI TIẾT</th><th>KẾT QUẢ MỤC TIÊU</th><th>BẮT ĐẦU</th><th>KẾT THÚC</th></tr></thead><tbody>${s}</tbody></table>`;
+  return head+nd+sm+`<table class="rt"><colgroup><col style="width:4%"><col style="width:10%"><col style="width:11%"><col style="width:11%"><col style="width:36%"><col style="width:12%"><col style="width:8%"><col style="width:8%"></colgroup><thead><tr><th>STT</th><th>HẠNG MỤC CÔNG VIỆC</th><th>ĐƠN VỊ</th><th>NỘI DUNG CÔNG VIỆC</th><th>CHI TIẾT</th><th>KẾT QUẢ MỤC TIÊU</th><th>BẮT ĐẦU</th><th>KẾT THÚC</th></tr></thead><tbody>${s}</tbody></table>`;
 }
 function bm01(p,off,co){
   const [a,b]=range(p,off),m1=a.slice(0,7),m2=b.slice(0,7);
@@ -985,7 +1007,9 @@ function bm01(p,off,co){
 }
 const togCus=()=>{const c=$("rper").value==="custom";$("rcus").hidden=!c;$("rkp").hidden=c};
 function genReport(){$("pedit").hidden=$("rtpl").value!=="bm02";const p=$("rper").value,off=p==="custom"?0:+$("rkp").value,co=$("rco").value;$("rbody").innerHTML=$("rtpl").value==="bm01"?bm01(p,off,co):bm02(p,off,co)}
-$("rep").onclick=()=>{togCus();genReport();$("rdlg").showModal()};
+$("rep").onclick=()=>{togCus();rndDraw();genReport();$("rdlg").showModal()};
+$("rnd").onchange=e=>{const c=e.target.closest("[data-nd]");if(!c)return;const s=new Set(rndSel());c.checked?s.add(c.dataset.nd):s.delete(c.dataset.nd);CFG.rnd=RND.filter(x=>s.has(x));saveC();rndDraw();genReport()};
+$("rnd").onclick=e=>{const b=e.target.closest("[data-ndall]");if(!b)return;CFG.rnd=b.dataset.ndall==="1"?RND.slice():[];saveC();rndDraw();genReport()};
 ["rtpl","rper","rkp","rco","rfrom","rto"].forEach(i=>$(i).onchange=()=>{togCus();genReport()});
 $("rclose").onclick=()=>$("rdlg").close();
 $("rprint").onclick=()=>{const pg=document.createElement("style");pg.textContent="@page{size:A4 landscape;margin:10mm}";document.head.appendChild(pg);document.body.classList.add("rpt");document.querySelectorAll("#rbody table.rt tr").forEach(r=>{if(r.offsetHeight>520)r.classList.add("split")});const done=()=>{pg.remove();document.body.classList.remove("rpt");document.querySelectorAll("#rbody tr.split").forEach(r=>r.classList.remove("split"));window.removeEventListener("afterprint",done)};window.addEventListener("afterprint",done);window.print()};
