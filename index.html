@@ -1421,7 +1421,7 @@ async function shApi(path,opt,sid){
   const tk=await shAuth(false);
   const r=await fetch("https://sheets.googleapis.com/v4/spreadsheets/"+(sid||SH.id)+path,{...(opt||{}),headers:{Authorization:"Bearer "+tk,"Content-Type":"application/json"}});
   if(r.status===401){shTok=null;try{sessionStorage.removeItem("phapche_sh_tok2");localStorage.removeItem("phapche_sh_tok2")}catch(e){}throw new Error("Phiên Google hết hạn: bấm nút Đồng bộ Google Sheet để đăng nhập lại")}
-  if(r.status===403){if(opt&&opt.method&&opt.method!=="GET"){shRO=true;shApplyRO()}else{shTok=null;shExp=0;shMail="";try{sessionStorage.removeItem("phapche_sh_tok2");localStorage.removeItem("phapche_sh_tok2");localStorage.removeItem("phapche_sh_mail")}catch(e){}}throw new Error("Không đủ quyền với Sheet (403): tài khoản Google đang dùng chưa được chia sẻ hoặc chỉ được xem. Bấm Đăng nhập Google và chọn đúng tài khoản chủ Sheet")}
+  if(r.status===403){if(opt&&opt.method&&opt.method!=="GET"){shRO=true;shApplyRO()}throw new Error("Không đủ quyền với Sheet (403): tài khoản Google đang dùng chưa được chia sẻ hoặc chỉ được xem. Bấm Đăng nhập Google và chọn đúng tài khoản chủ Sheet")}
   if(r.status===404)throw new Error("Không thấy Sheet (kiểm tra ID)");
   if(!r.ok)throw new Error("Google Sheets "+r.status+" "+(await r.text()).slice(0,120));
   return r.json()}
@@ -1507,7 +1507,7 @@ async function shInit(){
       if(confirm("Máy này có thay đổi chưa ghi lên Google Sheet.\nOK = ghi lên (ghi đè bản trên Sheet).\nCancel = bỏ thay đổi và tải bản từ Sheet.")){await shPush(true)}else{await shPull()}return}
     const d=await shGet();gateOpen();if(d===null){await shPush(true);return}
     ghApply(d);ghStatus("Đã tải từ Google Sheet lúc "+new Date().toLocaleTimeString("vi-VN"))
-  }catch(e){gateMsg("Không vào được: "+e.message);ghStatus("Lỗi Google Sheet: "+e.message+" (đang dùng dữ liệu của máy này)",true)}}
+  }catch(e){if(/403/.test(e.message)){shTok=null;shExp=0;shMail="";try{sessionStorage.removeItem("phapche_sh_tok2");localStorage.removeItem("phapche_sh_tok2");localStorage.removeItem("phapche_sh_mail")}catch(_){}}gateMsg("Không vào được: "+e.message);ghStatus("Lỗi Google Sheet: "+e.message+" (đang dùng dữ liệu của máy này)",true)}}
 const shDlg=document.createElement("dialog");
 shDlg.id="shdlg";shDlg.style.cssText=ghDlg.style.cssText;
 shDlg.innerHTML=`<h2 style="margin:0 0 8px;font-size:16px">Đồng bộ dữ liệu với Google Sheet</h2>
