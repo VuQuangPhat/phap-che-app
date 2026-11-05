@@ -1408,18 +1408,20 @@ function shUnpack(T){
   if(Object.keys(prof).length)cfg.prof=prof;o.cfg=cfg;return o}
 /* ----- Google Identity Services ----- */
 function shLoadGsi(){return new Promise((ok,no)=>{if(window.google&&google.accounts&&google.accounts.oauth2)return ok();const s=document.createElement("script");s.src="https://accounts.google.com/gsi/client";s.onload=ok;s.onerror=()=>no(new Error("Không tải được thư viện đăng nhập Google"));document.head.appendChild(s)})}
+let shAuthP=null;
 async function shAuth(interactive,fresh){
   if(!fresh&&shTok&&Date.now()<shExp-60000)return shTok;
   if(!fresh)for(const S of [sessionStorage,localStorage])try{const m=JSON.parse(S.getItem("phapche_sh_tok2")||"null");if(m&&m.t&&m.exp-60000>Date.now()){shTok=m.t;shExp=m.exp;return shTok}}catch(e){}
   try{const d=[];for(const [n,S] of [["session",sessionStorage],["local",localStorage]])try{const m=JSON.parse(S.getItem("phapche_sh_tok2")||"null");d.push(n+": "+(m?Math.round((m.exp-Date.now())/60000)+" phút":"trống"))}catch(e){d.push(n+": lỗi")}
     let x=document.getElementById("authdbg");if(!x){x=document.createElement("div");x.id="authdbg";x.style.cssText="position:fixed;left:6px;bottom:6px;z-index:99999;max-width:92vw;background:#fff4d6;color:#6b4e00;border:1px solid #e7cf8a;border-radius:8px;padding:6px 10px;font-size:12px;line-height:1.4;cursor:pointer;overflow-wrap:anywhere";x.title="Bấm để ẩn";x.onclick=()=>x.remove();document.body.appendChild(x)}
-    x.textContent="Đang xin token Google mới ("+(fresh?"bấm nút":interactive?"có tương tác":"tự động")+"). Token đã lưu: "+d.join("; ")+". Bản 05/11-d."}catch(e){}
+    x.textContent="Đang xin token Google mới ("+(fresh?"bấm nút":interactive?"có tương tác":"tự động")+"). Token đã lưu: "+d.join("; ")+". Bản 05/11-e."}catch(e){}
+  if(!interactive&&!fresh&&shAuthP)return shAuthP;
   await shLoadGsi();
-  return new Promise((ok,no)=>{
+  const pr=new Promise((ok,no)=>{
     const tc=google.accounts.oauth2.initTokenClient({client_id:SH.client,hint:fresh?undefined:(()=>{try{return localStorage.getItem("phapche_sh_mail")||undefined}catch(e){return undefined}})(),scope:"https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/userinfo.email",prompt:interactive?"":"none",
       callback:r=>{if(r.error)return no(new Error(r.error==="interaction_required"||r.error==="popup_closed"?"Phiên đăng nhập đã hết hạn: bấm Đăng nhập Google (một lần bấm)":r.error));shTok=r.access_token;shExp=Date.now()+(+r.expires_in||3600)*1000;try{const v=JSON.stringify({t:shTok,exp:shExp});sessionStorage.setItem("phapche_sh_tok2",v);localStorage.setItem("phapche_sh_tok2",v)}catch(e){}ok(shTok)},
       error_callback:e=>no(new Error("Phiên đăng nhập đã hết hạn: bấm Đăng nhập Google (một lần bấm)"))});
-    tc.requestAccessToken(fresh?{prompt:"select_account"}:interactive?{}:{prompt:""})})}
+    tc.requestAccessToken(fresh?{prompt:"select_account"}:interactive?{}:{prompt:"none"})});if(!interactive&&!fresh){shAuthP=pr;const cl=()=>{shAuthP=null};pr.then(cl,cl)}return pr}
 async function shApi(path,opt,sid){
   const tk=await shAuth(false);
   const r=await fetch("https://sheets.googleapis.com/v4/spreadsheets/"+(sid||SH.id)+path,{...(opt||{}),headers:{Authorization:"Bearer "+tk,"Content-Type":"application/json"}});
