@@ -1667,9 +1667,9 @@ async function drvSync(rows,oldMails,fid){
 
 /* Cổng đăng nhập: chặn toàn bộ giao diện cho tới khi đăng nhập Google và đọc được Sheet */
 (()=>{const go=$("gate_go"),cf=$("gate_cfg");if(!go)return;
-  go.onclick=()=>{const inv=$("inviteGo");if(inv){inv.click();return}
+  go.onclick=ev=>{const fresh=!!(ev&&ev.isTrusted&&ev.target&&ev.target.closest&&ev.target.closest("#gate_go"));const inv=$("inviteGo");if(inv){inv.click();return}
     if(!SH){gateMsg("Chưa có cấu hình kết nối. Hãy mở bằng link mời do quản trị gửi, hoặc bấm cấu hình lần đầu nếu bạn là quản trị.");return}
-    gateMsg("Đang đăng nhập…");shAuth(true,true).then(()=>shInit()).catch(e=>gateMsg(e.message))};
+    gateMsg("Đang đăng nhập…");shAuth(true,fresh).then(()=>shInit()).catch(e=>gateMsg(e.message))};
   cf.onclick=ev=>{ev.preventDefault();$("gate").style.display="none";$("shb").click();
     const o=new MutationObserver(()=>{if(!shDlg.open){o.disconnect();if($("gate"))$("gate").style.display="flex"}});o.observe(shDlg,{attributes:true,attributeFilter:["open"]})};
   if(SH){const once=ev=>{document.removeEventListener("pointerdown",once,true);if($("gate")&&!ev.target.closest("#gate_cfg,#gate_go"))go.click()};document.addEventListener("pointerdown",once,true)}
