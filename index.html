@@ -2583,13 +2583,14 @@ function ltAuto(z){
   if(/gcn|dkkd/.test(t)&&g.length)return "ghi nhận "+g.length+" lần: "+g[0].lan+" ("+fmt(g[0].ngay)+") đến "+g[g.length-1].lan+" ("+fmt(g[g.length-1].ngay)+")";
   return "";
 }
+function lkH(v){return esc(v||"").replace(/(https?:\/\/[^\s<]+)/g,u=>`<a href="${u}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Mở thư mục Drive</a>`)}
 function rLt(r,all){
   const n=t=>all.filter(x=>x.tt===t).length;
   $("pstats").innerHTML=st(all.length,"Hạng mục lưu trữ")+st(n("Đủ"),"Đủ hồ sơ")+st(n("Có một phần"),"Có một phần",n("Có một phần")?"late":"")+st(n("Thiếu")+n("Không có hồ sơ"),"Thiếu hoặc không có",n("Thiếu")+n("Không có hồ sơ")?"late":"");
   if(!r.length){$("plist").innerHTML=empty();return}
   const L=[...r].sort((a,b)=>ci(a.co)-ci(b.co)||sttNum(a)-sttNum(b));
   $("plist").innerHTML=`<table class="m"><thead><tr><th>Pháp nhân</th><th>Loại hồ sơ</th><th>Đường dẫn lưu trữ</th><th>Nội dung, ghi chú</th><th>Cần bổ sung</th><th>Tình trạng</th></tr></thead><tbody>`+
-  L.map(x=>`<tr data-id="${x.id}"><td>${chip(x.co)}</td><td class="t"><b>${esc((x.stt?x.stt+". ":"")+(x.ten||""))}</b></td><td class="t"><small class="s clamp" title="${esc(x.lk||"")}">${esc(x.lk||"")}</small></td><td class="t">${esc(x.nd||"").replace(/\n/g,"<br>")}${(a=>a?`<small class="s" style="color:var(--brand)">Trên app: ${esc(a)}</small>`:"")(ltAuto(x))}</td><td class="t">${esc(x.bs||"")}</td><td><span style="color:${LT_C[x.tt]||"var(--mute)"};font-weight:600">${esc(x.tt||"")}</span></td></tr>`).join("")+`</tbody></table>`;
+  L.map(x=>`<tr data-id="${x.id}"><td>${chip(x.co)}</td><td class="t"><b>${esc((x.stt?x.stt+". ":"")+(x.ten||""))}</b></td><td class="t"><small class="s">${lkH(x.lk)}</small></td><td class="t">${esc(x.nd||"").replace(/\n/g,"<br>")}${(a=>a?`<small class="s" style="color:var(--brand)">Trên app: ${esc(a)}</small>`:"")(ltAuto(x))}</td><td class="t">${esc(x.bs||"")}</td><td><span style="color:${LT_C[x.tt]||"var(--mute)"};font-weight:600">${esc(x.tt||"")}</span></td></tr>`).join("")+`</tbody></table>`;
 }
 function rDs(r,all){
   const d=PD(),cs=GCO?[GCO]:[...new Set([...(d.co||[]).map(c=>c.code),...all.map(x=>x.co)].filter(Boolean))].filter(c=>gcnLines((d.co||[]).find(x=>same(x.code,c))).length||all.some(x=>same(x.co,c)));
@@ -2633,7 +2634,7 @@ function bcHtml(b){
    +(b.gt?`<p>${esc(b.gt)}</p>`:"")+nn.map((v,i)=>`<p style="margin:2px 0 2px 14px">(${i+1}) ${esc(v)}</p>`).join("")
    +`<ul style="margin:4px 0 4px 18px;padding:0">${bl("Đã làm",b.ld)}${bl("Chưa làm",b.cl)}${bl("Kế hoạch",b.pa)}</ul>`
    +`<p style="text-align:right;margin:6px 0 0"><i>${esc(b.ky||"")}</i></p><p style="text-align:right;margin:0"><b>${esc(b.cd||"")}</b></p><p style="text-align:right;margin:30px 0 0"><b>${esc(b.nguoi||"")}</b></p>`;
-  const A_=tbl(["Loại hồ sơ","Đường dẫn lưu trữ","Nội dung / ghi chú","Cần bổ sung"],ltAll.map(z=>`<tr><td style="${th}">${esc((z.stt?z.stt+". ":"")+(z.ten||""))}</td><td style="${th}">${esc(z.lk||"")}</td><td style="${th}">${esc(z.nd||"").replace(/\n/g,"<br>")}${(a=>a?`<br><i>Trên app: ${esc(a)}</i>`:"")(ltAuto(z))}</td><td style="${th}">${esc(z.bs||"")}</td></tr>`).join(""),[20,30,36,14]);
+  const A_=tbl(["Loại hồ sơ","Đường dẫn lưu trữ","Nội dung / ghi chú","Cần bổ sung"],ltAll.map(z=>`<tr><td style="${th}">${esc((z.stt?z.stt+". ":"")+(z.ten||""))}</td><td style="${th}">${lkH(z.lk)}</td><td style="${th}">${esc(z.nd||"").replace(/\n/g,"<br>")}${(a=>a?`<br><i>Trên app: ${esc(a)}</i>`:"")(ltAuto(z))}</td><td style="${th}">${esc(z.bs||"")}</td></tr>`).join(""),[20,30,36,14]);
   const B_=tbl(["Ngày GCN","GCN ĐKKD","Nội dung","Biên bản họp","Nghị quyết","Điều lệ"],ds.map(z=>`<tr><td style="${th};white-space:nowrap">${z.ngay?fmt(z.ngay):""}</td><td style="${th}">${esc(z.lan||"")}</td><td style="${th}">${esc(z.nd||"")}</td><td style="${th};${dsLech(z)&&dsDate(z.bbh)>z.ngay?"background:#fff2cc":bdn(z.bbh)}">${esc(z.bbh||"")}${dsDate(z.bbh)>z.ngay?" (!)":""}</td><td style="${th};${dsLech(z)&&dsDate(z.nq)>z.ngay?"background:#fff2cc":bdn(z.nq)}">${esc(z.nq||"")}${dsDate(z.nq)>z.ngay?" (!)":""}</td><td style="${th};${dsDate(z.dlq)>z.ngay?"background:#fff2cc":bdn(z.dlq)}">${esc(z.dlq||"")}${dsDate(z.dlq)>z.ngay?" (!)":""}</td></tr>`).join(""),[11,8,25,14,14,28]);
   const app=`<p style="text-align:center;font-size:14pt;color:#1f3864;font-weight:bold;margin:0 0 6px">PHỤ LỤC</p><p style="break-after:avoid"><b>A. Đường dẫn lưu trữ hồ sơ ${esc(co)}</b></p>${ltAll.length?A_:""}`
    +`<p style="margin-top:12px;break-after:avoid"><b>B. Bảng đối soát thành phần điều lệ (bản scan pdf có chữ ký)</b></p>${ds.length?B_:""}`
