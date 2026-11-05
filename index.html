@@ -247,7 +247,7 @@ body.pd .pcap{max-height:none!important;overflow:visible}body.pd .pcap::after,bo
 @media print{#sig{display:none!important}body.sp>*:not(#sprintbox){display:none!important}body.sp #sprintbox{display:block}#sprintbox .sl{page-break-after:always;break-after:page;-webkit-print-color-adjust:exact;print-color-adjust:exact}body.sp{background:#fff!important}}
 
 @media print{header,.tabs,#vlist,#vbud,#vdash{display:none!important}dialog:not([open]){display:none}#rdlg{position:static!important;inset:auto!important;width:100%!important;max-width:none!important;height:auto!important;max-height:none!important;overflow:visible!important;margin:0!important;border:0;padding:0;box-shadow:none;background:#fff}#rdlg::backdrop{display:none}html,body{height:auto!important;overflow:visible!important}#rdlg h2,#rdlg .bar,#rdlg .foot,#rdlg .hint{display:none}#rbody{max-height:none;border:0;overflow:visible;padding:0}}
-@media print{body.rpt>*:not(#rdlg):not(script):not(style){display:none!important}#rbody table.rt tr.split{break-inside:auto!important;page-break-inside:auto!important}#rbody table.rt tr.kg{break-after:avoid;page-break-after:avoid}#rbody table.rt{min-width:0;width:100%;font-size:11px;page-break-inside:auto}#rbody table.rt thead{display:table-header-group}#rbody table.rt tr{break-inside:avoid;page-break-inside:avoid}#rbody table.rt th,#rbody table.rt td{padding:3px 5px}#rbody .rh{break-after:avoid}#rbody table.rt tr.sec{break-after:avoid}}
+@media print{body.rpt>*:not(#rdlg):not(script):not(style){display:none!important}#rbody table.rt tr.split{break-inside:auto!important;page-break-inside:auto!important}#rbody table.rt tr:has(td[rowspan]){break-inside:auto;page-break-inside:auto}#rbody table.rt{min-width:0;width:100%;font-size:11px;page-break-inside:auto}#rbody table.rt thead{display:table-header-group}#rbody table.rt tr{break-inside:avoid;page-break-inside:avoid}#rbody table.rt th,#rbody table.rt td{padding:3px 5px}#rbody .rh{break-after:avoid}#rbody table.rt tr.sec{break-after:avoid}}
 .bhint{margin:0;padding:6px 24px 0;color:var(--mute);font-size:12px}
 .stat.ok b{color:var(--ok)}
 #dprint{display:none}
@@ -959,13 +959,11 @@ function bm02(p,off,co){
   const sec=(t,c)=>`<tr class="sec"><td colspan="8" class="${c}">${esc(t)}</td></tr>`;
   const kf=r=>r.items?r.items.length:1,dx=x=>x.h?td("\u0001<b>"+x.h+"</b>",{cls:"l dx"}):x.g?td(`\u0001<span class="dg ${x.g}">${esc(x.t)}</span>`,{cls:"l dx"}):td(x.t,{cls:"l dx"});
   const emit=(hm,ents)=>{const tot=ents.reduce((x,e)=>x+e.rows.reduce((y,r)=>y+kf(r),0),0);let first=true,o="";
-    const C=9;ents.forEach(e=>{const er=e.rows.reduce((y,r)=>y+kf(r),0);e.rows.forEach((r,i)=>{const m=kf(r),num=++n;
-      for(let q=0;q<m;q++){const ch=q%C===0,mc=Math.min(C,m-q),last=(q%C===C-1)||q===m-1;o+=last?"<tr>":'<tr class="kg">';
-        if(ch)o+=td(q===0?num:"",{rs:mc});
-        if(q===0){o+=(first?td(hm,{rs:tot}):"")+(i===0?td(e.label,{rs:er,cls:rcl(e.label)}):"");first=false}
-        if(ch)o+=td(r.ty+(q>0?" (tiếp)":""),{rs:mc});
+    ents.forEach(e=>{const er=e.rows.reduce((y,r)=>y+kf(r),0);e.rows.forEach((r,i)=>{const m=kf(r),num=++n;
+      for(let q=0;q<m;q++){o+="<tr>";
+        if(q===0){o+=td(num,{rs:m})+(first?td(hm,{rs:tot}):"")+(i===0?td(e.label,{rs:er,cls:rcl(e.label)}):"")+td(r.ty,{rs:m});first=false}
         o+=r.items?dx(r.items[q]):td(r.d,{cls:"l"});
-        if(ch)o+=td(r.r,{rs:mc,cls:/^Hoàn thành/.test(r.r)?"rok":"rwip"})+td(r.s,{rs:mc})+td(r.e,{rs:mc});
+        if(q===0)o+=td(r.r,{rs:m,cls:/^Hoàn thành/.test(r.r)?"rok":"rwip"})+td(r.s,{rs:m})+td(r.e,{rs:m});
         o+="</tr>"}})});return o};
   const g3sel=co&&g3.includes(co)?[co]:g3;
   if(g1.length&&(!co||g1.includes(co))){s+=sec("XỬ LÝ HỒ SƠ NỘI BỘ CỦA "+CFG.org,"rs1");s+=emit("Đối với "+g1.join(", "),[{label:g1.join(", "),rows:block(g1,false)}])}
