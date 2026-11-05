@@ -949,8 +949,8 @@ function bm02(p,off,co){
     let k=0;const rows=(L,f)=>`<table class="dl2">${L.map(t=>`<tr><td>${++k}</td><td>${esc(tl(t))}</td><td>${esc(f(t))}</td></tr>`).join("")}</table>`;
     let h="";
     if(head.length)h+=`<div class="dh">${esc(head[0])}</div>`;
-    if(dnL.length)h+=`<div class="dg ok">Đã xong (${dnL.length})</div>`+rows(dnL,t=>"xong "+fmt(t.done));
-    if(op.length)h+=`<div class="dg wip">Chưa xong tại ${esc(fmt(b))} (${op.length})</div>`+rows(op,t=>t.st==="Hoàn thành"?`xong ${fmt(t.done)} (sau kỳ)`:t.st+(t.due?`, hạn ${fmt(t.due)}`:""));
+    if(dnL.length)h+=`<div class="dg ok">Đã xong (${dnL.length})</div>`+rows(dnL,()=>"");
+    if(op.length)h+=`<div class="dg wip">Chưa xong tại ${esc(fmt(b))} (${op.length})</div>`+rows(op,t=>t.st==="Hoàn thành"?"xong sau kỳ":t.st+(t.due?`, hạn ${fmt(t.due)}`:""));
     const out=["\u0001"+h];
     const st=list.map(t=>t.recv).filter(Boolean).sort()[0]||a,en=list.map(t=>openAt(t)?(t.due||b):(t.done||b)).sort().pop();
     return{d:out[0],r:op.length?`Đang xử lý (hoàn thành ${dn}/${list.length})`:`Hoàn thành ${dn}/${list.length}`,s:fmt(st<a?a:st),e:fmt(en>b?b:en)};
