@@ -1408,20 +1408,20 @@ function shUnpack(T){
   if(Object.keys(prof).length)cfg.prof=prof;o.cfg=cfg;return o}
 /* ----- Google Identity Services ----- */
 function shLoadGsi(){return new Promise((ok,no)=>{if(window.google&&google.accounts&&google.accounts.oauth2)return ok();const s=document.createElement("script");s.src="https://accounts.google.com/gsi/client";s.onload=ok;s.onerror=()=>no(new Error("Không tải được thư viện đăng nhập Google"));document.head.appendChild(s)})}
-async function shAuth(interactive){
-  if(shTok&&Date.now()<shExp-60000)return shTok;
-  try{const m=JSON.parse(sessionStorage.getItem("phapche_sh_tok2")||localStorage.getItem("phapche_sh_tok2")||"null");if(m&&m.exp-60000>Date.now()){shTok=m.t;shExp=m.exp;return shTok}}catch(e){}
+async function shAuth(interactive,fresh){
+  if(!fresh&&shTok&&Date.now()<shExp-60000)return shTok;
+  if(!fresh)try{const m=JSON.parse(sessionStorage.getItem("phapche_sh_tok2")||localStorage.getItem("phapche_sh_tok2")||"null");if(m&&m.exp-60000>Date.now()){shTok=m.t;shExp=m.exp;return shTok}}catch(e){}
   await shLoadGsi();
   return new Promise((ok,no)=>{
-    const tc=google.accounts.oauth2.initTokenClient({client_id:SH.client,hint:(()=>{try{return localStorage.getItem("phapche_sh_mail")||undefined}catch(e){return undefined}})(),scope:"https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/userinfo.email",prompt:interactive?"":"none",
+    const tc=google.accounts.oauth2.initTokenClient({client_id:SH.client,hint:fresh?undefined:(()=>{try{return localStorage.getItem("phapche_sh_mail")||undefined}catch(e){return undefined}})(),scope:"https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/userinfo.email",prompt:interactive?"":"none",
       callback:r=>{if(r.error)return no(new Error(r.error==="interaction_required"||r.error==="popup_closed"?"Phiên đăng nhập đã hết hạn: bấm Đăng nhập Google (một lần bấm)":r.error));shTok=r.access_token;shExp=Date.now()+(+r.expires_in||3600)*1000;try{const v=JSON.stringify({t:shTok,exp:shExp});sessionStorage.setItem("phapche_sh_tok2",v);localStorage.setItem("phapche_sh_tok2",v)}catch(e){}ok(shTok)},
       error_callback:e=>no(new Error("Phiên đăng nhập đã hết hạn: bấm Đăng nhập Google (một lần bấm)"))});
-    tc.requestAccessToken(interactive?{}:{prompt:""})})}
+    tc.requestAccessToken(fresh?{prompt:"select_account"}:interactive?{}:{prompt:""})})}
 async function shApi(path,opt,sid){
   const tk=await shAuth(false);
   const r=await fetch("https://sheets.googleapis.com/v4/spreadsheets/"+(sid||SH.id)+path,{...(opt||{}),headers:{Authorization:"Bearer "+tk,"Content-Type":"application/json"}});
   if(r.status===401){shTok=null;try{sessionStorage.removeItem("phapche_sh_tok2");localStorage.removeItem("phapche_sh_tok2")}catch(e){}throw new Error("Phiên Google hết hạn: bấm nút Đồng bộ Google Sheet để đăng nhập lại")}
-  if(r.status===403){if(opt&&opt.method&&opt.method!=="GET"){shRO=true;shApplyRO()}throw new Error("Không đủ quyền với Sheet (403): tài khoản này chỉ được xem hoặc chưa được chia sẻ")}
+  if(r.status===403){if(opt&&opt.method&&opt.method!=="GET"){shRO=true;shApplyRO()}else{shTok=null;shExp=0;shMail="";try{sessionStorage.removeItem("phapche_sh_tok2");localStorage.removeItem("phapche_sh_tok2");localStorage.removeItem("phapche_sh_mail")}catch(e){}}throw new Error("Không đủ quyền với Sheet (403): tài khoản Google đang dùng chưa được chia sẻ hoặc chỉ được xem. Bấm Đăng nhập Google và chọn đúng tài khoản chủ Sheet")}
   if(r.status===404)throw new Error("Không thấy Sheet (kiểm tra ID)");
   if(!r.ok)throw new Error("Google Sheets "+r.status+" "+(await r.text()).slice(0,120));
   return r.json()}
@@ -1669,7 +1669,7 @@ async function drvSync(rows,oldMails,fid){
 (()=>{const go=$("gate_go"),cf=$("gate_cfg");if(!go)return;
   go.onclick=()=>{const inv=$("inviteGo");if(inv){inv.click();return}
     if(!SH){gateMsg("Chưa có cấu hình kết nối. Hãy mở bằng link mời do quản trị gửi, hoặc bấm cấu hình lần đầu nếu bạn là quản trị.");return}
-    gateMsg("Đang đăng nhập…");shAuth(true).then(()=>shInit()).catch(e=>gateMsg(e.message))};
+    gateMsg("Đang đăng nhập…");shAuth(true,true).then(()=>shInit()).catch(e=>gateMsg(e.message))};
   cf.onclick=ev=>{ev.preventDefault();$("gate").style.display="none";$("shb").click();
     const o=new MutationObserver(()=>{if(!shDlg.open){o.disconnect();if($("gate"))$("gate").style.display="flex"}});o.observe(shDlg,{attributes:true,attributeFilter:["open"]})};
   if(SH){const once=ev=>{document.removeEventListener("pointerdown",once,true);if($("gate")&&!ev.target.closest("#gate_cfg,#gate_go"))go.click()};document.addEventListener("pointerdown",once,true)}
