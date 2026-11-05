@@ -916,7 +916,7 @@ $("psave").onclick=()=>{
 $("pcancel").onclick=()=>$("pdlg").close();
 /* Nội dung công việc để chọn tính vào báo cáo: lấy theo hồ sơ nguồn liên kết, nếu không có thì theo đầu tiêu đề */
 const RND=["Review HĐ","Hồ sơ nộp Sở TC","Nghị quyết","Đầu tư","Việc khác"];
-const hdN=t=>+t.hd||(typeof ndOf==='function'&&ndOf(t)==='Review HĐ'?1:0);
+const hdN=t=>{const v=t.hd;return(v===undefined||v===null||String(v).trim()==='')?(ndOf(t)==='Review HĐ'?1:0):(+v||0)};
 function ndOf(t){const P=CFG.prof||{};
   if((P.hs||[]).some(h=>h.tid===t.id))return "Hồ sơ nộp Sở TC";
   if((P.nq||[]).some(h=>h.tid===t.id))return "Nghị quyết";
@@ -940,13 +940,15 @@ function bm02(p,off,co){
   const {g1,g2,g3}=CFG;let n=0,s="";
   const cell=(list,ty,pre)=>{
     if(!list.length)return{d:"Không phát sinh",r:"Hoàn thành",s:fmt(a),e:fmt(b)};
-    const head=[];
-    if(ty==="Pháp lý thương mại"){const hd=list.reduce((x,t)=>x+hdN(t),0);if(hd){const hdo=list.filter(openAt).reduce((x,t)=>x+hdN(t),0);head.push(`Kiểm tra hợp đồng: ${hd-hdo} HĐ đã xong`+(hdo?`, ${hdo} HĐ đang xử lý`:""))}}
-    const ls=list.map(t=>(pre?t.co+": ":"")+t.title+(ty!=="Pháp lý thương mại"&&+t.hd?` (${t.hd} HĐ)`:"")+(openAt(t)?` [${t.st}${t.due?", hạn "+fmt(t.due):""}]`:""));
-    const body=ls.length>1?ls.map((l,i)=>`${i+1}/ ${l}`):ls;
-    const op=list.filter(openAt),dn=list.length-op.length;
+    const head=[],tl=t=>(pre?t.co+": ":"")+t.title.replace(/^Review HĐ:\s*/i,"")+(ty!=="Pháp lý thương mại"&&+t.hd?` (${t.hd} HĐ)`:"");
+    const op=list.filter(openAt),dnL=list.filter(t=>!openAt(t)),dn=dnL.length;
+    if(ty==="Pháp lý thương mại"){const hd=list.reduce((x,t)=>x+hdN(t),0),z=list.filter(t=>hdN(t)===0).length;
+      if(hd)head.push(`Đã kiểm tra ${hd} HĐ / ${list.length} việc`+(z?` (${z} việc không tính HĐ: dự thảo, mẫu)`:""))}
+    let k=0;const out=head.slice();
+    if(dnL.length){out.push(`● Đã xong (${dnL.length}):`);dnL.forEach(t=>out.push(`${++k}/ ${tl(t)} – xong ${fmt(t.done)}`))}
+    if(op.length){out.push(`● Chưa xong tại ${fmt(b)} (${op.length}):`);op.forEach(t=>out.push(`${++k}/ ${tl(t)} – `+(t.st==="Hoàn thành"?`xong ${fmt(t.done)}, sau kỳ báo cáo`:t.st+(t.due?`, hạn ${fmt(t.due)}`:""))))}
     const st=list.map(t=>t.recv).filter(Boolean).sort()[0]||a,en=list.map(t=>openAt(t)?(t.due||b):(t.done||b)).sort().pop();
-    return{d:head.concat(body).join("\n"),r:op.length?`Đang xử lý (hoàn thành ${dn}/${list.length})`:`Hoàn thành ${dn}/${list.length}`,s:fmt(st),e:fmt(en)};
+    return{d:out.join("\n"),r:op.length?`Đang xử lý (hoàn thành ${dn}/${list.length})`:`Hoàn thành ${dn}/${list.length}`,s:fmt(st<a?a:st),e:fmt(en>b?b:en)};
   };
   const block=(cs,pre)=>{const list=TK.filter(t=>cs.includes(t.co)&&rel(t));return(list.some(t=>t.type==="Khác")?TYPES:BASE).map(ty=>({ty,...cell(list.filter(t=>t.type===ty),ty,pre)}))};
   const sec=(t,c)=>`<tr class="sec"><td colspan="8" class="${c}">${esc(t)}</td></tr>`;
