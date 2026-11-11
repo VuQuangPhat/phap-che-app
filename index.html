@@ -2292,7 +2292,8 @@ function renderProf(){
   const fk=sec==="co"?"code":"co";
   const posOf=n=>PD().pos.filter(p=>same(p.name,n));
   const r=all.filter(x=>(!c||(sec==="prj"?same(prjCo(x),c):sec==="ppl"?posOf(x.name).some(p=>same(p.co,c)):same(x[fk],c)))&&(!q||(Object.values(x).join(" ")+(sec==="ppl"?" "+posOf(x.name).map(p=>Object.values(p).join(" ")).join(" "):"")).toLowerCase().includes(q)));
-  ({lt:rLt,ds:rDs,bc:rBc,co:rCo,dv:rDv,dl:rDl,uq:rUq,ppl:rPpl,pos:rPos,own:rOwn,bo:rBo,hs:rHs,mt:rMt,nq:rNq,ct:rCt,cp:rCp,prj:rPrj,pl:rPl,vay:rVay,mau:rMau})[sec](r,all);
+  try{({lt:rLt,ds:rDs,bc:rBc,co:rCo,dv:rDv,dl:rDl,uq:rUq,ppl:rPpl,pos:rPos,own:rOwn,bo:rBo,hs:rHs,mt:rMt,nq:rNq,ct:rCt,cp:rCp,prj:rPrj,pl:rPl,vay:rVay,mau:rMau})[sec](r,all)}
+  catch(err){console.error(err);$("plist").innerHTML='<div class="panel full warnp" style="margin:0 0 12px"><h3>⚠ Mục này không hiển thị được do lỗi dữ liệu hoặc mã</h3><p style="margin:6px 0">Chụp màn hình dòng này gửi lại để sửa: <b>'+esc((err&&err.message)||err)+" | "+esc(String((err&&err.stack)||"").split("\n")[1]||"").trim()+"</b></p></div>"}
 }
 
 
