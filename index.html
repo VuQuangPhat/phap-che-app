@@ -2299,6 +2299,7 @@ function renderProf(){
 }
 
 
+const unsgTag=x=>/bản word|chưa ký|chưa có bản ký|chưa xác minh|bản nháp|dự thảo/i.test((x.uq||"")+" "+(x.note||""))?'<small class="s" style="color:#b7791f;font-weight:600">⚠ chưa có bản ký</small>':"";
 /* ===== Tab Đối soát hồ sơ: đọc tab rc_items của Google Sheet, chỉ xem (sửa ở Sheet) ===== */
 const RC_ST=["Chưa rà soát","Đang thu thập","Đã có bản ký","Chỉ có bản Word","Thiếu","Không áp dụng"];
 let rcSt="";
@@ -2345,7 +2346,7 @@ function rHq(){
   if(!r.length){$("plist").innerHTML='<div class="empty">Chưa có chức vụ HĐQT hoặc Ban kiểm soát nào. Nhập ở mục Chức vụ (vai trò Chủ tịch HĐQT, Thành viên HĐQT…).</div>';return}
   const gs=[...new Set(r.map(x=>x.co))].sort((a,b)=>ci(a)-ci(b)||String(a).localeCompare(String(b)));
   const ord=x=>/Chủ tịch/i.test(x.role+" "+x.title)?0:/Trưởng/i.test(x.role+" "+x.title)?1:2;
-  const row=x=>{const on=activeP(x,t0);return `<tr${on?"":' style="opacity:.6"'}><td class="t"><b>${esc(x.name)}</b>${x.note?`<small>${esc(x.note)}</small>`:""}</td><td>${esc(x.role)}<small class="s">${esc(x.title)}</small></td><td>${x.from?fmt(x.from):"…"} đến ${x.to?fmt(x.to):"nay"}${x.to&&x.to<t0?'<small class="s bad">Hết hiệu lực</small>':""}</td><td>${esc(x.uq)}</td></tr>`};
+  const row=x=>{const on=activeP(x,t0);return `<tr${on?"":' style="opacity:.6"'}><td class="t"><b>${esc(x.name)}</b>${x.note?`<small>${esc(x.note)}</small>`:""}</td><td>${esc(x.role)}<small class="s">${esc(x.title)}</small></td><td>${x.from?fmt(x.from):"…"} đến ${x.to?fmt(x.to):"nay"}${x.to&&x.to<t0?'<small class="s bad">Hết hiệu lực</small>':""}</td><td>${esc(x.uq)}${unsgTag(x)}</td></tr>`};
   const blk=(rs,lab)=>{if(!rs.length)return"";rs=[...rs].sort((a,b)=>(activeP(b,t0)-activeP(a,t0))||String(b.from||"").localeCompare(String(a.from||""))||ord(a)-ord(b)||String(a.name).localeCompare(String(b.name),"vi"));
     return `<tr><td colspan="4" style="font-weight:600;background:var(--bg2,rgba(127,127,127,.06))">${lab} (${rs.filter(x=>activeP(x,t0)).length} đang hiệu lực / ${rs.length})</td></tr>`+rs.map(row).join("")};
   let h=`<div style="overflow-x:auto"><table class="m" style="min-width:640px"><thead><tr><th>Họ và tên</th><th>Vai trò, chức danh</th><th>Nhiệm kỳ / hiệu lực</th><th>Bổ nhiệm (số, ngày)</th></tr></thead><tbody>`;
@@ -2848,7 +2849,7 @@ function rPos0(r,all){
     const gk=norm(x.co),cl=posClosed.has(gk);
     if(cur!==gk){cur=gk;const rs=r.filter(y=>same(y.co,x.co)),na=rs.filter(y=>activeP(y,t0)).length;h+=`<tr class="tot g ${cx(x.co)}${cl?" col":""}" data-pg="${esc(gk)}"><td colspan="5">${chip(x.co)} <small style="font-weight:400;color:var(--mute)">${rs.length} chức vụ, ${na} đang hiệu lực</small></td></tr>`}
     const on=activeP(x,t0);
-    h+=`<tr data-id="${x.id}" data-gk="${esc(gk)}"${cl?" hidden":""}${on?"":' style="opacity:.6"'}><td class="t"><b>${esc(x.name)}</b>${x.note?`<small>${esc(x.note)}</small>`:""}</td><td>${esc(x.role)}<small class="s">${esc(x.title)}</small></td><td>${x.from?fmt(x.from):"…"} đến ${x.to?fmt(x.to):"nay"}${x.to&&x.to<t0?'<small class="s bad">Hết hiệu lực</small>':""}</td><td>${esc(x.uq)}</td><td>${dkTag(x)}</td></tr>`});
+    h+=`<tr data-id="${x.id}" data-gk="${esc(gk)}"${cl?" hidden":""}${on?"":' style="opacity:.6"'}><td class="t"><b>${esc(x.name)}</b>${x.note?`<small>${esc(x.note)}</small>`:""}</td><td>${esc(x.role)}<small class="s">${esc(x.title)}</small></td><td>${x.from?fmt(x.from):"…"} đến ${x.to?fmt(x.to):"nay"}${x.to&&x.to<t0?'<small class="s bad">Hết hiệu lực</small>':""}</td><td>${esc(x.uq)}${unsgTag(x)}</td><td>${dkTag(x)}</td></tr>`});
   const gg=govGaps(),gh=gg.filter(g=>g.h);
   const gpn=`<div class="panel full${gh.length?" warnp":""}" style="margin:0 0 12px"><h3>${gh.length?"⚠ ":""}Rà soát nhân sự quản lý (${gg.length})</h3>${gg.length?gg.map(g=>`<div class="act${g.h?" wnrow":""}" style="cursor:pointer" data-wgo="pos" data-wc="${esc(g.c)}" data-wt="${esc(g.t)}"><span class="d">${chip(g.c)}</span><span>${esc(g.t)}</span></div>`).join(""):'<small style="color:var(--mute)">Chưa phát hiện vấn đề về nhiệm kỳ, cơ cấu HĐQT, NĐDPL.</small>'}<small style="display:block;margin-top:6px;color:var(--mute)">Dựa trên Luật Doanh nghiệp 2020 (sửa đổi 2025). Cần đối chiếu Điều lệ từng công ty, nhất là nhiệm kỳ và số thành viên HĐQT.</small></div>`;
   $("plist").innerHTML=gpn+h+"</tbody></table>";
