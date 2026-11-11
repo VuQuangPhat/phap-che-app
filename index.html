@@ -2184,8 +2184,8 @@ const th4=document.createElement("button");th4.id="tpct";th4.textContent="Hợp 
 const th5=document.createElement("button");th5.id="tpcp";th5.textContent="Tuân thủ";nav.appendChild(th5);
 const th6=document.createElement("button");th6.id="tpmau";th6.textContent="HĐ mẫu";nav.appendChild(th6);
 const vp=document.createElement("div");vp.id="vprof";vp.hidden=true;
-const VISTAB=["dash","tl","|","co","dl","dv","|","lt","ds","bc","|","ppl","pos","uq","|","own","bo","|","prj","pl","vay"];
-vp.innerHTML=`<nav class="tabs" id="psub">${VISTAB.map(k=>k==="|"?'<span class="gsep"></span>':`<button data-s="${k}">${k==="dash"?"Tổng quan":k==="tl"?"Lịch sử":SEC[k].lab}</button>`).join("")}<span class="gsep"></span><button data-s="me">Thông tin của tôi</button><span style="margin-left:auto;display:flex;gap:6px;align-items:center;padding-left:12px"><button id="ppdf" class="primary">Xuất PDF mục này</button><button id="ppdfall">Xuất PDF toàn bộ</button></span></nav>
+const VISTAB=["dash","tl","|","co","dl","dv","|","ds","|","hq","ppl","pos","uq","|","own","bo","|","prj","pl","vay"];
+vp.innerHTML=`<nav class="tabs" id="psub">${VISTAB.map(k=>k==="|"?'<span class="gsep"></span>':`<button data-s="${k}">${k==="dash"?"Tổng quan":k==="tl"?"Lịch sử":k==="hq"?"HĐQT":SEC[k].lab}</button>`).join("")}<span class="gsep"></span><button data-s="me">Thông tin của tôi</button><span style="margin-left:auto;display:flex;gap:6px;align-items:center;padding-left:12px"><button id="ppdf" class="primary">Xuất PDF mục này</button><button id="ppdfall">Xuất PDF toàn bộ</button></span></nav>
 <div id="gcobar" class="gcobar"></div>
 <div id="pprint"></div>
 <section class="stats" id="pstats"></section>
@@ -2242,7 +2242,7 @@ tp.onclick=showProf;th2.onclick=showHs;th3.onclick=showHop;th4.onclick=showCt;th
 const _render=render;
 render=function(){if(view==="prof")renderProf();else _render()};
 const _csv=$("csv").onclick;
-$("csv").onclick=()=>{if(view==="prof"){if(sec==="tl")alert("Mục Lịch sử chỉ để xem; xuất PDF để lưu.");else if(sec==="dash")alert("Chọn một mục con (Pháp nhân, Nhân sự, Chức vụ, Sở hữu vốn, Dự án) để xuất CSV.");else expCSV()}else _csv()};
+$("csv").onclick=()=>{if(view==="prof"){if(sec==="tl"||sec==="hq")alert("Mục này chỉ để xem; xuất PDF để lưu.");else if(sec==="dash")alert("Chọn một mục con (Pháp nhân, Nhân sự, Chức vụ, Sở hữu vốn, Dự án) để xuất CSV.");else expCSV()}else _csv()};
 /* csave dựng lại CFG từ đầu, nên phải giữ lại CFG.prof */
 const _cs=$("csave").onclick;
 $("csave").onclick=()=>{const p=CFG.prof;_cs();if(p){CFG.prof=p;saveC()}};
@@ -2284,6 +2284,7 @@ function renderProf(){
   document.querySelectorAll("#psub [data-s]").forEach(b=>b.style.display=HIDE.includes(sec)?"none":"");vp.dataset.sec=sec;document.querySelectorAll("#psub button").forEach(b=>b.classList.toggle("on",b.dataset.s===sec));
   if(sec==="me"){$("pflt").hidden=true;$("pstats").hidden=true;rMe();return}
   if(sec==="tl"){$("pflt").hidden=true;$("pstats").hidden=true;rTl();return}
+  if(sec==="hq"){$("pflt").hidden=false;$("pstats").hidden=false;$("pfc").hidden=false;["padd","padd2","pcol","pexpd","pimp","ptpl","pexp"].forEach(i=>$(i).hidden=true);rHq();return}
   const dsh=sec==="dash";$("pflt").hidden=dsh;$("pstats").hidden=dsh;if(dsh){rDash();return}
   const all=PD()[sec],q=$("pq").value.toLowerCase().trim(),c=$("pfc").value;
   $("pfc").hidden=false;$("padd").textContent="Thêm "+SEC[sec].one;$("padd2").hidden=sec!=="ppl";$("pcol").hidden=$("pexpd").hidden=!(sec==="own"||sec==="pos");
@@ -2292,6 +2293,26 @@ function renderProf(){
   const posOf=n=>PD().pos.filter(p=>same(p.name,n));
   const r=all.filter(x=>(!c||(sec==="prj"?same(prjCo(x),c):sec==="ppl"?posOf(x.name).some(p=>same(p.co,c)):same(x[fk],c)))&&(!q||(Object.values(x).join(" ")+(sec==="ppl"?" "+posOf(x.name).map(p=>Object.values(p).join(" ")).join(" "):"")).toLowerCase().includes(q)));
   ({lt:rLt,ds:rDs,bc:rBc,co:rCo,dv:rDv,dl:rDl,uq:rUq,ppl:rPpl,pos:rPos,own:rOwn,bo:rBo,hs:rHs,mt:rMt,nq:rNq,ct:rCt,cp:rCp,prj:rPrj,pl:rPl,vay:rVay,mau:rMau})[sec](r,all);
+}
+
+
+/* ===== Tab HĐQT: tổng hợp từ mục Chức vụ (HĐQT và Ban kiểm soát theo từng pháp nhân), chỉ xem ===== */
+function rHq(){
+  const t0=today(),q=$("pq").value.toLowerCase().trim(),c=$("pfc").value;
+  const isH=x=>/HĐQT|Hội đồng quản trị/i.test((x.role||"")+" "+(x.title||"")),isK=x=>/kiểm soát|BKS/i.test((x.role||"")+" "+(x.title||""));
+  const all=PD().pos.filter(x=>isH(x)||isK(x)),hq=all.filter(isH);
+  const r=all.filter(x=>(!c||same(x.co,c))&&(!q||Object.values(x).join(" ").toLowerCase().includes(q)));
+  const cos=[...new Set(hq.filter(x=>activeP(x,t0)).map(x=>norm(x.co)))];
+  $("pstats").innerHTML=st(cos.length,"Công ty có HĐQT đang hiệu lực")+st(hq.filter(x=>activeP(x,t0)).length,"Thành viên HĐQT đang hiệu lực")+st(all.filter(x=>isK(x)&&activeP(x,t0)).length,"Kiểm soát viên đang hiệu lực")+st(hq.filter(x=>x.to&&x.to<t0).length,"Chức vụ HĐQT đã hết hiệu lực");
+  if(!r.length){$("plist").innerHTML='<div class="empty">Chưa có chức vụ HĐQT hoặc Ban kiểm soát nào. Nhập ở mục Chức vụ (vai trò Chủ tịch HĐQT, Thành viên HĐQT…).</div>';return}
+  const gs=[...new Set(r.map(x=>x.co))].sort((a,b)=>ci(a)-ci(b)||String(a).localeCompare(String(b)));
+  const ord=x=>/Chủ tịch/i.test(x.role+" "+x.title)?0:/Trưởng/i.test(x.role+" "+x.title)?1:2;
+  const row=x=>{const on=activeP(x,t0);return `<tr${on?"":' style="opacity:.6"'}><td class="t"><b>${esc(x.name)}</b>${x.note?`<small>${esc(x.note)}</small>`:""}</td><td>${esc(x.role)}<small class="s">${esc(x.title)}</small></td><td>${x.from?fmt(x.from):"…"} đến ${x.to?fmt(x.to):"nay"}${x.to&&x.to<t0?'<small class="s bad">Hết hiệu lực</small>':""}</td><td>${esc(x.uq)}</td></tr>`};
+  const blk=(rs,lab)=>{if(!rs.length)return"";rs=[...rs].sort((a,b)=>(activeP(b,t0)-activeP(a,t0))||String(b.from||"").localeCompare(String(a.from||""))||ord(a)-ord(b)||String(a.name).localeCompare(String(b.name),"vi"));
+    return `<tr><td colspan="4" style="font-weight:600;background:var(--bg2,rgba(127,127,127,.06))">${lab} (${rs.filter(x=>activeP(x,t0)).length} đang hiệu lực / ${rs.length})</td></tr>`+rs.map(row).join("")};
+  let h=`<div style="overflow-x:auto"><table class="m" style="min-width:640px"><thead><tr><th>Họ và tên</th><th>Vai trò, chức danh</th><th>Nhiệm kỳ / hiệu lực</th><th>Bổ nhiệm (số, ngày)</th></tr></thead><tbody>`;
+  gs.forEach(g=>{const rs=r.filter(x=>same(x.co,g));h+=`<tr class="tot g ${cx(g)}"><td colspan="4">${chip(g)}</td></tr>`+blk(rs.filter(isH),"Hội đồng quản trị")+blk(rs.filter(x=>!isH(x)&&isK(x)),"Ban kiểm soát")});
+  $("plist").innerHTML=h+`</tbody></table></div><small style="display:block;margin-top:8px;color:var(--mute)">Tab này tự tổng hợp từ mục Chức vụ; muốn sửa thì sửa ở mục Chức vụ. Công ty chưa có dòng nào nghĩa là chưa nhập chức vụ HĐQT trong hồ sơ.</small>`;
 }
 
 /* ===== bấm vào cảnh báo để nhảy đúng tab, đúng công ty, đúng dòng cần xem ===== */
@@ -4490,7 +4511,7 @@ function printProf(all){
       sec=k;if(k==="dash")rDash();else{const a=PD()[k];RN[k](a,a)}
       html+=`<h2 class="sechead${i?"":" first"}">${k==="dash"?"Tổng quan":SEC[k].lab}</h2>`+$("plist").innerHTML});
     sec=prev;$("plist").innerHTML=html;$("pstats").hidden=true;label="Toàn bộ hồ sơ";
-  }else label=sec==="dash"?"Tổng quan":sec==="tl"?"Lịch sử":SEC[sec].lab;
+  }else label=sec==="dash"?"Tổng quan":sec==="tl"?"Lịch sử":sec==="hq"?"HĐQT":SEC[sec].lab;
   $("pprint").innerHTML=`<h2>HỒ SƠ PHÁP LÝ CÔNG TY</h2><small>${esc(CFG.org)} | Mục: ${esc(label)} | Ngày xuất: ${fmt(today())}</small>`;
   document.querySelectorAll("#vprof details").forEach(d=>d.open=true);document.querySelectorAll("#vprof tr[data-gk]").forEach(r=>r.hidden=false);
   const pg=document.createElement("style");pg.textContent="@page{size:A4 landscape;margin:10mm}";document.head.appendChild(pg);
