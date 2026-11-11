@@ -1499,14 +1499,15 @@ async function shGetRev(sid){const j=await shApi("/values/"+shRange("_meta")+"!A
 async function shReadSheet(sid,isA){
   const titles=await shTitles(sid);
   if(!titles.includes("_meta")||(isA&&!titles.includes("cfg")))return{o:null,rev:0};
-  const want=titles.filter(t=>t==="tasks"||t==="budget"||t==="cfg"||t==="_long"||SH_TAB_R[t]||t.startsWith("prof_"));
+  const want=titles.filter(t=>t==="tasks"||t==="budget"||t==="cfg"||t==="_long"||t==="rc_items"||SH_TAB_R[t]||t.startsWith("prof_"));
   const j=await shApi("/values:batchGet?majorDimension=ROWS&valueRenderOption=UNFORMATTED_VALUE&"+want.map(t=>"ranges="+shRange(t)).join("&"),undefined,sid);
   const T={};(j.valueRanges||[]).forEach((vr,i)=>{T[want[i]]=(vr.values||[]).map(r=>r.map(c=>c===undefined?"":c))});
-  const rev=(await shGetRev(sid)).rev;return{o:shUnpack(T),rev}}
+  const rev=(await shGetRev(sid)).rev;let rc=[];try{rc=isA?shFromTable(T.rc_items||[]):[]}catch(e){console.error("rc_items",e)}return{o:shUnpack(T),rev,rc}}
 async function shGet(){
   shNoA=false;let A=null,B=null;
   try{A=await shReadSheet(SH.id,true)}catch(e){if(SH.id2&&/403/.test(e.message))shNoA=true;else throw e}
   if(SH.id2)B=await shReadSheet(SH.id2,false);
+  window.RC_ROWS=(A&&A.rc)||[];
   shRev=A?A.rev:0;shRevB=B?B.rev:0;
   document.body.classList.toggle("scopeprj",shNoA);
   if(shNoA){shRO=true;shApplyRO()}
@@ -2184,8 +2185,8 @@ const th4=document.createElement("button");th4.id="tpct";th4.textContent="Hợp 
 const th5=document.createElement("button");th5.id="tpcp";th5.textContent="Tuân thủ";nav.appendChild(th5);
 const th6=document.createElement("button");th6.id="tpmau";th6.textContent="HĐ mẫu";nav.appendChild(th6);
 const vp=document.createElement("div");vp.id="vprof";vp.hidden=true;
-const VISTAB=["dash","tl","|","co","dl","dv","|","ds","|","hq","ppl","pos","uq","|","own","bo","|","prj","pl","vay"];
-vp.innerHTML=`<nav class="tabs" id="psub">${VISTAB.map(k=>k==="|"?'<span class="gsep"></span>':`<button data-s="${k}">${k==="dash"?"Tổng quan":k==="tl"?"Lịch sử":k==="hq"?"HĐQT":SEC[k].lab}</button>`).join("")}<span class="gsep"></span><button data-s="me">Thông tin của tôi</button><span style="margin-left:auto;display:flex;gap:6px;align-items:center;padding-left:12px"><button id="ppdf" class="primary">Xuất PDF mục này</button><button id="ppdfall">Xuất PDF toàn bộ</button></span></nav>
+const VISTAB=["dash","tl","rc","|","co","dl","dv","|","ds","|","hq","ppl","pos","uq","|","own","bo","|","prj","pl","vay"];
+vp.innerHTML=`<nav class="tabs" id="psub">${VISTAB.map(k=>k==="|"?'<span class="gsep"></span>':`<button data-s="${k}">${k==="dash"?"Tổng quan":k==="tl"?"Lịch sử":k==="hq"?"HĐQT":k==="rc"?"Đối soát hồ sơ":SEC[k].lab}</button>`).join("")}<span class="gsep"></span><button data-s="me">Thông tin của tôi</button><span style="margin-left:auto;display:flex;gap:6px;align-items:center;padding-left:12px"><button id="ppdf" class="primary">Xuất PDF mục này</button><button id="ppdfall">Xuất PDF toàn bộ</button></span></nav>
 <div id="gcobar" class="gcobar"></div>
 <div id="pprint"></div>
 <section class="stats" id="pstats"></section>
@@ -2242,7 +2243,7 @@ tp.onclick=showProf;th2.onclick=showHs;th3.onclick=showHop;th4.onclick=showCt;th
 const _render=render;
 render=function(){if(view==="prof")renderProf();else _render()};
 const _csv=$("csv").onclick;
-$("csv").onclick=()=>{if(view==="prof"){if(sec==="tl"||sec==="hq")alert("Mục này chỉ để xem; xuất PDF để lưu.");else if(sec==="dash")alert("Chọn một mục con (Pháp nhân, Nhân sự, Chức vụ, Sở hữu vốn, Dự án) để xuất CSV.");else expCSV()}else _csv()};
+$("csv").onclick=()=>{if(view==="prof"){if(sec==="tl"||sec==="hq"||sec==="rc")alert("Mục này chỉ để xem; xuất PDF để lưu.");else if(sec==="dash")alert("Chọn một mục con (Pháp nhân, Nhân sự, Chức vụ, Sở hữu vốn, Dự án) để xuất CSV.");else expCSV()}else _csv()};
 /* csave dựng lại CFG từ đầu, nên phải giữ lại CFG.prof */
 const _cs=$("csave").onclick;
 $("csave").onclick=()=>{const p=CFG.prof;_cs();if(p){CFG.prof=p;saveC()}};
@@ -2284,6 +2285,7 @@ function renderProf(){
   document.querySelectorAll("#psub [data-s]").forEach(b=>b.style.display=HIDE.includes(sec)?"none":"");vp.dataset.sec=sec;document.querySelectorAll("#psub button").forEach(b=>b.classList.toggle("on",b.dataset.s===sec));
   if(sec==="me"){$("pflt").hidden=true;$("pstats").hidden=true;rMe();return}
   if(sec==="tl"){$("pflt").hidden=true;$("pstats").hidden=true;rTl();return}
+  if(sec==="rc"){$("pflt").hidden=false;$("pstats").hidden=false;$("pfc").hidden=false;["padd","padd2","pcol","pexpd","pimp","ptpl","pexp"].forEach(i=>$(i).hidden=true);try{rRc()}catch(err){console.error(err);$("plist").innerHTML='<div class="panel full warnp"><h3>⚠ Mục này không hiển thị được do lỗi dữ liệu hoặc mã</h3><p style="margin:6px 0">'+esc((err&&err.message)||err)+"</p></div>"}return}
   if(sec==="hq"){$("pflt").hidden=false;$("pstats").hidden=false;$("pfc").hidden=false;["padd","padd2","pcol","pexpd","pimp","ptpl","pexp"].forEach(i=>$(i).hidden=true);rHq();return}
   const dsh=sec==="dash";$("pflt").hidden=dsh;$("pstats").hidden=dsh;if(dsh){try{rDash()}catch(err){console.error(err);$("plist").innerHTML='<div class="panel full warnp" style="margin:0 0 12px"><h3>⚠ Mục này không hiển thị được do lỗi dữ liệu hoặc mã</h3><p style="margin:6px 0">Chụp màn hình dòng này gửi lại để sửa: <b>'+esc((err&&err.message)||err)+" | "+esc(String((err&&err.stack)||"").split("\n")[1]||"").trim()+"</b></p></div>"}return}
   const all=PD()[sec],q=$("pq").value.toLowerCase().trim(),c=$("pfc").value;
@@ -2296,6 +2298,41 @@ function renderProf(){
   catch(err){console.error(err);$("plist").innerHTML='<div class="panel full warnp" style="margin:0 0 12px"><h3>⚠ Mục này không hiển thị được do lỗi dữ liệu hoặc mã</h3><p style="margin:6px 0">Chụp màn hình dòng này gửi lại để sửa: <b>'+esc((err&&err.message)||err)+" | "+esc(String((err&&err.stack)||"").split("\n")[1]||"").trim()+"</b></p></div>"}
 }
 
+
+/* ===== Tab Đối soát hồ sơ: đọc tab rc_items của Google Sheet, chỉ xem (sửa ở Sheet) ===== */
+const RC_ST=["Chưa rà soát","Đang thu thập","Đã có bản ký","Chỉ có bản Word","Thiếu","Không áp dụng"];
+let rcSt="";
+const rcRows=()=>Array.isArray(window.RC_ROWS)?window.RC_ROWS:[];
+const rcCo=x=>{const d=String(x.dn||"").trim();if(/^fg$/i.test(d))return"FGC";return COS().find(c=>same(c,d))||d};
+const rcDone=x=>/đã có bản ký|không áp dụng/i.test(x.status||"");
+const rcDue=x=>/^\d{4}-\d\d-\d\d/.test(String(x.due||""))?String(x.due).slice(0,10):"";
+function rcGaps(){
+  const t0=today(),out=[],R=rcRows();if(!R.length)return out;
+  [...new Set(R.map(rcCo))].forEach(c=>{
+    const m=R.filter(x=>rcCo(x)===c),late=m.filter(x=>!rcDone(x)&&rcDue(x)&&rcDue(x)<t0),thi=m.filter(x=>/^thiếu$/i.test(String(x.status||"").trim())),wd=m.filter(x=>/bản word/i.test(x.status||""));
+    if(late.length){const d=late.map(rcDue).sort()[0];out.push({c,h:1,t:late.length+"/"+m.length+" hạng mục đối soát hồ sơ quá hạn chưa hoàn thành (hạn sớm nhất "+fmt(d)+"), xem tab Đối soát hồ sơ"})}
+    if(thi.length)out.push({c,h:1,t:thi.length+" hạng mục đối soát hồ sơ ở tình trạng Thiếu, cần tìm bản ký"});
+    if(wd.length)out.push({c,h:0,soft:1,t:wd.length+" hạng mục đối soát hồ sơ chỉ có bản Word, chưa có bản ký"})});
+  return out}
+function rRc(){
+  const t0=today(),q=$("pq").value.toLowerCase().trim(),c=$("pfc").value,R=rcRows();
+  if(!R.length){$("pstats").innerHTML="";$("plist").innerHTML='<div class="empty">Chưa đọc được dữ liệu đối soát. Dữ liệu lấy từ tab rc_items của Google Sheet; kiểm tra đã đăng nhập Google và tab này có dữ liệu, rồi tải lại trang.</div>';return}
+  const base=R.filter(x=>!c||same(rcCo(x),c)),isLate=x=>!rcDone(x)&&rcDue(x)&&rcDue(x)<t0;
+  const r=base.filter(x=>(!rcSt||(x.status||"")===rcSt)&&(!q||Object.values(x).join(" ").toLowerCase().includes(q)));
+  const n=s=>base.filter(x=>(x.status||"")===s).length;
+  $("pstats").innerHTML=st(base.length,"Hạng mục đối soát")+st(n("Chưa rà soát"),"Chưa rà soát")+st(n("Đang thu thập"),"Đang thu thập")+st(base.filter(x=>/bản ký/i.test(x.status||"")).length,"Đã có bản ký")+st(base.filter(isLate).length,"Quá hạn",base.filter(isLate).length?"late":"")+st(n("Thiếu"),"Thiếu");
+  const used=[...new Set([...RC_ST,...R.map(x=>x.status||"")].filter(Boolean))];
+  const sel=`<div style="margin:0 0 10px"><label style="font-size:13px;color:var(--mute)">Lọc theo tình trạng </label><select id="rcst"><option value="">Tất cả</option>${used.map(s=>`<option value="${esc(s)}"${s===rcSt?" selected":""}>${esc(s)}</option>`).join("")}</select></div>`;
+  if(!r.length){$("plist").innerHTML=sel+'<div class="empty">Không có hạng mục nào khớp bộ lọc.</div>';$("rcst").onchange=()=>{rcSt=$("rcst").value;renderProf()};return}
+  const col=s=>/bản ký|không áp dụng/i.test(s)?"var(--ok)":/thiếu/i.test(s)?"#c53030":/word|thu thập/i.test(s)?"#b7791f":"var(--mute)";
+  const gs=[...new Set(r.map(rcCo))].sort((a,b)=>ci(a)-ci(b)||String(a).localeCompare(String(b)));
+  let h=`<div style="overflow-x:auto"><table class="m" style="min-width:720px"><thead><tr><th>Mã</th><th>Hạng mục</th><th>Tình trạng</th><th>Người phụ trách</th><th>Hạn</th><th>Ghi chú</th></tr></thead><tbody>`;
+  gs.forEach(g=>{const rs=r.filter(x=>rcCo(x)===g);h+=`<tr class="tot g ${cx(g)}"><td colspan="6">${COS().some(z=>same(z,g))?chip(g):`<b>${esc(g)}</b>`} <small>${rs.length} hạng mục</small></td></tr>`;
+    [...new Set(rs.map(x=>x.group||""))].forEach(gr=>{h+=`<tr><td colspan="6" style="font-weight:600;background:var(--bg2,rgba(127,127,127,.06))">${esc(gr)}</td></tr>`;
+      rs.filter(x=>(x.group||"")===gr).forEach(x=>{const s=x.status||"",d=rcDue(x);h+=`<tr><td><small>${esc(x.code||"")}</small></td><td class="t"><b>${esc(x.doc||"")}</b><small class="s">${esc(x.doc_group||"")}</small></td><td><span style="color:${col(s)};font-weight:600">${esc(s)}</span></td><td>${esc(x.person||"")}</td><td>${d?fmt(d)+(isLate(x)?' <small class="s bad">quá hạn</small>':""):""}</td><td class="t"><small>${esc(x.note||"")}</small></td></tr>`})})});
+  $("plist").innerHTML=sel+h+`</tbody></table></div><small style="display:block;margin-top:8px;color:var(--mute)">Tab này đọc từ tab rc_items của Google Sheet và chỉ để xem; muốn sửa tình trạng, người phụ trách, hạn thì sửa ở Sheet. Chỉ chọn "Đã có bản ký" khi đã có văn bản ký, đóng dấu.</small>`;
+  $("rcst").onchange=()=>{rcSt=$("rcst").value;renderProf()};
+}
 
 /* ===== Tab HĐQT: tổng hợp từ mục Chức vụ (HĐQT và Ban kiểm soát theo từng pháp nhân), chỉ xem ===== */
 function rHq(){
@@ -2414,7 +2451,7 @@ function rDash(){
   d.prj.forEach(x=>{const pc=prjCo(x),pf=pc?x.name+": ":"";if(!x.owner)W.push([pc||x.name,pf+"thiếu chủ đầu tư","prj",x.name]);if(!x.nddpl)W.push([pc||x.name,pf+"thiếu NĐDPL / người điều hành dự án","prj",x.name])});
   const BOM=boModel().out.filter(o=>!GCO||same(o.c,GCO));BOM.forEach(o=>o.warn.forEach(w=>{if(w.k==="miss")W.push([o.c,"CSHHL "+w.b.name+" ("+nf(w.b.t)+"%) đạt ngưỡng 25% nhưng chưa ghi nhận kê khai","bo"]);else if(w.k==="diff")W.push([o.c,"CSHHL "+w.b.name+": tỷ lệ đã kê khai "+nf(w.tl)+"% lệch với số tính từ sở hữu vốn "+nf(w.b.t)+"%, cần đối chiếu","bo"])}));
   BOM.forEach(o=>{if(o.g&&o.g.asof&&(new Date(today())-new Date(o.g.asof))/864e5>ruleNum("bo.so_lieu_cu_ngay",183))W.push([o.c,"Số liệu sở hữu vốn chốt "+fmt(o.g.asof)+" đã quá 6 tháng, cần xác nhận lại cơ cấu cổ đông (ảnh hưởng xác định CSHHL)","own"])});
-  hsGaps().filter(g=>!g.soft).forEach(g=>W.push([g.c,g.t,"hs"]));govGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"pos"]));cpGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"cp"]));intGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,wSecOf(g.t)]));
+  rcGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"rc"]));hsGaps().filter(g=>!g.soft).forEach(g=>W.push([g.c,g.t,"hs"]));govGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"pos"]));cpGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"cp"]));intGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,wSecOf(g.t)]));
   const MG=mtGaps();MG.filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"mt"]));ctGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"ct"]));mauGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"mau"]));plGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"pl"]));vayGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"vay"]));(window.__nldGaps?window.__nldGaps():[]).filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"nld"]));(window.__invGaps?window.__invGaps():[]).filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"inv"]));
   const nBO=new Set(BOM.flatMap(o=>o.bo.map(b=>b.key))).size;
   const pB=`<div class="panel full"><h3>Chủ sở hữu hưởng lợi theo doanh nghiệp (ngưỡng ${TH25()}%)</h3>${BOM.length?BOM.map(o=>`<div class="act" style="cursor:pointer;align-items:flex-start" data-wgo="bo" data-wc="${esc(o.c)}" data-wt=""><span class="d">${chip(o.c)}</span><span style="flex:1">${o.bo.length?o.bo.map(b=>`<b>${esc(b.name)}</b> ${nf(b.t)}%${b.d>0&&b.i>0.005?` <small style="color:var(--mute)">(TT ${nf(b.d)}% + GT ${nf(b.i)}%)</small>`:""} ${(()=>{const s=boStat(o,b);return s==="Đã đăng ký"?'<small style="color:var(--ok)">đã kê khai</small>':s==="Đang thực hiện đăng ký"?'<span class="dkp">đang kê khai</span>':s==="Chưa đăng ký"?'<span class="wn1">⚠ chưa kê khai</span>':s==="Chưa ghi nhận"?'<span class="wn1">⚠ chưa ghi nhận kê khai</span>':""})()}`).join("<br>"):'<small style="color:var(--warn)">Chưa có cá nhân đạt 25%: xét tiêu chí kiểm soát</small>'}</span></div>`).join(""):'<small style="color:var(--mute)">Chưa có dữ liệu sở hữu vốn.</small>'}</div>`;
@@ -2729,6 +2766,7 @@ function govGaps(){
       if(!vn)out.push({c:c.code,h:1,t:"Tất cả NĐDPL đang hiệu lực đều không phải công dân Việt Nam: phải có ít nhất một NĐDPL cư trú tại Việt Nam (Điều 12 Luật Doanh nghiệp)"})}});
   d.pos.filter(p=>activeP(p,t0)&&(isBoard(p)||isBKS(p)||isMgr(p))).forEach(p=>{
     const who=p.name+" ("+[p.role,p.title].filter(Boolean).join(", ")+")";let end="",est=0;
+    if(isBoard(p)||isBKS(p)){if(!p.from)out.push({c:p.co,h:0,soft:1,t:who+": chưa ghi ngày bắt đầu chức vụ"});if(/chưa xác minh/i.test(p.note||""))out.push({c:p.co,h:1,t:who+": căn cứ chưa xác minh (chưa có bản ký), xem ghi chú ở mục Chức vụ"});else if(/cần đối chiếu|cần xác nhận/i.test(p.note||""))out.push({c:p.co,h:0,soft:1,t:who+": ghi chú còn việc cần đối chiếu hoặc xác nhận, xem mục Chức vụ"})}
     if(p.to)end=p.to;else if(p.from){end=addCal(p.from,365*5);est=1}
     if(!end)return;const n=dDiff(t0,end);
     if(est&&n<0)out.push({c:p.co,h:0,t:who+": đã quá 05 năm kể từ ngày bổ nhiệm "+fmt(p.from)+" mà chưa ghi ngày kết thúc nhiệm kỳ, kiểm tra nhiệm kỳ hoặc bổ nhiệm lại (nhiệm kỳ không quá 05 năm)"});
@@ -4512,7 +4550,7 @@ function printProf(all){
       sec=k;if(k==="dash")rDash();else{const a=PD()[k];RN[k](a,a)}
       html+=`<h2 class="sechead${i?"":" first"}">${k==="dash"?"Tổng quan":SEC[k].lab}</h2>`+$("plist").innerHTML});
     sec=prev;$("plist").innerHTML=html;$("pstats").hidden=true;label="Toàn bộ hồ sơ";
-  }else label=sec==="dash"?"Tổng quan":sec==="tl"?"Lịch sử":sec==="hq"?"HĐQT":SEC[sec].lab;
+  }else label=sec==="dash"?"Tổng quan":sec==="tl"?"Lịch sử":sec==="hq"?"HĐQT":sec==="rc"?"Đối soát hồ sơ":SEC[sec].lab;
   $("pprint").innerHTML=`<h2>HỒ SƠ PHÁP LÝ CÔNG TY</h2><small>${esc(CFG.org)} | Mục: ${esc(label)} | Ngày xuất: ${fmt(today())}</small>`;
   document.querySelectorAll("#vprof details").forEach(d=>d.open=true);document.querySelectorAll("#vprof tr[data-gk]").forEach(r=>r.hidden=false);
   const pg=document.createElement("style");pg.textContent="@page{size:A4 landscape;margin:10mm}";document.head.appendChild(pg);
