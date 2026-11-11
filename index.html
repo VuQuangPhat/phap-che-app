@@ -2285,7 +2285,7 @@ function renderProf(){
   if(sec==="me"){$("pflt").hidden=true;$("pstats").hidden=true;rMe();return}
   if(sec==="tl"){$("pflt").hidden=true;$("pstats").hidden=true;rTl();return}
   if(sec==="hq"){$("pflt").hidden=false;$("pstats").hidden=false;$("pfc").hidden=false;["padd","padd2","pcol","pexpd","pimp","ptpl","pexp"].forEach(i=>$(i).hidden=true);rHq();return}
-  const dsh=sec==="dash";$("pflt").hidden=dsh;$("pstats").hidden=dsh;if(dsh){rDash();return}
+  const dsh=sec==="dash";$("pflt").hidden=dsh;$("pstats").hidden=dsh;if(dsh){try{rDash()}catch(err){console.error(err);$("plist").innerHTML='<div class="panel full warnp" style="margin:0 0 12px"><h3>⚠ Mục này không hiển thị được do lỗi dữ liệu hoặc mã</h3><p style="margin:6px 0">Chụp màn hình dòng này gửi lại để sửa: <b>'+esc((err&&err.message)||err)+" | "+esc(String((err&&err.stack)||"").split("\n")[1]||"").trim()+"</b></p></div>"}return}
   const all=PD()[sec],q=$("pq").value.toLowerCase().trim(),c=$("pfc").value;
   $("pfc").hidden=false;$("padd").textContent="Thêm "+SEC[sec].one;$("padd2").hidden=sec!=="ppl";$("pcol").hidden=$("pexpd").hidden=!(sec==="own"||sec==="pos");
   document.querySelectorAll("#psub button").forEach(b=>b.classList.toggle("on",b.dataset.s===sec));
