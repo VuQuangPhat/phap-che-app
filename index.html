@@ -6458,6 +6458,134 @@ window.__aiBuild=buildContext;window.__aiMask=maskText;
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot();
 })();
 
+/* ===== Tab Lịch năm: timeline ngang đầu việc pháp chế theo tháng. Đọc tab lich_nam của Sheet pháp chế, chỉ xem (sửa ở Sheet).
+   Cột: id, ky (YYYY-MM), han, loai (law|int), phap_nhan, dau_viec, mo_ta, cspl, nhan, nhom (A theo tháng, B theo sự kiện, C việc nền, D ghi chú thay đổi), nguoi_pt, trang_thai ===== */
+(function(){
+function boot(){
+const tptc=document.getElementById("tptc");
+if(!tptc){console.error("Module Lịch năm: không tìm thấy thanh tab");return}
+const nav=tptc.parentNode;
+const e=s=>esc(s==null?"":String(s));
+const COS_LN=["FGC","FGI","HLI","HLM","BAC"];
+let ROWS=null,fLoai="all",fCo="",busy=false;
+
+const css=document.createElement("style");
+css.textContent=`
+#vln{padding-bottom:48px}
+#vln .ln-head{padding:14px 24px 4px}
+#vln .ln-head h2{margin:0 0 4px;font-size:18px}
+#vln .ln-head p{margin:2px 0;color:var(--mute);font-size:13px;line-height:1.5;max-width:100ch}
+#vln .ln-bar{display:flex;gap:8px 12px;align-items:center;flex-wrap:wrap;padding:6px 24px}
+#vln .ln-bar select{padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);max-width:100%}
+#vln .ln-chips{display:flex;gap:6px;flex-wrap:wrap}
+#vln .ln-chips button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:5px 14px;font-size:13px}
+#vln .ln-chips button[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:var(--bg)}
+#vln .ln-stat{font-size:12.5px;color:var(--mute);flex:1 1 220px;min-width:0;overflow-wrap:anywhere}
+#vln .ln-legend{display:flex;flex-wrap:wrap;gap:6px 16px;padding:4px 24px 8px;font-size:12px;color:var(--mute)}
+#vln .ln-legend i{display:inline-block;width:14px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+#vln .ln-scroll{margin:0 24px;overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+#vln .ln-board{padding:18px 0 20px;min-width:calc(var(--n,13)*252px)}
+#vln .ln-cols{display:grid;grid-template-columns:repeat(var(--n,13),minmax(0,1fr))}
+#vln .ln-col{padding:0 8px;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;gap:8px}
+#vln .ln-axis{position:relative;height:28px;margin:10px 0 0}
+#vln .ln-axis::before{content:"";position:absolute;left:0;right:0;top:13px;height:2px;background:var(--line)}
+#vln .ln-axis .ln-col{position:relative;justify-content:flex-start}
+#vln .ln-dot{position:absolute;left:50%;top:7px;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:var(--brand);border:3px solid var(--bg);box-shadow:0 0 0 1.5px var(--brand)}
+#vln .ln-dot.pk{background:var(--seal);box-shadow:0 0 0 1.5px var(--seal)}
+#vln .ln-dot.now{background:var(--warn);box-shadow:0 0 0 1.5px var(--warn)}
+#vln .ln-lab{text-align:center;padding-top:4px;justify-content:flex-start}
+#vln .ln-lab b{display:block;font-size:13px;line-height:1.3}
+#vln .ln-lab span{display:block;font-size:12px;color:var(--mute)}
+#vln .ln-c{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:12.5px;min-width:0;overflow-wrap:anywhere}
+#vln .ln-c.law{border-left:3px solid var(--seal)}
+#vln .ln-c.int{border-left:3px solid var(--brand)}
+#vln .ln-c h4{margin:3px 0 2px;font-size:13px;line-height:1.35}
+#vln .ln-top{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center}
+#vln .ln-t{font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--mute)}
+#vln .ln-co{font-size:11px;border:1px solid var(--line);border-radius:4px;padding:0 6px;color:var(--mute)}
+#vln .ln-h{font-size:12px;color:var(--warn);font-weight:600}
+#vln .ln-tag{display:inline-block;font-size:10.5px;padding:0 6px;border-radius:4px;border:1px solid var(--line);color:var(--mute);margin-left:4px;white-space:nowrap}
+#vln .ln-tag.ok{color:var(--ok);border-color:var(--ok)}
+#vln .ln-tag.no{color:var(--warn);border-color:var(--warn)}
+#vln details{margin-top:4px}
+#vln summary{cursor:pointer;color:var(--brand);font-size:12px}
+#vln details p{margin:4px 0 0;color:var(--mute);line-height:1.5}
+#vln .ln-sec{padding:18px 24px 0}
+#vln .ln-sec h3{margin:0 0 8px;font-size:15px}
+#vln .ln-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:10px}
+#vln .ln-note{border-left:3px solid var(--warn);padding:4px 0 4px 12px;font-size:13px;margin-bottom:8px}
+#vln .ln-note b{display:block}
+#vln .ln-empty{margin:10px 24px;color:var(--mute)}
+@media(max-width:760px){#vln .ln-head,#vln .ln-bar,#vln .ln-legend,#vln .ln-sec,#vln .ln-empty{padding-left:12px;padding-right:12px;margin-left:0;margin-right:0}#vln .ln-scroll{margin:0 12px}}`;
+document.head.appendChild(css);
+
+const tab=document.createElement("button");tab.id="tpln";tab.textContent="Lịch năm";nav.appendChild(tab);
+const v=document.createElement("div");v.id="vln";v.hidden=true;
+v.innerHTML=`<div class="ln-head"><h2>Lịch năm pháp chế 2027</h2>
+<p>Các đầu việc pháp chế của FGC, FGI, HLI, HLM, BAC xếp theo tháng. Dữ liệu đọc từ tab lich_nam của Sheet pháp chế và chỉ để xem; muốn thêm, sửa hoặc giao người phụ trách thì sửa ở Sheet rồi bấm Tải lại. Năm tài chính giả định trùng năm dương lịch. Căn cứ pháp lý có nhãn "chưa xác minh" cần tra nguồn hiện hành trước khi dùng.</p></div>
+<div class="ln-bar"><div class="ln-chips" id="lnf" role="group" aria-label="Lọc theo loại việc"><button type="button" data-l="all" aria-pressed="true">Tất cả</button><button type="button" data-l="law" aria-pressed="false">Mốc pháp định</button><button type="button" data-l="int" aria-pressed="false">Nội bộ</button></div>
+<label>Pháp nhân <select id="lnco" aria-label="Lọc theo pháp nhân"><option value="">Tất cả</option>${COS_LN.map(c=>`<option>${c}</option>`).join("")}</select></label>
+<span class="ln-stat" id="lnstat">Chưa tải dữ liệu.</span><button id="lnreload" type="button">Tải lại</button></div>
+<div class="ln-legend"><span><i style="background:var(--seal)"></i>Mốc pháp định (có hạn theo luật)</span><span><i style="background:var(--brand)"></i>Việc nội bộ</span><span><i style="background:var(--warn)"></i>Tháng hiện tại</span></div>
+<div id="lnbody"><p class="ln-empty">Đang tải.</p></div>`;
+const anchor=document.getElementById("vai")||document.getElementById("vtq")||document.getElementById("vinv")||nav;
+anchor.after(v);
+const $=id=>document.getElementById(id);
+
+const hide=()=>{v.hidden=true;tab.classList.remove("on")};
+[...nav.querySelectorAll("button")].forEach(b=>{if(b!==tab)b.addEventListener("click",hide)});
+tab.onclick=()=>{["vlist","vbud","vdash","vprof","vtc","vinv","vtq","vai"].forEach(i=>{const x=document.getElementById(i);if(x)x.hidden=true});
+  nav.querySelectorAll("button").forEach(b=>b.classList.remove("on"));v.hidden=false;tab.classList.add("on");load(false)};
+
+async function load(force){
+  if(ROWS&&!force){render();return}
+  if(busy)return;busy=true;$("lnstat").textContent="Đang đọc Sheet...";
+  try{
+    if(typeof SH==="undefined"||!SH||typeof shApi!=="function")throw new Error("Chưa kết nối Google Sheet: bấm Đồng bộ Google Sheet để đăng nhập, rồi mở lại tab này.");
+    let j;
+    try{j=await shApi("/values/"+encodeURIComponent("'lich_nam'")+"!A1:L400")}
+    catch(err){if(/400|Unable to parse range|not found/i.test(err.message))throw new Error("Chưa có tab lich_nam trong Sheet pháp chế.");throw err}
+    const vals=j.values||[],h=(vals[0]||[]).map(c=>String(c).trim());
+    ROWS=vals.slice(1).map(r=>{const o={};h.forEach((k,i)=>{o[k]=String(r[i]==null?"":r[i]).trim()});return o}).filter(o=>o.id&&o.dau_viec);
+    render();
+  }catch(err){ROWS=null;$("lnstat").textContent="";$("lnbody").innerHTML=`<p class="ln-empty">${e(err.message)}</p>`}
+  busy=false;
+}
+const MON=ky=>{const m=/^(\d{4})-(\d\d)$/.exec(ky||"");return m?{y:+m[1],m:+m[2]}:null};
+const coOk=o=>{if(!fCo)return true;const p=(o.phap_nhan||"").toUpperCase();if(/CẢ 5/.test(p))return true;if(COS_LN.some(c=>p.includes(c)))return p.includes(fCo);return true};
+const loaiOk=o=>fLoai==="all"||o.loai===fLoai;
+const tagH=n=>n==="quy định rõ"?`<span class="ln-tag ok">quy định rõ</span>`:n==="chưa xác minh"?`<span class="ln-tag no">chưa xác minh</span>`:"";
+function card(o){
+  const law=o.loai==="law";
+  return `<article class="ln-c ${law?"law":"int"}"><div class="ln-top"><span class="ln-t">${law?"Mốc pháp định":"Nội bộ"}</span><span class="ln-co">${e(o.phap_nhan||"")}</span>${o.trang_thai?`<span class="ln-tag">${e(o.trang_thai)}</span>`:""}</div><h4>${e(o.dau_viec)}</h4>${o.han?`<div class="ln-h">${e(o.han)}</div>`:""}${o.nguoi_pt?`<div class="ln-co" style="display:inline-block;margin-top:3px">Phụ trách: ${e(o.nguoi_pt)}</div>`:""}${(o.mo_ta||o.cspl)?`<details><summary>Chi tiết${o.nhan&&law?"":""}</summary>${o.mo_ta?`<p>${e(o.mo_ta)}</p>`:""}${o.cspl?`<p>Căn cứ: ${e(o.cspl)} ${tagH(o.nhan)}</p>`:""}</details>`:""}</article>`;
+}
+function render(){
+  const all=ROWS||[];
+  if(!all.length){$("lnbody").innerHTML='<p class="ln-empty">Tab lich_nam chưa có dòng nào.</p>';$("lnstat").textContent="";return}
+  const A=all.filter(o=>o.nhom==="A"&&MON(o.ky)),vis=A.filter(o=>coOk(o)&&loaiOk(o));
+  const kys=[...new Set(A.map(o=>o.ky))].sort();
+  const d=new Date(),nowKy=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+  const nLaw=vis.filter(o=>o.loai==="law").length,nNo=vis.filter(o=>o.nhan==="chưa xác minh").length;
+  $("lnstat").textContent=vis.length+" việc theo tháng, "+nLaw+" mốc pháp định, "+nNo+" căn cứ chưa xác minh.";
+  const by=k=>vis.filter(o=>o.ky===k).sort((a,b)=>(a.loai===b.loai?0:a.loai==="law"?-1:1));
+  const cards=kys.map(k=>`<div class="ln-col">${by(k).map(card).join("")}</div>`).join("");
+  const dots=kys.map(k=>{const L=by(k),hasLaw=L.some(o=>o.loai==="law");return `<div class="ln-col"><span class="ln-dot${k===nowKy?" now":hasLaw?" pk":""}"></span></div>`}).join("");
+  const labs=kys.map(k=>{const m=MON(k),L=by(k),nl=L.filter(o=>o.loai==="law").length;return `<div class="ln-col ln-lab"><b>Tháng ${m.m}${m.y!==2027?"/"+m.y:""}${k===nowKy?" (hiện tại)":""}</b><span>${L.length} việc${nl?", "+nl+" mốc pháp định":""}</span></div>`}).join("");
+  const sec=(nhom,tt,sub)=>{const L=all.filter(o=>o.nhom===nhom&&coOk(o)&&loaiOk(o));return L.length?`<section class="ln-sec"><h3>${tt}</h3>${sub?`<p style="margin:0 0 8px;color:var(--mute);font-size:13px">${sub}</p>`:""}<div class="ln-grid">${L.map(card).join("")}</div></section>`:""};
+  const D=all.filter(o=>o.nhom==="D");
+  const notes=D.length?`<section class="ln-sec"><h3>Điểm khác so với bản nháp</h3>${D.map(o=>`<div class="ln-note"><b>${e(o.dau_viec)}</b>${e(o.mo_ta)}${o.cspl?` <span style="color:var(--mute)">Căn cứ: ${e(o.cspl)}</span> ${tagH(o.nhan)}`:""}</div>`).join("")}</section>`:"";
+  $("lnbody").innerHTML=`<div class="ln-scroll" tabindex="0" aria-label="Timeline đầu việc theo tháng, cuộn ngang"><div class="ln-board" style="--n:${kys.length}"><div class="ln-cols">${cards}</div><div class="ln-axis ln-cols">${dots}</div><div class="ln-cols">${labs}</div></div></div>`+
+    sec("B","Việc theo sự kiện","Không có mốc cố định; cần kế hoạch dự phòng trong năm.")+sec("C","Việc nền của phòng pháp chế","")+notes+
+    `<p class="ln-empty">Kéo ngang để xem hết các tháng. Bản nháp đầu việc dựng ngày 12/11/2026; mốc ngày và căn cứ có nhãn "chưa xác minh" chưa tra nguồn hiện hành.</p>`;
+}
+$("lnf").onclick=ev=>{const b=ev.target.closest("button");if(!b)return;fLoai=b.dataset.l;$("lnf").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b?"true":"false"));if(ROWS)render()};
+$("lnco").onchange=ev=>{fCo=ev.target.value;if(ROWS)render()};
+$("lnreload").onclick=()=>load(true);
+window.__lnRender=rows=>{ROWS=rows;render()};
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot();
+})();
+
 </script>
 </body>
 </html>
