@@ -2873,7 +2873,7 @@ function dsMerge(co){
     r.dlq=dl.length?dl.map(z=>fmt(z.ngay)+(z.loai==="Điều lệ đầy đủ"?" (điều lệ)":" (phụ lục"+(z.lan?" lần "+z.lan:"")+")")).join("; "):(r.mdl||NFT);
     r.bbh=mt.length?mt.map(z=>fmt(z.ngay)).join("; "):(r.mbbh||NFT);
     r.nq=nq.length?nq.map(z=>fmt(z.ngay)).join("; "):(r.mnq||NFT);
-    r.src={dlq:dl.length,bbh:mt.length,nq:nq.length}});
+    r.dlz=dl;r.src={dlq:dl.length,bbh:mt.length,nq:nq.length}});
   rows.sort((a,b)=>String(a.ngay||"").localeCompare(String(b.ngay||"")));
   const extra=(d.dl||[]).filter(z=>same(z.co,co)&&!used.has(z.id)&&z.ngay).sort((a,b)=>String(a.ngay).localeCompare(String(b.ngay)));
   return{rows,extra};
@@ -2907,7 +2907,7 @@ function rDs(r,all){
   if(!R.length){$("plist").innerHTML=empty()+'<p class="tcnote" style="margin:8px 24px">Bảng này tự lấy lịch sử GCN từ mục Pháp nhân, điều lệ từ mục Điều lệ, họp và nghị quyết từ tab Họp HĐQT / ĐHĐCĐ. Dòng nhập tay chỉ để bổ sung chỗ app chưa có.</p>';return}
   const nfc=(v,app)=>nfd(v)?'<span style="color:#c53030">'+esc(v)+'</span>':esc(v||"")+(app?' <small class="s" style="color:var(--ok)">app</small>':"");
   $("plist").innerHTML=`<table class="m"><thead><tr><th>Pháp nhân</th><th>Ngày GCN</th><th>GCN ĐKKD</th><th>Nội dung</th><th>Biên bản họp</th><th>Nghị quyết</th><th>Điều lệ</th></tr></thead><tbody>`+
-  R.map(x=>`<tr${x.id?` data-id="${x.id}"`:""}><td>${chip(x.co)}</td><td>${x.ngay?fmt(x.ngay):""}</td><td>${esc(x.lan||"")}</td><td class="t">${esc(x.nd||"")}${dsLech(x)?'<small class="s" style="color:#b7791f">Ngày chứng từ sau ngày cấp GCN: cần đối chiếu bản gốc</small>':""}</td><td>${nfc(x.bbh,x.src&&x.src.bbh)}</td><td>${nfc(x.nq,x.src&&x.src.nq)}</td><td>${nfc(x.dlq,x.src&&x.src.dlq)}</td></tr>`).join("")+`</tbody></table>`+
+  R.map(x=>`<tr${x.id?` data-id="${x.id}"`:""}><td>${chip(x.co)}</td><td>${x.ngay?fmt(x.ngay):""}</td><td>${esc(x.lan||"")}</td><td class="t">${esc(x.nd||"")}${dsLech(x)?'<small class="s" style="color:#b7791f">Ngày chứng từ sau ngày cấp GCN: cần đối chiếu bản gốc</small>':""}</td><td>${nfc(x.bbh,x.src&&x.src.bbh)}</td><td>${nfc(x.nq,x.src&&x.src.nq)}</td><td>${x.dlz&&x.dlz.length?x.dlz.map(z=>{const t=esc(fmt(z.ngay)+(z.loai==="Điều lệ đầy đủ"?" (điều lệ)":" (phụ lục"+(z.lan?" lần "+z.lan:"")+")"));return z.lk?`<a href="${esc(z.lk)}" target="_blank" rel="noopener" data-dlopen title="Mở file điều lệ">${t}</a>`:t}).join("; ")+' <small class="s" style="color:var(--ok)">app</small>':nfc(x.dlq,x.src&&x.src.dlq)}</td></tr>`).join("")+`</tbody></table>`+
   M.filter(o=>o.m.extra.length).map(o=>`<p class="tcnote" style="margin:8px 24px">${esc(o.c)}: văn bản điều lệ trên app chưa gắn với lần GCN nào: ${o.m.extra.map(z=>esc((z.loai==="Điều lệ đầy đủ"?"Điều lệ":"Phụ lục"+(z.lan?" lần "+z.lan:""))+" "+fmt(z.ngay))).join("; ")}.</p>`).join("");
 }
 const dsDate=v=>{const m=String(v||"").match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);return m?m[3]+"-"+m[2].padStart(2,"0")+"-"+m[1].padStart(2,"0"):""};
