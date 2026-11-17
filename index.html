@@ -1648,7 +1648,7 @@ function shFromTable(v){if(!v||!v.length)return[];const h=v[0];return v.slice(1)
 const shIsRows=a=>Array.isArray(a)&&a.every(r=>r&&typeof r==="object"&&!Array.isArray(r));
 /* state -> {tab:[[...]]}; tab tên: tasks, budget, prof_<k>, cfg (key/seq/chunk) */
 /* ===== Quy tắc pháp lý đọc từ tab quy_tac của Sheet (CFG.prof.qt); không có thì dùng mặc định bên dưới và ghi mặc định lên Sheet ===== */
-const DEF_RULES=[{"nhom": "bo.nguong", "ma": "bo.nguong", "stt": 0, "gia_tri": 25, "don_vi": "%", "noi_dung": "Ngưỡng sở hữu xác định CSHHL (vốn điều lệ hoặc cổ phần có quyền biểu quyết)", "can_cu": "Điều 17, 18 NĐ 168/2025/NĐ-CP; NĐ 296/2026/NĐ-CP", "trang_thai": "hiệu lực"}, {"nhom": "bo.canh_bao", "ma": "bo.so_lieu_cu_ngay", "stt": 0, "gia_tri": 183, "don_vi": "ngày", "noi_dung": "Số liệu sở hữu vốn chốt quá số ngày này thì cảnh báo cần xác nhận lại cơ cấu cổ đông", "can_cu": "Quy tắc nội bộ phòng pháp chế", "trang_thai": "hiệu lực"},  {"nhom": "bo.can_cu", "ma": "bo.can_cu.1", "stt": 1, "gia_tri": "", "don_vi": "", "noi_dung": "Căn cứ: Luật Doanh nghiệp, Nghị định 168/2025/NĐ-CP về đăng ký doanh nghiệp (Điều 17, 18), được sửa đổi bởi Nghị định 296/2026/NĐ-CP. Biểu mẫu: Thông tư 68/2025/TT-BTC, sửa đổi bởi Thông tư 121/2026/TT-BTC từ 21/08/2026 (Mẫu 10 thay mới, Mẫu 11 bãi bỏ). Cần đối chiếu văn bản gốc trước khi kê khai chính thức.", "can_cu": "", "trang_thai": "hiệu lực"}, {"nhom": "bo.can_cu", "ma": "bo.can_cu.2", "stt": 2, "gia_tri": "", "don_vi": "", "noi_dung": "CSHHL là cá nhân trực tiếp hoặc gián tiếp sở hữu hoặc kiểm soát cuối cùng trên thực tế đối với doanh nghiệp. Người đại diện phần vốn nhà nước không được coi là CSHHL.", "can_cu": "", "trang_thai": "hiệu lực"}, {"nhom": "bo.can_cu", "ma": "bo.can_cu.3", "stt": 3, "gia_tri": "", "don_vi": "", "noi_dung": "Tiêu chí 1 (sở hữu): cá nhân sở hữu trực tiếp, gián tiếp hoặc cả hai từ 25% vốn điều lệ hoặc 25% tổng số cổ phần có quyền biểu quyết. Nhóm cá nhân có quan hệ gia đình hoặc hợp đồng cùng sở hữu mà tổng đạt 25% thì mọi thành viên trong nhóm đều là CSHHL. Công ty hợp danh: mọi thành viên hợp danh.", "can_cu": "", "trang_thai": "hiệu lực"}, {"nhom": "bo.can_cu", "ma": "bo.can_cu.4", "stt": 4, "gia_tri": "", "don_vi": "", "noi_dung": "Tiêu chí 2 (kiểm soát thực tế): áp dụng khi không có ai đạt tiêu chí 1, hoặc có căn cứ cho thấy người đạt tiêu chí 1 không phải CSHHL (quyền bổ nhiệm, miễn nhiệm đa số thành viên HĐQT, giám đốc; sửa đổi điều lệ; quyết định chính sách tài chính, đầu tư; tổ chức lại, giải thể).", "can_cu": "", "trang_thai": "hiệu lực"}, {"nhom": "bo.can_cu", "ma": "bo.can_cu.5", "stt": 5, "gia_tri": "", "don_vi": "", "noi_dung": "Tiêu chí 3 (dự phòng): xác định một người quản lý có quyền hạn cao nhất để hành động thay mặt doanh nghiệp.", "can_cu": "", "trang_thai": "hiệu lực"}, {"nhom": "bo.can_cu", "ma": "bo.can_cu.6", "stt": 6, "gia_tri": "", "don_vi": "", "noi_dung": "Khi cổ đông là pháp nhân, phải rà soát từng cấp đến cá nhân cuối cùng. Công cụ này tự cộng sở hữu gián tiếp qua các công ty trong hệ thống và coi mọi cổ phần là có quyền biểu quyết. Đặt \"Nhóm có quan hệ gia đình / hợp đồng\" tại tab Nhân sự để cộng gộp theo nhóm. Thời hạn thông báo khi có thay đổi: đối chiếu Nghị định 168/2025/NĐ-CP.", "can_cu": "", "trang_thai": "hiệu lực"}];
+const DEF_RULES=[{"nhom": "bo.nguong", "ma": "bo.nguong", "stt": 0, "gia_tri": 25, "don_vi": "%", "noi_dung": "Ngưỡng sở hữu xác định CSHHL (vốn điều lệ hoặc cổ phần có quyền biểu quyết)", "can_cu": "Điều 17, 18 NĐ 168/2025/NĐ-CP; NĐ 296/2026/NĐ-CP", "trang_thai": "hiệu lực"}, {"nhom": "bo.canh_bao", "ma": "bo.so_lieu_cu_ngay", "stt": 0, "gia_tri": 183, "don_vi": "ngày", "noi_dung": "Số liệu sở hữu vốn chốt quá số ngày này thì cảnh báo cần xác nhận lại cơ cấu cổ đông", "can_cu": "Quy tắc nội bộ phòng pháp chế", "trang_thai": "hiệu lực"},  {"nhom": "bo.can_cu", "ma": "bo.can_cu.1", "stt": 1, "gia_tri": "", "don_vi": "", "noi_dung": "Căn cứ: Luật Doanh nghiệp, Nghị định 168/2025/NĐ-CP về đăng ký doanh nghiệp (Điều 17, 18), được sửa đổi bởi Nghị định 296/2026/NĐ-CP. Biểu mẫu: Thông tư 68/2025/TT-BTC, sửa đổi bởi Thông tư 121/2026/TT-BTC từ 21/08/2026 (Mẫu 10 thay mới, Mẫu 11 bãi bỏ). Cần đối chiếu văn bản gốc trước khi kê khai chính thức.", "can_cu": "", "trang_thai": "hiệu lực"}, {"nhom": "bo.can_cu", "ma": "bo.can_cu.2", "stt": 2, "gia_tri": "", "don_vi": "", "noi_dung": "CSHHL là cá nhân trực tiếp hoặc gián tiếp sở hữu hoặc kiểm soát cuối cùng trên thực tế đối với doanh nghiệp. Người đại diện phần vốn nhà nước không được coi là CSHHL.", "can_cu": "", "trang_thai": "hiệu lực"}, {"nhom": "bo.can_cu", "ma": "bo.can_cu.3", "stt": 3, "gia_tri": "", "don_vi": "", "noi_dung": "Tiêu chí 1 (sở hữu): cá nhân sở hữu trực tiếp, gián tiếp hoặc cả hai từ 25% vốn điều lệ hoặc 25% tổng số cổ phần có quyền biểu quyết. Nhóm cá nhân có quan hệ gia đình hoặc hợp đồng cùng sở hữu mà tổng đạt 25% thì mọi thành viên trong nhóm đều là CSHHL. Công ty hợp danh: mọi thành viên hợp danh.", "can_cu": "", "trang_thai": "hiệu lực"}, {"nhom": "bo.can_cu", "ma": "bo.can_cu.4", "stt": 4, "gia_tri": "", "don_vi": "", "noi_dung": "Tiêu chí 2 (kiểm soát thực tế): áp dụng khi không có ai đạt tiêu chí 1, hoặc có căn cứ cho thấy người đạt tiêu chí 1 không phải CSHHL (quyền bổ nhiệm, miễn nhiệm đa số thành viên HĐQT, giám đốc; sửa đổi điều lệ; quyết định chính sách tài chính, đầu tư; tổ chức lại, giải thể).", "can_cu": "", "trang_thai": "hiệu lực"}, {"nhom": "bo.can_cu", "ma": "bo.can_cu.5", "stt": 5, "gia_tri": "", "don_vi": "", "noi_dung": "Tiêu chí 3 (dự phòng): xác định một người quản lý có quyền hạn cao nhất để hành động thay mặt doanh nghiệp.", "can_cu": "", "trang_thai": "hiệu lực"}, {"nhom": "bo.can_cu", "ma": "bo.can_cu.6", "stt": 6, "gia_tri": "", "don_vi": "", "noi_dung": "Khi cổ đông là pháp nhân, phải rà soát từng cấp đến cá nhân cuối cùng. Công cụ này tự cộng sở hữu gián tiếp qua các công ty trong hệ thống và coi mọi cổ phần là có quyền biểu quyết. Đặt \"Nhóm có quan hệ gia đình / hợp đồng\" tại tab Nhân sự để cộng gộp theo nhóm. Thời hạn thông báo khi có thay đổi: đối chiếu Nghị định 168/2025/NĐ-CP.", "can_cu": "", "trang_thai": "hiệu lực"},{"nhom": "ds.cua_so", "ma": "ds.dl_truoc", "stt": 0, "gia_tri": 60, "don_vi": "ngày", "noi_dung": "Đối soát điều lệ: điều lệ/phụ lục được gắn vào lần GCN nếu ngày hiệu lực không sớm hơn ngày cấp GCN quá số ngày này", "can_cu": "", "trang_thai": "hiệu lực"},{"nhom": "ds.cua_so", "ma": "ds.dl_sau", "stt": 0, "gia_tri": 30, "don_vi": "ngày", "noi_dung": "Đối soát điều lệ: điều lệ/phụ lục được gắn vào lần GCN nếu ngày hiệu lực không muộn hơn ngày cấp GCN quá số ngày này", "can_cu": "", "trang_thai": "hiệu lực"},{"nhom": "ds.cua_so", "ma": "ds.bb_truoc", "stt": 0, "gia_tri": 60, "don_vi": "ngày", "noi_dung": "Đối soát điều lệ: biên bản họp/nghị quyết được gắn vào lần GCN nếu ngày không sớm hơn ngày cấp GCN quá số ngày này", "can_cu": "", "trang_thai": "hiệu lực"},{"nhom": "ds.cua_so", "ma": "ds.bb_sau", "stt": 0, "gia_tri": 3, "don_vi": "ngày", "noi_dung": "Đối soát điều lệ: biên bản họp/nghị quyết được gắn vào lần GCN nếu ngày không muộn hơn ngày cấp GCN quá số ngày này", "can_cu": "", "trang_thai": "hiệu lực"}];
 const QT=()=>((CFG.prof&&CFG.prof.qt)||[]);
 const ruleOn=r=>r&&!/hết hiệu lực|ngưng|tắt/i.test(String(r.trang_thai||""));
 const ruleRow=ma=>QT().find(r=>r&&r.ma===ma&&ruleOn(r));
@@ -1735,12 +1735,22 @@ document.addEventListener("click",e=>{
 const shRange=t=>encodeURIComponent("'"+t+"'");
 async function shTitles(sid){const j=await shApi("?fields=sheets.properties.title",undefined,sid);return(j.sheets||[]).map(s=>s.properties.title)}
 async function shGetRev(sid){const j=await shApi("/values/"+shRange("_meta")+"!A1:B2",undefined,sid).catch(e=>{if(/400/.test(e.message))return{};throw e});const v=(j.values||[]);return{rev:+(v[0]&&v[0][1])||0,at:(v[1]&&v[1][1])||""}}
+/* Phát hiện Sheet bị sửa trực tiếp từ bên ngoài (không đi qua app nên không tăng số rev): so dấu vân tay từng tab với lần đọc/ghi gần nhất */
+const SNAP={};
+const shNorm=rows=>{const r=(rows||[]).map(x=>{const a=x.slice();while(a.length&&(a[a.length-1]===""||a[a.length-1]==null))a.pop();return a});while(r.length&&!r[r.length-1].length)r.pop();return JSON.stringify(r)};
+const shHash=t=>{let h=5381;for(let i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0;return h+":"+t.length};
+const shWanted=t=>t==="tasks"||t==="budget"||t==="cfg"||t==="_long"||t==="rc_items"||!!SH_TAB_R[t]||t.startsWith("prof_");
+const shSnapFrom=T=>{const o={};Object.keys(T).forEach(t=>o[t]=shHash(shNorm(T[t])));return o};
+async function shSnapRead(sid){const titles=await shTitles(sid),want=titles.filter(shWanted);if(!want.length)return{};
+  const j=await shApi("/values:batchGet?majorDimension=ROWS&valueRenderOption=UNFORMATTED_VALUE&"+want.map(t=>"ranges="+shRange(t)).join("&"),undefined,sid);
+  const T={};(j.valueRanges||[]).forEach((vr,i)=>{T[want[i]]=(vr.values||[]).map(r=>r.map(c=>c===undefined?"":c))});return shSnapFrom(T)}
 async function shReadSheet(sid,isA){
   const titles=await shTitles(sid);
   if(!titles.includes("_meta")||(isA&&!titles.includes("cfg")))return{o:null,rev:0};
   const want=titles.filter(t=>t==="tasks"||t==="budget"||t==="cfg"||t==="_long"||t==="rc_items"||SH_TAB_R[t]||t.startsWith("prof_"));
   const j=await shApi("/values:batchGet?majorDimension=ROWS&valueRenderOption=UNFORMATTED_VALUE&"+want.map(t=>"ranges="+shRange(t)).join("&"),undefined,sid);
   const T={};(j.valueRanges||[]).forEach((vr,i)=>{T[want[i]]=(vr.values||[]).map(r=>r.map(c=>c===undefined?"":c))});
+  SNAP[sid]=shSnapFrom(T);
   const rev=(await shGetRev(sid)).rev;let rc=[];try{rc=isA?shFromTable(T.rc_items||[]):[]}catch(e){console.error("rc_items",e)}return{o:shUnpack(T),rev,rc}}
 async function shGet(){
   shNoA=false;let A=null,B=null;
@@ -1759,6 +1769,8 @@ async function shPutSheet(sid,T,known,force){
   const titles=await shTitles(sid),names=Object.keys(T);
   const cur=titles.includes("_meta")?await shGetRev(sid):{rev:0};
   if(!force&&known!==null&&cur.rev!==known)throw new Error("conflict");
+  if(!force&&SNAP[sid]){const now=await shSnapRead(sid),bad=[];Object.keys(now).forEach(t=>{if(SNAP[sid][t]!==now[t])bad.push(t)});Object.keys(SNAP[sid]).forEach(t=>{if(!(t in now))bad.push(t)});
+    if(bad.length){const e=new Error("ext");e.tabs=bad;throw e}}
   const add=[...names,"_meta"].filter(t=>!titles.includes(t));
   if(add.length)await shApi(":batchUpdate",{method:"POST",body:JSON.stringify({requests:add.map(t=>({addSheet:{properties:{title:t}}}))})},sid);
   const old=titles.filter(t=>(t.startsWith("prof_")||SH_TAB_R[t])&&!names.includes(t));
@@ -1767,6 +1779,7 @@ async function shPutSheet(sid,T,known,force){
   const nr=cur.rev+1,data=names.map(t=>({range:"'"+t+"'!A1",values:T[t]}));
   data.push({range:"'_meta'!A1",values:[["rev",nr],["updated",new Date().toISOString()],["schema","phapche v2"]]});
   await shApi("/values:batchUpdate",{method:"POST",body:JSON.stringify({valueInputOption:"RAW",data})},sid);
+  try{SNAP[sid]=await shSnapRead(sid)}catch(e){delete SNAP[sid]}
   return nr}
 async function shPut(force){
   if(shNoA)throw new Error("Tài khoản này chỉ xem được phần pháp lý dự án nên không ghi được");
@@ -1778,7 +1791,7 @@ async function shPut(force){
 async function shPush(force){
   if(!SH||shRO)return;if(shBusy){ghSchedule();return}shBusy=true;
   try{ghStatus("Đang ghi lên Google Sheet…");await shPut(force);ghStatus("Đã đồng bộ Google Sheet lúc "+new Date().toLocaleTimeString("vi-VN"))}
-  catch(e){ghStatus(e.message==="conflict"?"Xung đột: Sheet có bản mới hơn từ máy khác. Mở “Đồng bộ Google Sheet” để tải về hoặc ghi đè.":"Lỗi Google Sheet: "+e.message,true)}
+  catch(e){ghStatus(e.message==="ext"?"Chưa ghi: Sheet vừa bị sửa trực tiếp ở tab "+(e.tabs||[]).join(", ")+". Mở “Đồng bộ Google Sheet” → “Tải từ Sheet” để lấy chỗ vừa sửa, hoặc “Ghi đè lên Sheet” nếu muốn bỏ chỗ sửa ngoài đó.":e.message==="conflict"?"Xung đột: Sheet có bản mới hơn từ máy khác. Mở “Đồng bộ Google Sheet” để tải về hoặc ghi đè.":"Lỗi Google Sheet: "+e.message,true)}
   shBusy=false}
 async function shPull(){const d=await shGet();if(d===null)throw new Error("Sheet chưa có dữ liệu");ghApply(d);shSrcSet();ghStatus("Đã tải từ Google Sheet lúc "+new Date().toLocaleTimeString("vi-VN"))}
 function gateOpen(){const g=$("gate");if(g)g.remove();try{aqInit()}catch(e){}}
@@ -2860,15 +2873,19 @@ const NF_RE=/chưa\s*tìm|chua\s*tim/i,LT_C={"Đủ":"var(--ok)","Có một ph�
 const sttNum=x=>parseFloat(String(x.stt||"").replace(/[^\d.]/g,""))||999;
 
 /* Ưu tiên dữ liệu đã có trên app: lịch sử GCN lấy từ hồ sơ pháp nhân; điều lệ, họp, nghị quyết dò theo ngày; chỉ chỗ app chưa có mới dùng dòng nhập tay */
-const gcnLines=c=>String((c&&c.gcnls)||"").split(/\n+/).map(l=>{const m=l.match(/^(.*?),\s*(\d{1,2})\/(\d{1,2})\/(\d{4}):\s*(.*)$/);return m?{lan:m[1].trim(),ngay:m[4]+"-"+m[3].padStart(2,"0")+"-"+m[2].padStart(2,"0"),tx:m[5].trim()}:null}).filter(Boolean);
+const GCN_BAD={};
+const gcnLines=c=>{const bad=[];const o=String((c&&c.gcnls)||"").split(/\n+/).map(l=>{if(!l.trim())return null;const m=l.match(/^(.*?),\s*(\d{1,2})\/(\d{1,2})\/(\d{4}):\s*(.*)$/);if(!m){bad.push(l.trim());return null}return{lan:m[1].trim(),ngay:m[4]+"-"+m[3].padStart(2,"0")+"-"+m[2].padStart(2,"0"),tx:m[5].trim()}}).filter(Boolean);if(c&&c.code)GCN_BAD[c.code]=bad;return o};
 const dayN=v=>Date.parse(v)/864e5;
 function dsMerge(co){
   const d=PD(),c=(d.co||[]).find(x=>same(x.code,co)),rows=[],used=new Set();
   gcnLines(c).forEach(g=>rows.push({co,lan:g.lan,ngay:g.ngay,nd:g.tx,auto:1}));
   d.ds.filter(z=>same(z.co,co)).forEach(z=>{let r=rows.find(x=>norm(x.lan)===norm(z.lan));if(!r){r={co,lan:z.lan,ngay:z.ngay||"",nd:z.nd||""};rows.push(r)}
     r.id=z.id;if(!r.ngay)r.ngay=z.ngay||"";if(!r.nd)r.nd=z.nd||"";r.mbbh=z.bbh;r.mnq=z.nq;r.mdl=z.dlq;r.note=z.note});
-  rows.forEach(r=>{const G=r.ngay?dayN(r.ngay):NaN,near=(arr,lo,hi)=>isNaN(G)?[]:(arr||[]).filter(z=>same(z.co,co)&&z.ngay&&dayN(z.ngay)-G>=lo&&dayN(z.ngay)-G<=hi);
-    const dl=near(d.dl,-60,30),mt=near(d.mt,-60,3),nq=near(d.nq,-60,3);dl.forEach(z=>used.add(z.id));
+  /* mỗi văn bản chỉ gắn vào MỘT lần GCN: lần gần ngày nhất trong cửa sổ (cửa sổ đọc từ quy_tac, mặc định 60 ngày trước / 30 ngày sau với điều lệ, 60 / 3 với biên bản, nghị quyết) */
+  const asg=(arr,lo,hi)=>{const m=new Map();(arr||[]).filter(z=>same(z.co,co)&&z.ngay).forEach(z=>{let best=null,bd=1e9;rows.forEach(r=>{const G=r.ngay?dayN(r.ngay):NaN;if(isNaN(G))return;const df=dayN(z.ngay)-G;if(df>=lo&&df<=hi&&Math.abs(df)<bd){bd=Math.abs(df);best=r}});if(best)m.set(z,best)});return m};
+  const WD=[-ruleNum("ds.dl_truoc",60),ruleNum("ds.dl_sau",30)],WB=[-ruleNum("ds.bb_truoc",60),ruleNum("ds.bb_sau",3)],aDl=asg(d.dl,WD[0],WD[1]),aMt=asg(d.mt,WB[0],WB[1]),aNq=asg(d.nq,WB[0],WB[1]);
+  rows.forEach(r=>{const near=(arr,m)=>(arr||[]).filter(z=>m.get(z)===r);
+    const dl=near(d.dl,aDl),mt=near(d.mt,aMt),nq=near(d.nq,aNq);dl.forEach(z=>used.add(z.id));
     const NFT="Chưa tìm thấy file";
     r.dlq=dl.length?dl.map(z=>fmt(z.ngay)+(z.loai==="Điều lệ đầy đủ"?" (điều lệ)":" (phụ lục"+(z.lan?" lần "+z.lan:"")+")")).join("; "):(r.mdl||NFT);
     const mrg=(base,ex)=>{const o=[];base.forEach(z=>o.push({ng:z.ngay,t:fmt(z.ngay),lk:""}));ex.forEach(z=>{const i=o.find(q=>q.ng===z.ng);if(i){if(!i.lk&&z.lk)i.lk=z.lk;if(z.so&&i.t.indexOf("số")<0)i.t+=" (số "+z.so+")"}else o.push({ng:z.ng,t:fmt(z.ng)+(z.so?" (số "+z.so+")":""),lk:z.lk||""})});return o};
@@ -2903,14 +2920,15 @@ function rLt(r,all){
   L.map(x=>`<tr data-id="${x.id}"><td>${chip(x.co)}</td><td class="t"><b>${esc((x.stt?x.stt+". ":"")+(x.ten||""))}</b></td><td class="t"><small class="s">${lkH(x.lk)}</small></td><td class="t">${esc(x.nd||"").replace(/\n/g,"<br>")}${(a=>a?`<small class="s" style="color:var(--brand)">Trên app: ${esc(a)}</small>`:"")(ltAuto(x))}</td><td class="t">${esc(x.bs||"")}</td><td><span style="color:${LT_C[x.tt]||"var(--mute)"};font-weight:600">${esc(x.tt||"")}</span></td></tr>`).join("")+`</tbody></table>`;
 }
 function rDs(r,all){
-  const d=PD(),cs=GCO?[GCO]:[...new Set([...(d.co||[]).map(c=>c.code),...all.map(x=>x.co)].filter(Boolean))].filter(c=>gcnLines((d.co||[]).find(x=>same(x.code,c))).length||all.some(x=>same(x.co,c)));
+  const d=PD(),cs=GCO?[GCO]:[...new Set([...(d.co||[]).map(c=>c.code),...all.map(x=>x.co)].filter(Boolean))].filter(c=>gcnLines((d.co||[]).find(x=>same(x.code,c))).length||(GCN_BAD[c]||[]).length||all.some(x=>same(x.co,c)));
   const M=cs.map(c=>({c,m:dsMerge(c)})),R=[];M.forEach(o=>o.m.rows.forEach(x=>R.push(x)));
+  const gW=cs.filter(c=>(GCN_BAD[c]||[]).length).map(c=>`<p class="tcnote" style="margin:8px 24px;color:#c53030"><b>${esc(c)}: ${GCN_BAD[c].length} dòng lịch sử GCN không đọc được nên chưa vào bảng.</b> Mỗi dòng phải có dạng “Lần 3, 02/12/2022: nội dung”. Dòng lỗi: ${GCN_BAD[c].map(l=>"“"+esc(l.length>70?l.slice(0,70)+"…":l)+"”").join("; ")}</p>`).join("");
   const nfd=v=>NF_RE.test(v||"");
   $("pstats").innerHTML=st(R.length,"Lần thay đổi ghi nhận")+st(R.filter(x=>nfd(x.dlq)).length,"Chưa tìm thấy điều lệ",R.some(x=>nfd(x.dlq))?"late":"")+st(R.filter(x=>nfd(x.bbh)||nfd(x.nq)).length,"Chưa tìm thấy biên bản hoặc nghị quyết",R.some(x=>nfd(x.bbh)||nfd(x.nq))?"late":"")+st(R.filter(x=>dsLech(x)).length,"Ngày chứng từ sau ngày cấp GCN",R.some(x=>dsLech(x))?"late":"");
-  if(!R.length){$("plist").innerHTML=empty()+'<p class="tcnote" style="margin:8px 24px">Bảng này tự lấy lịch sử GCN từ mục Pháp nhân, điều lệ từ mục Điều lệ, họp và nghị quyết từ tab Họp HĐQT / ĐHĐCĐ. Dòng nhập tay chỉ để bổ sung chỗ app chưa có.</p>';return}
+  if(!R.length){$("plist").innerHTML=gW+empty()+'<p class="tcnote" style="margin:8px 24px">Bảng này tự lấy lịch sử GCN từ mục Pháp nhân, điều lệ từ mục Điều lệ, họp và nghị quyết từ tab Họp HĐQT / ĐHĐCĐ. Dòng nhập tay chỉ để bổ sung chỗ app chưa có.</p>';return}
   const lkc=(arr,v,app)=>arr&&arr.length?arr.map(i=>i.lk?`<a href="${esc(i.lk)}" target="_blank" rel="noopener" data-dlopen>${esc(i.t)}</a>`:esc(i.t)).join("; ")+(app?' <small class="s" style="color:var(--ok)">app</small>':""):nfc(v,app);
   const nfc=(v,app)=>nfd(v)?'<span style="color:#c53030">'+esc(v)+'</span>':esc(v||"")+(app?' <small class="s" style="color:var(--ok)">app</small>':"");
-  $("plist").innerHTML=`<table class="m"><thead><tr><th>Pháp nhân</th><th>Ngày GCN</th><th>GCN ĐKKD</th><th>Nội dung</th><th>Biên bản họp</th><th>Nghị quyết</th><th>Điều lệ</th></tr></thead><tbody>`+
+  $("plist").innerHTML=gW+`<table class="m"><thead><tr><th>Pháp nhân</th><th>Ngày GCN</th><th>GCN ĐKKD</th><th>Nội dung</th><th>Biên bản họp</th><th>Nghị quyết</th><th>Điều lệ</th></tr></thead><tbody>`+
   R.map(x=>`<tr${x.id?` data-id="${x.id}"`:""}><td>${chip(x.co)}</td><td>${x.ngay?fmt(x.ngay):""}</td><td>${esc(x.lan||"")}</td><td class="t">${esc(x.nd||"")}${dsLech(x)?'<small class="s" style="color:#b7791f">Ngày chứng từ sau ngày cấp GCN: cần đối chiếu bản gốc</small>':""}</td><td>${lkc(x.bbhz,x.bbh,x.src&&x.src.bbh)}</td><td>${lkc(x.nqz,x.nq,x.src&&x.src.nq)}</td><td>${x.dlz&&x.dlz.length?x.dlz.map(z=>{const t=esc(fmt(z.ngay)+(z.loai==="Điều lệ đầy đủ"?" (điều lệ)":" (phụ lục"+(z.lan?" lần "+z.lan:"")+")"));return z.lk?`<a href="${esc(z.lk)}" target="_blank" rel="noopener" data-dlopen title="Mở file điều lệ">${t}</a>`:t}).join("; ")+' <small class="s" style="color:var(--ok)">app</small>':nfc(x.dlq,x.src&&x.src.dlq)}</td></tr>`).join("")+`</tbody></table>`+
   M.filter(o=>o.m.extra.length).map(o=>`<p class="tcnote" style="margin:8px 24px">${esc(o.c)}: văn bản điều lệ trên app chưa gắn với lần GCN nào: ${o.m.extra.map(z=>esc((z.loai==="Điều lệ đầy đủ"?"Điều lệ":"Phụ lục"+(z.lan?" lần "+z.lan:""))+" "+fmt(z.ngay))).join("; ")}.</p>`).join("");
 }
