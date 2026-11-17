@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
-<head>
+<head><meta name="khung-nha-ban" content="fg@1.0.1">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aqua Legal | Pháp lý doanh nghiệp</title>
@@ -346,7 +346,8 @@ body.pp #vprof .oad .od.od3{grid-template-columns:repeat(3,minmax(0,1fr))}
 #vprof .dn .lgd i{width:9px;height:9px;border-radius:2px;flex:none}
 #vprof .dn .lgd span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #vprof .dn .lgd b{font-weight:600}
-#vprof .og svg{width:100%;height:auto;display:block}
+#vprof .og svg{width:100%;height:auto;display:block;overflow:visible}
+#vprof .og{padding-bottom:10px}
 #vprof .og .bx{fill:color-mix(in srgb,var(--cc) 16%,var(--card));stroke:var(--cc);stroke-width:1.5}
 #vprof .og text{fill:var(--ink);font-size:12px;font-family:inherit}
 #vprof .og .ed{fill:none;stroke:var(--mute);stroke-width:1.4;opacity:.75}
@@ -2748,7 +2749,7 @@ function rCo0(r,all){
   r.map(x=>{const lack=x.vtg!==""&&x.vtg!=null&&x.vdl&&+x.vtg<+x.vdl;
     return `<tr data-id="${x.id}"><td>${chip(x.code)}</td><td class="t">${esc(x.name)}<small>${esc(x.addr)}</small></td><td>${esc(x.msdn)}<small class="s">${[x.lan?"Lần "+x.lan:"",x.ngay?fmt(x.ngay):""].filter(Boolean).join(" - ")}</small>${x.lkgcn?`<small class="s">${lkA(x.lkgcn,"Mở GCN ĐKDN")}</small>`:""}${x.lknganh?`<small class="s">${lkA(x.lknganh,"Mở GX ngành nghề")}</small>`:""}${x.lkhs?`<small class="s">${lkA(x.lkhs,"Thư mục hồ sơ")}</small>`:""}${x.dk&&x.dk!=="Không áp dụng"?`<small class="s">${dkTag(x)}${x.dknd?": "+esc(x.dknd):""}</small>`:""}</td><td>${x.ngaylan1?fmt(x.ngaylan1):'<span class="bad">Chưa có</span>'}</td><td class="num">${money(x.vdl)}</td><td class="num">${x.vtg===""||x.vtg==null?"":money(x.vtg)}${lack?`<small class="s bad">Thấp hơn vốn điều lệ ${money(+x.vdl-+x.vtg)}</small>`:""}</td><td>${rep(x.code)}</td><td>${(()=>{const D=(PD().dv||[]).filter(v=>same(v.co,x.code)&&v.st!=="Đã chấm dứt"),c=l=>D.filter(v=>v.loai===l).length,t=[[c("Chi nhánh")+c("Chi nhánh ở nước ngoài"),"chi nhánh"],[c("Văn phòng đại diện")+c("Văn phòng đại diện ở nước ngoài"),"VPĐD"],[c("Địa điểm kinh doanh"),"địa điểm KD"]].filter(a=>a[0]).map(a=>a[0]+" "+a[1]);return t.length?t.join(", "):'<span style="color:var(--mute)">Chưa có</span>'})()}</td><td>${(()=>{const q=window.__nldSum?window.__nldSum(x.code):{n:0,cd:null},c=q.cd;return (q.n?q.n+" lao động đang làm việc":'<span style="color:var(--mute)">Chưa có hồ sơ lao động</span>')+`<small class="s">${c?esc(c.st)+(+c.dv?", "+c.dv+" đoàn viên":""):"Chưa theo dõi công đoàn"}</small>`})()}</td></tr>`}).join("")+"</tbody></table>";
 }
-/* ===== Phụ lục sửa đổi, bổ sung Điều lệ (theo cấu trúc phụ lục HLM lần 1 đến 5) ===== */
+/* ===== Phụ lục sửa đổi, bổ sung Điều lệ (theo cấu trúc phụ lục mẫu lần 1 đến 5) ===== */
 function dlpNext(c){const L=(PD().dl||[]).filter(x=>same(x.co,c)&&/Phụ lục/.test(x.loai||"")).map(x=>+x.lan||0);return L.length?Math.max(...L)+1:1}
 function dlpCtx(o){
   const r=coRec(o.c),cp=/cổ phần/i.test(r.name||""),w=cp?{n:"Đại hội đồng cổ đông",d:"Nghị quyết",lead:"Chủ tịch Hội đồng quản trị"}:(uqCqW(uqModel(r))||{n:"Chủ sở hữu công ty",d:"Quyết định",lead:"Chủ sở hữu công ty"}),p=o.nw?persOf(o.nw):{},
@@ -3155,7 +3156,7 @@ function ownDash(){
     let nl=0;const cub=(t,a,b,c,d)=>{const u=1-t;return u*u*u*a+3*u*u*t*b+3*u*t*t*c+t*t*t*d};
     const ed=M.edges.map(e=>{const a=pos[e.from],b=pos[e.to];if(!a||!b)return"";let x1=a.x+bw,y1=a.y+bh/2+spread(out,e.from,e,"to"),x2=b.x,y2=b.y+bh/2+spread(inn,e.to,e,"from");const mx=(x1+x2)/2,long=lay[e.to]-lay[e.from]>1;
       let c1x,c1y,c2x,c2y,t=.5;
-      if(long){/* nối dài: xuất phát từ mép trên/dưới của khung, không đi chung cửa với mũi tên ngắn */const up=nl++%2===1,dist=l=>lay[l.to]-lay[l.from],isL=l=>dist(l)>1,lo=out[e.from].filter(isL).sort((p,q)=>dist(q)-dist(p)||pos[p.to].y-pos[q.to].y),li=inn[e.to].filter(isL).sort((p,q)=>dist(p)-dist(q)||pos[p.from].y-pos[q.from].y),sp1=(lo.indexOf(e)-(lo.length-1)/2)*13,sp2=(li.indexOf(e)-(li.length-1)/2)*13,ex=(dist(e)-2)*18;x1=a.x+bw*.7+sp1;x2=b.x+bw*.3+sp2;y1=up?a.y:a.y+bh;y2=up?b.y:b.y+bh;const yc=up?Math.min(a.y,b.y)-52-ex:Math.max(y1,y2)+52+ex;c1x=x1;c1y=yc;c2x=x2;c2y=yc;t=.5;if(!up)H=Math.max(H,yc*.75+y1*.125+y2*.125+34)}
+      if(long){/* nối dài: xuất phát từ mép trên/dưới của khung, không đi chung cửa với mũi tên ngắn */const up=nl++%2===1,dist=l=>lay[l.to]-lay[l.from],isL=l=>dist(l)>1,lo=out[e.from].filter(isL).sort((p,q)=>dist(q)-dist(p)||pos[p.to].y-pos[q.to].y),li=inn[e.to].filter(isL).sort((p,q)=>dist(p)-dist(q)||pos[p.from].y-pos[q.from].y),sp1=(lo.indexOf(e)-(lo.length-1)/2)*13,sp2=(li.indexOf(e)-(li.length-1)/2)*13,ex=(dist(e)-2)*18;x1=a.x+bw*.7+sp1;x2=b.x+bw*.3+sp2;y1=up?a.y:a.y+bh;y2=up?b.y:b.y+bh;const yc=up?Math.min(a.y,b.y)-52-ex:Math.max(y1,y2)+52+ex;c1x=x1;c1y=yc;c2x=x2;c2y=yc;t=.5;if(!up)H=Math.max(H,yc*.75+y1*.125+y2*.125+44)}
       else{c1x=mx;c1y=y1;c2x=mx;c2y=y2}
       const lx=cub(t,x1,c1x,c2x,x2),ly=cub(t,y1,c1y,c2y,y2);
       return `<path class="ed" d="M${x1},${y1} C${c1x},${c1y} ${c2x},${c2y} ${x2},${y2}" marker-end="url(#ar)"/><g><rect class="lb" x="${lx-25}" y="${ly-9}" width="50" height="18" rx="9"/><text class="lt" x="${lx}" y="${ly+4}" text-anchor="middle">${nf(e.p)}%</text></g>`}).join("");
