@@ -3127,11 +3127,17 @@ function ownModel(){
   const edges=[];cs.forEach(c=>rows[c].forEach(r=>{if(r.co&&!same(r.co,c)&&r.p>0)edges.push({from:r.co,to:c,p:r.p})}));
   return{latest,rows,U,edges,cs,G};
 }
+function donutCenter(t,color){
+  t=String(t==null?"":t);const w=t.split(" ");let lines=[t];
+  if(t.length>8&&w.length>1){let best=1,bd=1e9;for(let i=1;i<w.length;i++){const d=Math.abs(w.slice(0,i).join(" ").length-w.slice(i).join(" ").length);if(d<bd){bd=d;best=i}}lines=[w.slice(0,best).join(" "),w.slice(best).join(" ")]}
+  const mx=Math.max(...lines.map(x=>x.length)),fs=Math.max(8,Math.min(13,58/(mx*.62))).toFixed(1),y0=lines.length>1?60-(lines.length-1)*fs*.5+fs*.35:64;
+  return lines.map((x,i)=>`<text x="60" y="${(y0+i*fs*1.15).toFixed(1)}" text-anchor="middle" style="font-size:${fs}px;font-weight:700;fill:${color||"var(--ink)"}">${esc(x)}</text>`).join("");
+}
 function donut(segs,center,color){
   const C=2*Math.PI*42;let off=0,tot=segs.reduce((a,s)=>a+s.p,0);
   if(tot<99.95)segs=[...segs,{p:100-tot,color:"var(--line)",name:"Chưa đối chiếu / chưa kê",ghost:1}];
   const arcs=segs.map(s=>{const len=Math.max(0,Math.min(s.p,100))/100*C,a=`<circle cx="60" cy="60" r="42" fill="none" style="stroke:${s.color}" stroke-width="18" stroke-dasharray="${len.toFixed(2)} ${(C-len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 60 60)"><title>${esc(s.name)}: ${nf(s.p)}%</title></circle>`;off+=len;return a}).join("");
-  return `<svg viewBox="0 0 120 120">${arcs}<text x="60" y="64" text-anchor="middle" style="font-size:13px;font-weight:700;fill:${color||"var(--ink)"}">${esc(center)}</text></svg>`;
+  return `<svg viewBox="0 0 120 120">${arcs}${donutCenter(center,color)}</svg>`;
 }
 const PCOL=["#7f93ad","#a79a85","#8fa89b","#a98f9f","#98a0b8","#b09a78","#85a3a8","#a8858c"];
 function ownDash(){
@@ -3156,7 +3162,7 @@ function ownDash(){
     let nl=0;const cub=(t,a,b,c,d)=>{const u=1-t;return u*u*u*a+3*u*u*t*b+3*u*t*t*c+t*t*t*d};
     const ed=M.edges.map(e=>{const a=pos[e.from],b=pos[e.to];if(!a||!b)return"";let x1=a.x+bw,y1=a.y+bh/2+spread(out,e.from,e,"to"),x2=b.x,y2=b.y+bh/2+spread(inn,e.to,e,"from");const mx=(x1+x2)/2,long=lay[e.to]-lay[e.from]>1;
       let c1x,c1y,c2x,c2y,t=.5;
-      if(long){/* nối dài: xuất phát từ mép trên/dưới của khung, không đi chung cửa với mũi tên ngắn */const up=nl++%2===1,dist=l=>lay[l.to]-lay[l.from],isL=l=>dist(l)>1,lo=out[e.from].filter(isL).sort((p,q)=>dist(q)-dist(p)||pos[p.to].y-pos[q.to].y),li=inn[e.to].filter(isL).sort((p,q)=>dist(p)-dist(q)||pos[p.from].y-pos[q.from].y),sp1=(lo.indexOf(e)-(lo.length-1)/2)*13,sp2=(li.indexOf(e)-(li.length-1)/2)*13,ex=(dist(e)-2)*18;x1=a.x+bw*.7+sp1;x2=b.x+bw*.3+sp2;y1=up?a.y:a.y+bh;y2=up?b.y:b.y+bh;const yc=up?Math.min(a.y,b.y)-52-ex:Math.max(y1,y2)+52+ex;c1x=x1;c1y=yc;c2x=x2;c2y=yc;t=.5;if(!up)H=Math.max(H,yc*.75+y1*.125+y2*.125+44)}
+      if(long){/* nối dài: xuất phát từ mép trên/dưới của khung, không đi chung cửa với mũi tên ngắn */const up=nl++%2===1,dist=l=>lay[l.to]-lay[l.from],isL=l=>dist(l)>1,lo=out[e.from].filter(isL).sort((p,q)=>dist(q)-dist(p)||pos[p.to].y-pos[q.to].y),li=inn[e.to].filter(isL).sort((p,q)=>dist(p)-dist(q)||pos[p.from].y-pos[q.from].y),sp1=(lo.indexOf(e)-(lo.length-1)/2)*13,sp2=(li.indexOf(e)-(li.length-1)/2)*13,ex=(dist(e)-2)*18;x1=a.x+bw*.7+sp1;x2=b.x+bw*.3+sp2;y1=up?a.y:a.y+bh;y2=up?b.y:b.y+bh;const mid=nodes.filter(k=>lay[k]>=lay[e.from]&&lay[k]<=lay[e.to]&&pos[k]),yc0=up?Math.min(a.y,b.y)-52-ex:Math.max(y1,y2)+52+ex,yc=up?Math.min(yc0,((Math.min(...mid.map(k=>pos[k].y))-26-ex)-(y1+y2)*.125)/.75):Math.max(yc0,((Math.max(...mid.map(k=>pos[k].y+bh))+26+ex)-(y1+y2)*.125)/.75);c1x=x1;c1y=yc;c2x=x2;c2y=yc;t=.5;if(!up)H=Math.max(H,yc*.75+y1*.125+y2*.125+44)}
       else{c1x=mx;c1y=y1;c2x=mx;c2y=y2}
       const lx=cub(t,x1,c1x,c2x,x2),ly=cub(t,y1,c1y,c2y,y2);
       return `<path class="ed" d="M${x1},${y1} C${c1x},${c1y} ${c2x},${c2y} ${x2},${y2}" marker-end="url(#ar)"/><g><rect class="lb" x="${lx-25}" y="${ly-9}" width="50" height="18" rx="9"/><text class="lt" x="${lx}" y="${ly+4}" text-anchor="middle">${nf(e.p)}%</text></g>`}).join("");
