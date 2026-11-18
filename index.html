@@ -3067,10 +3067,7 @@ function dvDs(r,D){D=D||PD();if(!r||!r.length)return;
         if(!bb.length&&m.bbl)bb.push({t:"BBH HĐQT (file)",h:m.bbl});
         if(!qd.length&&m.qdl)qd.push({t:"QĐ HĐQT (file)",h:m.qdl});
         const qdTxt=m.k==="first"&&x.qd&&!qd.length?x.qd:"";
-        if(needBB&&!bb.length&&!qd.length&&!qdTxt&&!m.bbx&&!m.qdx&&m.k!=="chg")W.push("(a) "+lab+": "+(m.k==="end"?"chấm dứt":"thành lập")+" chưa có QĐ/BBH HĐQT");
         const dlT=m.dl!==undefined,dlRed=dlT&&m.dl&&!/^Không cần/i.test(m.dl);
-        if(dlRed)W.push("\u0001"+(m.k==="first"?"(a) ":"(b) ")+lab+": "+m.dl);
-        if(!dlT&&!m.dlk&&needDL&&!dd.length)W.push(m.k==="first"?"(a) "+lab+": thành lập chưa có phụ lục Điều lệ":m.k==="end"?"(b) "+lab+": chấm dứt chưa có phụ lục Điều lệ":"(b) "+lab+": thay đổi thực chất nhưng chưa có phụ lục Điều lệ");
         [...bb,...qd].filter(z=>z.ng&&z.ng>m.ng).forEach(z=>W.push("(d) "+lab+": "+z.t+" sau ngày giấy"));
         if(m.k==="end"&&!m.xn&&!m.lk&&!/(Phòng ĐKKD|Phòng Đăng ký|thông báo|xác nhận)/i.test(m.nd))W.push("(c) "+lab+": chấm dứt chưa có xác nhận của Phòng Đăng ký kinh doanh");
         const gl2=[m.lk?A("Mở giấy"+(m.lkc?" (link chung)":""),m.lk):"",m.xn?A("Xác nhận của Phòng ĐKKD",m.xn):""].filter(Boolean),
