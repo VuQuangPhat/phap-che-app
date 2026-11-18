@@ -2933,7 +2933,7 @@ function rDs(r,all){
   M.filter(o=>o.m.extra.length).map(o=>`<p class="tcnote" style="margin:8px 24px">${esc(o.c)}: văn bản điều lệ trên app chưa gắn với lần GCN nào: ${o.m.extra.map(z=>esc((z.loai==="Điều lệ đầy đủ"?"Điều lệ":"Phụ lục"+(z.lan?" lần "+z.lan:""))+" "+fmt(z.ngay))).join("; ")}.</p>`).join("");
 }
 const dsDate=v=>{const m=String(v||"").match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);return m?m[3]+"-"+m[2].padStart(2,"0")+"-"+m[1].padStart(2,"0"):""};
-const dsLech=x=>!!x.ngay&&[x.bbh,x.nq,x.dlq].some(v=>{const d=dsDate(v);return d&&d>x.ngay});
+const dsLech=x=>!!x.ngay&&[x.bbh,x.nq].some(v=>{const d=dsDate(v);return d&&d>x.ngay});
 const nlh=t=>String(t||"").split(/\n+/).map(v=>v.trim()).filter(Boolean);
 function bcHtml(b){
   const co=b.co,d=PD(),x=(d.co||[]).find(c=>same(c.code,co))||{},t0=today(),A=d.pos.filter(p=>same(p.co,co)&&activeP(p,t0));
