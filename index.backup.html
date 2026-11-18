@@ -2101,7 +2101,7 @@ const SEC={
     f:[{k:"co",l:"Doanh nghiệp",list:"p_codes"},{k:"loai",l:"Loại văn bản",t:"sel",o:DL_L},{k:"ten",l:"Tên văn bản",full:1},{k:"lan",l:"Lần sửa đổi (với phụ lục)"},
        {k:"ngay",l:"Ngày hiệu lực",t:"date"},{k:"st",l:"Tình trạng",t:"sel",o:DL_S},{k:"cc",l:"Căn cứ (nghị quyết, quyết định, GCN ĐKDN liên quan)",full:1},
        {k:"nd",l:"Nội dung chính, điều khoản được sửa",full:1},{k:"file",l:"Tên file bản gốc (scan)",full:1},{k:"lk",l:"Link mở bản gốc PDF (Google Drive hoặc đường dẫn)",full:1},
-       {k:"nv",l:"Toàn văn",t:"area",full:1},{k:"bbh_ngay",l:"Biên bản họp: ngày",t:"date"},{k:"bbh_lk",l:"Biên bản họp: link file",full:1},{k:"nq_so",l:"Nghị quyết/quyết định: số"},{k:"nq_ngay",l:"Nghị quyết/quyết định: ngày",t:"date"},{k:"nq_lk",l:"Nghị quyết/quyết định: link file",full:1},{k:"note",l:"Ghi chú",t:"area",full:1}]},
+       {k:"nv",l:"Toàn văn",t:"area",full:1},{k:"bbh_ngay",l:"Biên bản họp: ngày",t:"date"},{k:"bbh_lk",l:"Biên bản họp: link file",full:1},{k:"bbh_so",l:"Biên bản họp: số"},{k:"nq_so",l:"Nghị quyết/quyết định: số"},{k:"nq_ngay",l:"Nghị quyết/quyết định: ngày",t:"date"},{k:"nq_lk",l:"Nghị quyết/quyết định: link file",full:1},{k:"note",l:"Ghi chú",t:"area",full:1}]},
   uq:{lab:"Ủy quyền",one:"văn bản ủy quyền",req:["co","a","b"],
     key:o=>[o.co,o.b,o.so,o.ngay].map(norm).join("|"),
     f:[{k:"co",l:"Doanh nghiệp (Bên ủy quyền)",list:"p_codes"},{k:"a",l:"Người đại diện theo pháp luật (Bên A)",list:"p_names"},{k:"at",l:"Chức danh Bên A"},
@@ -2888,8 +2888,8 @@ function dsMerge(co){
     const dl=near(d.dl,aDl),mt=near(d.mt,aMt),nq=near(d.nq,aNq);dl.forEach(z=>used.add(z.id));
     const NFT="Chưa tìm thấy file";
     r.dlq=dl.length?dl.map(z=>fmt(z.ngay)+(z.loai==="Điều lệ đầy đủ"?" (điều lệ)":" (phụ lục"+(z.lan?" lần "+z.lan:"")+")")).join("; "):(r.mdl||NFT);
-    const mrg=(base,ex)=>{const o=[];base.forEach(z=>o.push({ng:z.ngay,t:fmt(z.ngay),lk:""}));ex.forEach(z=>{const i=o.find(q=>q.ng===z.ng);if(i){if(!i.lk&&z.lk)i.lk=z.lk;if(z.so&&i.t.indexOf("số")<0)i.t+=" (số "+z.so+")"}else o.push({ng:z.ng,t:fmt(z.ng)+(z.so?" (số "+z.so+")":""),lk:z.lk||""})});return o};
-    r.bbhz=mrg(mt,dl.filter(z=>z.bbh_ngay).map(z=>({ng:z.bbh_ngay,lk:z.bbh_lk})));
+    const mrg=(base,ex,soOnly)=>{const o=[];base.forEach(z=>o.push({ng:z.ngay,t:fmt(z.ngay),lk:""}));ex.forEach(z=>{const i=o.find(q=>q.ng===z.ng);if(i){if(!i.lk&&z.lk)i.lk=z.lk;if(z.so){if(soOnly)i.t=z.so;else if(i.t.indexOf("số")<0)i.t+=" (số "+z.so+")"}}else o.push({ng:z.ng,t:z.so?(soOnly?z.so:fmt(z.ng)+" (số "+z.so+")"):fmt(z.ng),lk:z.lk||""})});return o};
+    r.bbhz=mrg(mt,dl.filter(z=>z.bbh_ngay).map(z=>({ng:z.bbh_ngay,so:z.bbh_so,lk:z.bbh_lk})),true);
     r.nqz=mrg(nq,dl.filter(z=>z.nq_ngay).map(z=>({ng:z.nq_ngay,so:z.nq_so,lk:z.nq_lk})));
     r.bbh=r.bbhz.length?r.bbhz.map(i=>i.t).join("; "):(r.mbbh||NFT);
     r.nq=r.nqz.length?r.nqz.map(i=>i.t).join("; "):(r.mnq||NFT);
@@ -2933,7 +2933,7 @@ function rDs(r,all){
   M.filter(o=>o.m.extra.length).map(o=>`<p class="tcnote" style="margin:8px 24px">${esc(o.c)}: văn bản điều lệ trên app chưa gắn với lần GCN nào: ${o.m.extra.map(z=>esc((z.loai==="Điều lệ đầy đủ"?"Điều lệ":"Phụ lục"+(z.lan?" lần "+z.lan:""))+" "+fmt(z.ngay))).join("; ")}.</p>`).join("");
 }
 const dsDate=v=>{const m=String(v||"").match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);return m?m[3]+"-"+m[2].padStart(2,"0")+"-"+m[1].padStart(2,"0"):""};
-const dsLech=x=>!!x.ngay&&[x.bbh,x.nq].some(v=>{const d=dsDate(v);return d&&d>x.ngay});
+const dsLech=x=>!!x.ngay&&([[x.bbhz,x.bbh],[x.nqz,x.nq]].some(([a,v])=>a&&a.length?a.some(i=>i.ng&&i.ng>x.ngay):(d=>d&&d>x.ngay)(dsDate(v))));
 const nlh=t=>String(t||"").split(/\n+/).map(v=>v.trim()).filter(Boolean);
 function bcHtml(b){
   const co=b.co,d=PD(),x=(d.co||[]).find(c=>same(c.code,co))||{},t0=today(),A=d.pos.filter(p=>same(p.co,co)&&activeP(p,t0));

@@ -2152,6 +2152,7 @@ const SEC={
        {k:"lknganh",l:"Link mở Giấy xác nhận ngành nghề (PDF / Google Drive)",full:1},
        {k:"lkhs",l:"Link thư mục hồ sơ pháp lý của công ty (Google Drive)",full:1},
        {k:"gcnls",l:"Lịch sử các lần cấp GCN ĐKDN (mỗi dòng một lần: lần, ngày, nội dung, người đại diện theo pháp luật)",t:"area",full:1},
+       {k:"cnvpdd",l:"Chi nhánh, VPĐD (mỗi dòng một mốc: Loại mã số, lần/sự kiện, dd/mm/yyyy: nội dung)",t:"area",full:1},
        {k:"nganh",l:"Ngành, nghề kinh doanh đã đăng ký (theo Giấy xác nhận gần nhất; mỗi dòng một ngành)",t:"area",full:1},
        {k:"nganhso",l:"Số Giấy xác nhận thay đổi nội dung ĐKDN (ngành nghề)"},
        {k:"nganhngay",l:"Ngày Giấy xác nhận ngành nghề",t:"date"},
@@ -2755,7 +2756,24 @@ $("plist").addEventListener("click",e=>{
   b.textContent=o?"Thu gọn ‹":"Xem chi tiết ›";
   if(!o)p.scrollIntoView({block:"nearest",behavior:"smooth"});
 });
-function rCo(r,all){rCo0(r,all);
+/* ===== Khối Chi nhánh / VPĐD (đọc cột cnvpdd của prof_co; mỗi dòng một mốc: "<Loại> <mã số>, <lần/sự kiện>, dd/mm/yyyy: nội dung") ===== */
+function cnParse(txt){const bad=[],U={};String(txt||"").split(/\n+/).forEach(l=>{l=l.trim();if(!l)return;
+  const m=l.match(/^(.*?)\s*(\d{6,}(?:-\d{1,4})?)\s*,\s*(.*?),\s*(\d{1,2})\/(\d{1,2})\/(\d{4})\s*:\s*(.*)$/);
+  if(!m||!m[1].trim()){bad.push(l);return}
+  const ma=m[2],u=U[ma]||(U[ma]={ma,ten:m[1].trim(),ms:[]}),ng=m[6]+"-"+m[5].padStart(2,"0")+"-"+m[4].padStart(2,"0");
+  u.ms.push({ng,ev:m[3].trim(),nd:m[7].trim()});
+  if(/^(VPĐD|Văn phòng đại diện)/i.test(u.ten)&&u.ten.length>m[1].trim().length)u.ten=m[1].trim()});
+  const L=Object.values(U);L.forEach(u=>{u.ms.sort((a,b)=>a.ng.localeCompare(b.ng));const e=[...u.ms].reverse().find(z=>/chấm dứt/i.test(z.ev+" "+z.nd));u.end=e?e.ng:""});
+  L.sort((a,b)=>(a.ms[0].ng).localeCompare(b.ms[0].ng)||a.ma.localeCompare(b.ma));return{units:L,bad}}
+function cnBlock(r){
+  const h=[...r].sort((a,b)=>ci(a.code)-ci(b.code)||String(a.code).localeCompare(String(b.code))).map(x=>{const c=cnParse(x.cnvpdd);if(!c.units.length&&!c.bad.length)return"";
+    const cards=c.units.map(u=>{const ket=!!u.end;return `<div class="cn-u"><div class="cn-h"><b>${esc(/^VPĐD/i.test(u.ten)?u.ten.replace(/^VPĐD/i,"Văn phòng đại diện (VPĐD)"):u.ten)}</b><span class="cn-ma">Mã số ${esc(u.ma)}</span><span class="cn-st ${ket?"off":"on"}">${ket?"Đã chấm dứt "+fmt(u.end):"Đang hoạt động"}</span></div>
+      <ul class="cn-ms">${u.ms.map(z=>`<li><span class="cn-d">${fmt(z.ng)}</span><span class="cn-e">${esc(z.ev)}</span>${z.nd?`<span class="cn-n">${esc(z.nd)}</span>`:""}</li>`).join("")}</ul></div>`}).join("");
+    const warn=c.bad.length?`<p class="tcnote" style="margin:6px 0;color:#c53030"><b>${c.bad.length} dòng Chi nhánh/VPĐD không đọc được.</b> Mỗi dòng phải có dạng “VPĐD 1101890689-001, lần 1, 24/03/2021: nội dung”. Dòng lỗi: ${c.bad.map(l=>"“"+esc(l.length>70?l.slice(0,70)+"…":l)+"”").join("; ")}</p>`:"";
+    return `<section class="cn-c"><h3>${chip(x.code)} Chi nhánh / VPĐD</h3>${warn}<div class="cn-g">${cards}</div></section>`}).join("");
+  if(!h)return;
+  $("plist").insertAdjacentHTML("beforeend",`<style>.cn-c{margin:18px 0 0}.cn-c h3{font-size:14px;margin:0 0 8px;display:flex;gap:8px;align-items:center}.cn-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}.cn-u{border:1px solid var(--line,#ddd);border-radius:8px;padding:10px 12px;background:var(--card,#fff);min-width:0}.cn-h{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;margin-bottom:6px}.cn-ma{font-size:12px;color:var(--mute)}.cn-st{font-size:11px;font-weight:700;border-radius:4px;padding:1px 8px}.cn-st.on{background:color-mix(in srgb,var(--ok,#15803d) 14%,transparent);color:var(--ok,#15803d)}.cn-st.off{background:color-mix(in srgb,var(--mute,#777) 18%,transparent);color:var(--mute,#666)}.cn-ms{list-style:none;margin:0;padding:0;display:grid;gap:4px}.cn-ms li{display:flex;flex-wrap:wrap;gap:2px 8px;font-size:12.5px}.cn-d{font-weight:600;white-space:nowrap}.cn-n{color:var(--mute);flex-basis:100%}</style>`+h)}
+function rCo(r,all){rCo0(r,all);cnBlock(r);
   $("plist").insertAdjacentHTML("afterbegin",'<div class="hsp" style="margin:0 0 12px"><b>Nhập cập nhật từ file</b> (file .json do Claude xuất từ giấy tờ anh gửi; ghi vào các mục Pháp nhân, CSHHL… theo từng dòng, không xóa dữ liệu khác): <input type="file" accept=".json,application/json" data-capimp style="margin-left:6px"></div>')}
 function rCo0(r,all){
   const sum=k=>all.reduce((s,x)=>s+(+x[k]||0),0),miss=all.filter(x=>!x.msdn||!x.vdl||!x.addr).length;
