@@ -3050,23 +3050,25 @@ function dvDs(r,D){D=D||PD();if(!r||!r.length)return;
     const mtAll=(D.mt||[]).filter(z=>same(z.co,co)),isH=z=>/^Họp HĐQT/i.test(z.loai||""),mt=mtAll.filter(isH),
       hdqtTen=new Set(mt.map(z=>norm(z.ten))),nqAll=(D.nq||[]).filter(z=>same(z.co,co)),nq=nqAll.filter(z=>z.mt?hdqtTen.has(norm(z.mt)):/HĐQT/i.test(z.so||"")),
       byId=(arr,id)=>id?arr.find(z=>String(z.id||"").toLowerCase()===String(id).toLowerCase()):null,
-      usedB=new Set(),usedQ=new Set();all.forEach(m=>{const b=byId(mtAll,m.bbhid),q=byId(nqAll,m.qdid);if(b)usedB.add(b);if(q)usedQ.add(q)});
+      lid=u=>(String(u||"").match(/\/d\/([\w-]+)/)||[])[1]||String(u||"").trim(),
+      byLk=(arr,u)=>u?arr.find(z=>z.lk&&lid(z.lk)===lid(u)):null,
+      usedB=new Set(),usedQ=new Set();all.forEach(m=>{const b=byId(mtAll,m.bbhid)||byLk(mtAll,m.bbl),q=byId(nqAll,m.qdid)||byLk(nqAll,m.qdl);if(b)usedB.add(b);if(q)usedQ.add(q)});
     const dl=(D.dl||[]).filter(z=>same(z.co,co)&&/(chi nhánh|văn phòng đại diện|VPĐD)/i.test((z.nd||"")+" "+(z.ten||"")));
     const aM=asg(mt.filter(z=>!usedB.has(z)),wB),aN=asg(nq.filter(z=>!usedQ.has(z)),wB),aD=asg(dl,wD),rec=(D.co||[]).find(c=>same(c.code,co))||{},gl=gcnLines(rec).filter(g=>/(hành chính|địa giới)/i.test(g.tx));
     const cards=U.map(({x,ms,bad})=>{
-      const W=[],first=ms.find(m=>m.k==="first"),end=ms.find(m=>m.k==="end");
+      const W=[],first=ms.find(m=>m.k==="first"),end=ms.find(m=>m.k==="end"),dlNo=/Điều lệ[^.;:]*không ghi/i.test(x.note||"");
       const rows=ms.map(m=>{
-        const eb=byId(mtAll,m.bbhid),eq=byId(nqAll,m.qdid),
+        const eb=byId(mtAll,m.bbhid)||byLk(mtAll,m.bbl),eq=byId(nqAll,m.qdid)||byLk(nqAll,m.qdl),
           bbR=eb?[eb]:mt.filter(z=>aM.get(z)===m),qdR=eq?[eq]:nq.filter(z=>aN.get(z)===m),
-          dd=dl.filter(z=>aD.get(z)===m).map(z=>({t:(z.loai==="Điều lệ đầy đủ"?"Điều lệ":"PL"+(z.lan?" lần "+z.lan:""))+" "+fmt(z.ngay),h:z.lk||""})),
-          hc=m.k==="chg"&&hcOnly(m.nd),needBB=!hc,needDL=m.k==="chg"&&!hc,lab=m.lb+" ("+fmt(m.ng)+")";
-        const rt=(z,pre)=>(z.so?z.so:pre)+(z.ngay?" · "+fmt(z.ngay):""),
-          bb=bbR.map(z=>({t:rt(z,"BBH HĐQT"),ng:z.ngay,h:urlOf(z)||m.bbl})),qd=qdR.map(z=>({t:rt(z,"QĐ/NQ HĐQT"),ng:z.ngay,h:urlOf(z)||m.qdl}));
+          dd=(m.k==="chg"&&hcOnly(m.nd)?[]:dl.filter(z=>aD.get(z)===m)).map(z=>({t:(z.loai==="Điều lệ đầy đủ"?"Điều lệ":"PL"+(z.lan?" lần "+z.lan:""))+" "+fmt(z.ngay),h:z.lk||""})),
+          hc=m.k==="chg"&&hcOnly(m.nd),needBB=!hc,needDL=(m.k==="chg"&&!hc)||(dlNo&&(m.k==="first"||m.k==="end")),lab=m.lb+" ("+fmt(m.ng)+")";
+        const rt=(z,pre)=>(z.so?pre+" "+z.so:pre)+(z.ngay?", "+fmt(z.ngay):""),
+          bb=bbR.map(z=>({t:rt(z,"BBH"),ng:z.ngay,h:urlOf(z)||m.bbl})),qd=qdR.map(z=>({t:rt(z,/QĐ/i.test(z.so||"")?"QĐ":"NQ"),ng:z.ngay,h:urlOf(z)||m.qdl}));
         if(!bb.length&&m.bbl)bb.push({t:"BBH HĐQT (file)",h:m.bbl});
         if(!qd.length&&m.qdl)qd.push({t:"QĐ HĐQT (file)",h:m.qdl});
         const qdTxt=m.k==="first"&&x.qd&&!qd.length?x.qd:"";
         if(needBB&&!bb.length&&!qd.length&&!qdTxt&&m.k!=="chg")W.push("(a) "+lab+": "+(m.k==="end"?"chấm dứt":"thành lập")+" chưa có QĐ/BBH HĐQT");
-        if(needDL&&!dd.length)W.push("(b) "+lab+": thay đổi thực chất nhưng chưa có phụ lục Điều lệ");
+        if(needDL&&!dd.length)W.push(m.k==="first"?"(a) "+lab+": thành lập chưa có phụ lục Điều lệ":m.k==="end"?"(b) "+lab+": chấm dứt chưa có phụ lục Điều lệ":"(b) "+lab+": thay đổi thực chất nhưng chưa có phụ lục Điều lệ");
         [...bb,...qd].filter(z=>z.ng&&z.ng>m.ng).forEach(z=>W.push("(d) "+lab+": "+z.t+" sau ngày giấy"));
         if(m.k==="end"&&!m.xn&&!m.lk&&!/(Phòng ĐKKD|Phòng Đăng ký|thông báo|xác nhận)/i.test(m.nd))W.push("(c) "+lab+": chấm dứt chưa có xác nhận của Phòng Đăng ký kinh doanh");
         const gl2=[m.lk?A("Mở giấy"+(m.lkc?" (link chung)":""),m.lk):"",m.xn?A("Xác nhận của Phòng ĐKKD",m.xn):""].filter(Boolean),
@@ -3074,7 +3076,7 @@ function dvDs(r,D){D=D||PD();if(!r||!r.length)return;
           NA='<span style="color:var(--mute)">Không cần (thay đổi hành chính)</span>',
           cb=hc?NA:bb.length?bb.map(z=>A(z.t,z.h)||esc(z.t)).join("<br>"):(needBB?NF:"x"),
           cq=hc?NA:qd.length?qd.map(z=>A(z.t,z.h)||esc(z.t)).join("<br>"):(qdTxt?'<span style="color:var(--mute)">'+esc(qdTxt)+" (chưa có file)</span>":(needBB?NF:"x")),
-          cdl=dd.length?dd.map(z=>A(z.t,z.h)||esc(z.t)).join("<br>"):(needDL?NF:"x");
+          cdl=hc?NA:dd.length?dd.map(z=>A(z.t,z.h)||esc(z.t)).join("<br>"):(needDL?'<span style="color:#c53030">Chưa có phụ lục Điều lệ</span>':"x");
         return `<tr><td class="t"><b>${esc(m.lb)}</b> · ${fmt(m.ng)}${m.nd?`<small>${esc(m.nd)}</small>`:""}</td><td>${gcn}</td><td>${cb}</td><td>${cq}</td><td>${cdl}</td></tr>`}).join("");
       if(x.st==="Đang chấm dứt"||(x.st==="Đã chấm dứt"&&!end))W.push("(c) "+esc(x.ten)+": đang/đã chấm dứt nhưng chưa có mốc chấm dứt kèm xác nhận Phòng Đăng ký kinh doanh");
       if(first)gl.forEach(g=>{if(g.ngay<first.ng||(end&&end.ng<=g.ngay))return;const ok=ms.some(m=>{if(m.k==="first"&&m.ng>g.ngay)return false;const df=dayN(m.ng)-dayN(g.ngay);return m.k!=="end"&&df>=wH[0]&&df<=wH[1]});if(!ok)W.push("(e) GCN doanh nghiệp "+(g.lan||"")+" ngày "+fmt(g.ngay)+" đổi địa chỉ hành chính nhưng chưa có mốc cập nhật của đơn vị này")});
