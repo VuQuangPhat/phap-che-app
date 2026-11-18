@@ -3032,7 +3032,7 @@ function dvParse(x){const ms=[],bad=[];x=Object.assign({},x,{ngaylan1:dvIso(x.ng
     t=t.replace(/\s{2,}/g," ").replace(/[\s;,.]+$/,"").trim();
     const m=t.match(/^(Lần đầu|Lần\s*\d+|Chấm dứt)\s*,\s*(\d{1,2})\/(\d{1,2})\/(\d{4})\s*:?\s*(.*)$/i);
     if(!m){bad.push(l);return}
-    ms.push({k:/^chấm dứt/i.test(m[1])?"end":/^lần đầu/i.test(m[1])?"first":"chg",lb:m[1].replace(/\s+/g," ").replace(/^lần/i,"Lần").replace(/^chấm/i,"Chấm"),ng:m[4]+"-"+m[3].padStart(2,"0")+"-"+m[2].padStart(2,"0"),nd:m[5].trim(),lk:/^https?:/i.test(tk.gcn||"")?tk.gcn:"",xn:/^https?:/i.test(tk.xn||"")?tk.xn:"",bbl:/^https?:/i.test(tk.bbh||"")?tk.bbh:"",qdl:/^https?:/i.test(tk.qd||"")?tk.qd:"",bbhid:tk.bbhid||"",qdid:tk.qdid||"",dl:dlv})});
+    ms.push({k:/^chấm dứt/i.test(m[1])?"end":/^lần đầu/i.test(m[1])?"first":"chg",lb:m[1].replace(/\s+/g," ").replace(/^lần/i,"Lần").replace(/^chấm/i,"Chấm"),ng:m[4]+"-"+m[3].padStart(2,"0")+"-"+m[2].padStart(2,"0"),nd:m[5].trim(),lk:/^https?:/i.test(tk.gcn||"")?tk.gcn:"",xn:/^https?:/i.test(tk.xn||"")?tk.xn:"",bbl:/^https?:/i.test(tk.bbh||"")?tk.bbh:"",qdl:/^https?:/i.test(tk.qd||"")?tk.qd:"",bbx:/^x$/i.test(tk.bbh||""),qdx:/^x$/i.test(tk.qd||""),bbhid:tk.bbhid||"",qdid:tk.qdid||"",dl:dlv})});
   if(!ms.some(z=>z.k==="first")&&x.ngaylan1)ms.push({k:"first",lb:"Lần đầu",ng:x.ngaylan1,nd:"",lk:"",syn:1});
   if(!ms.some(z=>z.k==="end")&&x.ngayct)ms.push({k:"end",lb:"Chấm dứt",ng:x.ngayct,nd:"",lk:"",syn:1});
   const o={first:0,chg:1,end:2};ms.sort((a,b)=>a.ng.localeCompare(b.ng)||o[a.k]-o[b.k]);
@@ -3067,7 +3067,7 @@ function dvDs(r,D){D=D||PD();if(!r||!r.length)return;
         if(!bb.length&&m.bbl)bb.push({t:"BBH HĐQT (file)",h:m.bbl});
         if(!qd.length&&m.qdl)qd.push({t:"QĐ HĐQT (file)",h:m.qdl});
         const qdTxt=m.k==="first"&&x.qd&&!qd.length?x.qd:"";
-        if(needBB&&!bb.length&&!qd.length&&!qdTxt&&m.k!=="chg")W.push("(a) "+lab+": "+(m.k==="end"?"chấm dứt":"thành lập")+" chưa có QĐ/BBH HĐQT");
+        if(needBB&&!bb.length&&!qd.length&&!qdTxt&&!m.bbx&&!m.qdx&&m.k!=="chg")W.push("(a) "+lab+": "+(m.k==="end"?"chấm dứt":"thành lập")+" chưa có QĐ/BBH HĐQT");
         const dlT=m.dl!==undefined,dlRed=dlT&&m.dl&&!/^Không cần/i.test(m.dl);
         if(dlRed)W.push("\u0001"+(m.k==="first"?"(a) ":"(b) ")+lab+": "+m.dl);
         if(!dlT&&needDL&&!dd.length)W.push(m.k==="first"?"(a) "+lab+": thành lập chưa có phụ lục Điều lệ":m.k==="end"?"(b) "+lab+": chấm dứt chưa có phụ lục Điều lệ":"(b) "+lab+": thay đổi thực chất nhưng chưa có phụ lục Điều lệ");
@@ -3076,8 +3076,8 @@ function dvDs(r,D){D=D||PD();if(!r||!r.length)return;
         const gl2=[m.lk?A("Mở giấy"+(m.lkc?" (link chung)":""),m.lk):"",m.xn?A("Xác nhận của Phòng ĐKKD",m.xn):""].filter(Boolean),
           gcn=gl2.length?gl2.join("<br>"):NF,
           NA='<span style="color:var(--mute)">Không cần (thay đổi hành chính)</span>',
-          cb=hc?NA:bb.length?bb.map(z=>A(z.t,z.h)||esc(z.t)).join("<br>"):(needBB?NF:"x"),
-          cq=hc?NA:qd.length?qd.map(z=>A(z.t,z.h)||esc(z.t)).join("<br>"):(qdTxt?'<span style="color:var(--mute)">'+esc(qdTxt)+" (chưa có file)</span>":(needBB?NF:"x")),
+          cb=hc?NA:bb.length?bb.map(z=>A(z.t,z.h)||esc(z.t)).join("<br>"):(m.bbx?"x":needBB?NF:"x"),
+          cq=hc?NA:qd.length?qd.map(z=>A(z.t,z.h)||esc(z.t)).join("<br>"):(qdTxt?'<span style="color:var(--mute)">'+esc(qdTxt)+" (chưa có file)</span>":(m.qdx?"x":needBB?NF:"x")),
           cdl=dlT?(m.dl?`<span style="color:${dlRed?"#c53030":"var(--mute)"}">${esc(m.dl)}</span>`:"x"):hc?NA:dd.length?dd.map(z=>A(z.t,z.h)||esc(z.t)).join("<br>"):(needDL?'<span style="color:#c53030">Chưa có phụ lục Điều lệ</span>':"x");
         return `<tr><td class="t"><b>${esc(m.lb)}</b> · ${fmt(m.ng)}${m.nd?`<small>${esc(m.nd)}</small>`:""}</td><td>${gcn}</td><td>${cb}</td><td>${cq}</td><td>${cdl}</td></tr>`}).join("");
       if(x.st==="Đang chấm dứt"||(x.st==="Đã chấm dứt"&&!end))W.push("(c) "+esc(x.ten)+": đang/đã chấm dứt nhưng chưa có mốc chấm dứt kèm xác nhận Phòng Đăng ký kinh doanh");

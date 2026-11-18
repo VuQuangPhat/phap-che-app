@@ -3026,13 +3026,13 @@ function dvIso(v){v=String(v||"").trim();let m=v.match(/^(\d{1,2})\/(\d{1,2})\/(
 function dvParse(x){const ms=[],bad=[];x=Object.assign({},x,{ngaylan1:dvIso(x.ngaylan1),ngayct:dvIso(x.ngayct)});
   const TK=/(^|[\s;,.(])(GCN|BBHID|QDID|BBH|QD|QĐ|Xac nhan|Xác nhận)\s*[:=]\s*(\S+)/gi,cl=v=>String(v||"").replace(/[).,;]+$/,"");
   String(x.ls||"").split(/\n+/).forEach(l=>{l=l.trim();if(!l)return;
-    const tk={};let t=l.replace(TK,(_,pre,k,v)=>{k=k.toLowerCase().replace("đ","d").replace(/\s+/g,"");if(k==="xacnhan")k="xn";tk[k]=cl(v);return pre||" "});
+    let dlv;const tk={};let t=l.replace(/(^|[\s;,.(])DL\s*:\s*\[([^\]]*)\]/i,(_,pre,v)=>{dlv=v.trim();return pre||" "}).replace(TK,(_,pre,k,v)=>{k=k.toLowerCase().replace("đ","d").replace(/\s+/g,"");if(k==="xacnhan")k="xn";tk[k]=cl(v);return pre||" "});
     t=t.replace(/\b(GCN|BBH|QD|QĐ|Xac nhan|Xác nhận)\s*:\s*(?=$|[.;,])/gi,"");
     const un=(t.match(/https?:\/\/\S+/)||[""])[0];if(un){t=t.replace(un," ");if(!tk.gcn)tk.gcn=cl(un)}
     t=t.replace(/\s{2,}/g," ").replace(/[\s;,.]+$/,"").trim();
     const m=t.match(/^(Lần đầu|Lần\s*\d+|Chấm dứt)\s*,\s*(\d{1,2})\/(\d{1,2})\/(\d{4})\s*:?\s*(.*)$/i);
     if(!m){bad.push(l);return}
-    ms.push({k:/^chấm dứt/i.test(m[1])?"end":/^lần đầu/i.test(m[1])?"first":"chg",lb:m[1].replace(/\s+/g," ").replace(/^lần/i,"Lần").replace(/^chấm/i,"Chấm"),ng:m[4]+"-"+m[3].padStart(2,"0")+"-"+m[2].padStart(2,"0"),nd:m[5].trim(),lk:/^https?:/i.test(tk.gcn||"")?tk.gcn:"",xn:/^https?:/i.test(tk.xn||"")?tk.xn:"",bbl:/^https?:/i.test(tk.bbh||"")?tk.bbh:"",qdl:/^https?:/i.test(tk.qd||"")?tk.qd:"",bbhid:tk.bbhid||"",qdid:tk.qdid||""})});
+    ms.push({k:/^chấm dứt/i.test(m[1])?"end":/^lần đầu/i.test(m[1])?"first":"chg",lb:m[1].replace(/\s+/g," ").replace(/^lần/i,"Lần").replace(/^chấm/i,"Chấm"),ng:m[4]+"-"+m[3].padStart(2,"0")+"-"+m[2].padStart(2,"0"),nd:m[5].trim(),lk:/^https?:/i.test(tk.gcn||"")?tk.gcn:"",xn:/^https?:/i.test(tk.xn||"")?tk.xn:"",bbl:/^https?:/i.test(tk.bbh||"")?tk.bbh:"",qdl:/^https?:/i.test(tk.qd||"")?tk.qd:"",bbhid:tk.bbhid||"",qdid:tk.qdid||"",dl:dlv})});
   if(!ms.some(z=>z.k==="first")&&x.ngaylan1)ms.push({k:"first",lb:"Lần đầu",ng:x.ngaylan1,nd:"",lk:"",syn:1});
   if(!ms.some(z=>z.k==="end")&&x.ngayct)ms.push({k:"end",lb:"Chấm dứt",ng:x.ngayct,nd:"",lk:"",syn:1});
   const o={first:0,chg:1,end:2};ms.sort((a,b)=>a.ng.localeCompare(b.ng)||o[a.k]-o[b.k]);
@@ -3068,7 +3068,9 @@ function dvDs(r,D){D=D||PD();if(!r||!r.length)return;
         if(!qd.length&&m.qdl)qd.push({t:"QĐ HĐQT (file)",h:m.qdl});
         const qdTxt=m.k==="first"&&x.qd&&!qd.length?x.qd:"";
         if(needBB&&!bb.length&&!qd.length&&!qdTxt&&m.k!=="chg")W.push("(a) "+lab+": "+(m.k==="end"?"chấm dứt":"thành lập")+" chưa có QĐ/BBH HĐQT");
-        if(needDL&&!dd.length)W.push(m.k==="first"?"(a) "+lab+": thành lập chưa có phụ lục Điều lệ":m.k==="end"?"(b) "+lab+": chấm dứt chưa có phụ lục Điều lệ":"(b) "+lab+": thay đổi thực chất nhưng chưa có phụ lục Điều lệ");
+        const dlT=m.dl!==undefined,dlRed=dlT&&m.dl&&!/^Không cần/i.test(m.dl);
+        if(dlRed)W.push("\u0001"+(m.k==="first"?"(a) ":"(b) ")+lab+": "+m.dl);
+        if(!dlT&&needDL&&!dd.length)W.push(m.k==="first"?"(a) "+lab+": thành lập chưa có phụ lục Điều lệ":m.k==="end"?"(b) "+lab+": chấm dứt chưa có phụ lục Điều lệ":"(b) "+lab+": thay đổi thực chất nhưng chưa có phụ lục Điều lệ");
         [...bb,...qd].filter(z=>z.ng&&z.ng>m.ng).forEach(z=>W.push("(d) "+lab+": "+z.t+" sau ngày giấy"));
         if(m.k==="end"&&!m.xn&&!m.lk&&!/(Phòng ĐKKD|Phòng Đăng ký|thông báo|xác nhận)/i.test(m.nd))W.push("(c) "+lab+": chấm dứt chưa có xác nhận của Phòng Đăng ký kinh doanh");
         const gl2=[m.lk?A("Mở giấy"+(m.lkc?" (link chung)":""),m.lk):"",m.xn?A("Xác nhận của Phòng ĐKKD",m.xn):""].filter(Boolean),
@@ -3076,14 +3078,14 @@ function dvDs(r,D){D=D||PD();if(!r||!r.length)return;
           NA='<span style="color:var(--mute)">Không cần (thay đổi hành chính)</span>',
           cb=hc?NA:bb.length?bb.map(z=>A(z.t,z.h)||esc(z.t)).join("<br>"):(needBB?NF:"x"),
           cq=hc?NA:qd.length?qd.map(z=>A(z.t,z.h)||esc(z.t)).join("<br>"):(qdTxt?'<span style="color:var(--mute)">'+esc(qdTxt)+" (chưa có file)</span>":(needBB?NF:"x")),
-          cdl=hc?NA:dd.length?dd.map(z=>A(z.t,z.h)||esc(z.t)).join("<br>"):(needDL?'<span style="color:#c53030">Chưa có phụ lục Điều lệ</span>':"x");
+          cdl=dlT?(m.dl?`<span style="color:${dlRed?"#c53030":"var(--mute)"}">${esc(m.dl)}</span>`:"x"):hc?NA:dd.length?dd.map(z=>A(z.t,z.h)||esc(z.t)).join("<br>"):(needDL?'<span style="color:#c53030">Chưa có phụ lục Điều lệ</span>':"x");
         return `<tr><td class="t"><b>${esc(m.lb)}</b> · ${fmt(m.ng)}${m.nd?`<small>${esc(m.nd)}</small>`:""}</td><td>${gcn}</td><td>${cb}</td><td>${cq}</td><td>${cdl}</td></tr>`}).join("");
       if(x.st==="Đang chấm dứt"||(x.st==="Đã chấm dứt"&&!end))W.push("(c) "+esc(x.ten)+": đang/đã chấm dứt nhưng chưa có mốc chấm dứt kèm xác nhận Phòng Đăng ký kinh doanh");
       if(first)gl.forEach(g=>{if(g.ngay<first.ng||(end&&end.ng<=g.ngay))return;const ok=ms.some(m=>{if(m.k==="first"&&m.ng>g.ngay)return false;const df=dayN(m.ng)-dayN(g.ngay);return m.k!=="end"&&df>=wH[0]&&df<=wH[1]});if(!ok)W.push("(e) GCN doanh nghiệp "+(g.lan||"")+" ngày "+fmt(g.ngay)+" đổi địa chỉ hành chính nhưng chưa có mốc cập nhật của đơn vị này")});
       bad.forEach(l=>W.push("Dòng không đọc được (cần dạng “Lần 2, 11/03/2024: nội dung”): “"+esc(l.length>80?l.slice(0,80)+"…":l)+"”"));
       const ket=x.st==="Đã chấm dứt";
       return `<div class="dvc"><div class="dvh"><b>${esc(x.ten)}</b><span class="dvm">Mã số ${esc(((rec.msdn||"")+"-"+(x.ma||"")).replace(/^-/,""))}</span><span class="dvs ${ket?"off":"on"}">${ket?"Đã chấm dứt"+(x.ngayct?" "+fmt(x.ngayct):""):esc(x.st||"Đang hoạt động")}</span></div>
-      ${W.length?`<ul class="dvw">${[...new Set(W)].map(w=>`<li>${/^\(/.test(w)||/^Dòng/.test(w)?w:esc(w)}</li>`).join("")}</ul>`:""}
+      ${W.length?`<ul class="dvw">${[...new Set(W)].map(w=>w[0]==="\u0001"?`<li style="color:#c53030">${esc(w.slice(1))}</li>`:`<li>${/^\(/.test(w)||/^Dòng/.test(w)?w:esc(w)}</li>`).join("")}</ul>`:""}
       ${ms.length?`<div style="overflow-x:auto"><table class="m dvt"><thead><tr><th style="width:30%">Mốc</th><th>Giấy chứng nhận / xác nhận</th><th>BBH HĐQT</th><th>QĐ / NQ HĐQT</th><th>Điều lệ / phụ lục</th></tr></thead><tbody>${rows}</tbody></table></div>`:""}</div>`}).join("");
     return `<section class="dvb"><h3>${chip(co)} Đối soát mốc chi nhánh / VPĐD</h3>${cards}</section>`}).join("");
   if(!out)return;
