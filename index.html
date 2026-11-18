@@ -4866,16 +4866,16 @@ function mbcBuild(D,rows,code,rec,sameFn){
   P.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:20,after:0},children:[run("BÁO CÁO SƠ BỘ HIỆN TRẠNG HỒ SƠ PHÁP LÝ CỦA "+code,{bold:true,size:28,color:BL})]}));
   const sub=(rec&&rec.name?String(rec.name).replace(/^\s*CTCP\b/i,"Công ty Cổ phần")+(rec.msdn?" (MST "+rec.msdn+")":"")+" – ":"")+"Bảng đối soát thành phần điều lệ (bản scan pdf có chữ ký)";
   P.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:0,after:40},children:[run(sub,{size:S,bold:true})]}));
-  const cell=(t,w,o)=>{o=o||{};const T=String(t==null?"":t),sh=o.head?"D9E2F3":/\(!\)/.test(T)?"FFF2CC":/^\s*Chưa có/i.test(T)?"EDEDED":null;
+  const cell=(t,w,o)=>{o=o||{};const T=String(t==null?"":t),sh=o.head?"D9E2F3":/\(!\)/.test(T)?"FFF2CC":/^\s*Chưa có|\(chưa có file\)/i.test(T)?"EDEDED":null;
     return new TableCell({width:{size:w,type:WidthType.DXA},borders:bds,margins:{top:15,bottom:15,left:60,right:60},shading:sh?{type:ShadingType.CLEAR,color:"auto",fill:sh}:undefined,
       children:[new Paragraph({alignment:o.head||o.ctr?AlignmentType.CENTER:AlignmentType.LEFT,spacing:{before:0,after:0},children:[run(T,{bold:!!o.head})]})]})};
   muc.forEach(m=>{
-    const n=+m.muc,cols=["c1","c2","c3","c4","c5","c6"].map(k=>(m[k]||"").trim()),nc=cols.reduce((a,c,i)=>c?i+1:a,0),heads=cols.slice(0,nc);
+    const n=+m.muc,cols=["c1","c2","c3","c4","c5","c6","c7"].map(k=>(m[k]||"").trim()),nc=cols.reduce((a,c,i)=>c?i+1:a,0),heads=cols.slice(0,nc);
     const rs=dong.filter(z=>+z.muc===n).sort((a,b)=>+a.thu_tu-+b.thu_tu);
-    P.push(new Paragraph({keepNext:true,spacing:{before:100,after:20},children:[run(n+". "+(m.ten||""),{bold:true,size:19,color:BL})]}));
+    P.push(new Paragraph({keepNext:true,spacing:{before:100,after:20},children:[run(String(m.muc).trim()+(/\./.test(String(m.muc))?" ":". ")+(m.ten||""),{bold:true,size:19,color:BL})]}));
     if(rs.length&&nc){
       const wt=heads.map((h,i)=>Math.min(Math.max(h.length,...rs.map(r=>String(r["c"+(i+1)]||"").length),8),55)),sw=wt.reduce((a,b)=>a+b,0);
-      let ws=nc===6?[1150,900,3100,1200,1200,2288]:nc===5?[1150,900,4300,1900,1588]:wt.map(w=>Math.max(1150,Math.round(TW*w/sw)));const ex=ws.reduce((a,b)=>a+b,0)-TW;if(ex)ws[ws.indexOf(Math.max(...ws))]-=ex;
+      let ws=nc===6?[1150,900,3100,1200,1200,2288]:nc===7?[1000,950,1000,3038,1200,1200,1450]:nc===5?[1150,900,4300,1900,1588]:wt.map(w=>Math.max(1150,Math.round(TW*w/sw)));const ex=ws.reduce((a,b)=>a+b,0)-TW;if(ex)ws[ws.indexOf(Math.max(...ws))]-=ex;
       P.push(new Table({width:{size:TW,type:WidthType.DXA},columnWidths:ws,layout:D.TableLayoutType?D.TableLayoutType.FIXED:undefined,
         rows:[new TableRow({tableHeader:true,cantSplit:true,children:heads.map((h,i)=>cell(h,ws[i],{head:1}))}),
           ...rs.map(r=>new TableRow({cantSplit:true,children:heads.map((h,i)=>cell(r["c"+(i+1)],ws[i],{ctr:!/^(Nội dung|Điều lệ)/.test(h)}))}))]}));
