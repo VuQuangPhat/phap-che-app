@@ -1747,9 +1747,10 @@ async function shSnapRead(sid){const titles=await shTitles(sid),want=titles.filt
 async function shReadSheet(sid,isA){
   const titles=await shTitles(sid);
   if(!titles.includes("_meta")||(isA&&!titles.includes("cfg")))return{o:null,rev:0};
-  const want=titles.filter(t=>t==="tasks"||t==="budget"||t==="cfg"||t==="_long"||t==="rc_items"||SH_TAB_R[t]||t.startsWith("prof_"));
+  const want=titles.filter(t=>t==="tasks"||t==="budget"||t==="cfg"||t==="_long"||t==="rc_items"||t==="mau_bc"||SH_TAB_R[t]||t.startsWith("prof_"));
   const j=await shApi("/values:batchGet?majorDimension=ROWS&valueRenderOption=UNFORMATTED_VALUE&"+want.map(t=>"ranges="+shRange(t)).join("&"),undefined,sid);
   const T={};(j.valueRanges||[]).forEach((vr,i)=>{T[want[i]]=(vr.values||[]).map(r=>r.map(c=>c===undefined?"":c))});
+  if(isA){MBC_T=T.mau_bc||null}delete T.mau_bc;
   SNAP[sid]=shSnapFrom(T);
   const rev=(await shGetRev(sid)).rev;let rc=[];try{rc=isA?shFromTable(T.rc_items||[]):[]}catch(e){console.error("rc_items",e)}return{o:shUnpack(T),rev,rc}}
 async function shGet(){
@@ -2548,7 +2549,7 @@ function renderProf(){
   if(sec==="hq"){$("pflt").hidden=false;$("pstats").hidden=false;$("pfc").hidden=false;["padd","padd2","pcol","pexpd","pimp","ptpl","pexp"].forEach(i=>$(i).hidden=true);rHq();return}
   const dsh=sec==="dash";$("pflt").hidden=dsh;$("pstats").hidden=dsh;if(dsh){try{rDash()}catch(err){console.error(err);$("plist").innerHTML='<div class="panel full warnp" style="margin:0 0 12px"><h3>⚠ Mục này không hiển thị được do lỗi dữ liệu hoặc mã</h3><p style="margin:6px 0">Chụp màn hình dòng này gửi lại để sửa: <b>'+esc((err&&err.message)||err)+" | "+esc(String((err&&err.stack)||"").split("\n")[1]||"").trim()+"</b></p></div>"}return}
   const all=PD()[sec],q=$("pq").value.toLowerCase().trim(),c=$("pfc").value;
-  $("pfc").hidden=false;$("padd").textContent="Thêm "+SEC[sec].one;$("padd2").hidden=sec!=="ppl";$("pcol").hidden=$("pexpd").hidden=!(sec==="own"||sec==="pos");
+  $("pfc").hidden=false;$("padd").textContent="Thêm "+SEC[sec].one;$("ptpl").textContent=sec==="ds"?"Xuất docx":"Tải mẫu CSV";$("padd2").hidden=sec!=="ppl";$("pcol").hidden=$("pexpd").hidden=!(sec==="own"||sec==="pos");
   document.querySelectorAll("#psub button").forEach(b=>b.classList.toggle("on",b.dataset.s===sec));
   const fk=sec==="co"?"code":"co";
   const posOf=n=>PD().pos.filter(p=>same(p.name,n));
@@ -4847,7 +4848,53 @@ $("hsdel").onclick=()=>{const d=PD(),nm=dsec==="ppl"?(d.ppl.find(v=>v.id===editI
 /* ---------- Nhập / xuất CSV ---------- */
 $("pimp").onclick=()=>$("pfile").click();
 $("pfile").onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>importCSV(rd.result);rd.readAsText(f,"utf-8");e.target.value=""};
-$("ptpl").onclick=()=>dl("mau_ho_so_"+sec+".csv","text/csv","\ufeff"+SEC[sec].f.map(f=>csvc(f.l)).join(",")+"\r\n");
+$("ptpl").onclick=()=>sec==="ds"?mbcExport():dl("mau_ho_so_"+sec+".csv","text/csv","\ufeff"+SEC[sec].f.map(f=>csvc(f.l)).join(",")+"\r\n");
+/* ===== Xuất báo cáo hiện trạng hồ sơ pháp lý (.docx) từ tab mau_bc =====
+   Dữ liệu dựng bảng nằm ở Sheet (tab mau_bc, dòng MUC/DONG/GC); app chỉ đọc chữ và tô màu theo chữ, không tự suy ra. */
+let MBC_T=null;
+const mbcDate=v=>{if(typeof v==="number"&&v>30000&&v<80000){const d=new Date(Math.round((v-25569)*864e5));return String(d.getUTCDate()).padStart(2,"0")+"/"+String(d.getUTCMonth()+1).padStart(2,"0")+"/"+d.getUTCFullYear()}return v==null?"":String(v)};
+function mbcRows(T){const h=(T[0]||[]).map(x=>String(x||"").trim());return T.slice(1).map(r=>{const o={};h.forEach((k,i)=>{if(k)o[k]=mbcDate(r[i])});return o})}
+function mbcBuild(D,rows,code,rec,sameFn){
+  const{Document,Packer,Paragraph,Table,TableRow,TableCell,TextRun,Footer,PageNumber,WidthType,ShadingType,BorderStyle,AlignmentType}=D;
+  const F="Arial",S=18,SN=17,BL="1F3864",TW=11906-2*907,bd={style:BorderStyle.SINGLE,size:4,color:"7F7F7F"},bds={top:bd,bottom:bd,left:bd,right:bd};
+  const mine=z=>sameFn(z.co,code),muc=rows.filter(z=>z.loai==="MUC").sort((a,b)=>+a.muc-+b.muc),dong=rows.filter(z=>z.loai==="DONG"&&mine(z)),gc=rows.filter(z=>z.loai==="GC"&&mine(z));
+  const run=(t,o)=>new TextRun(Object.assign({text:t,font:F,size:S},o||{}));
+  const P=[];
+  P.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:80},children:[run("BÁO CÁO SƠ BỘ HIỆN TRẠNG HỒ SƠ PHÁP LÝ CỦA "+code,{bold:true,size:28,color:BL})]}));
+  const sub=(rec&&rec.name?rec.name+(rec.msdn?" (MST "+rec.msdn+")":"")+" – ":"")+"Bảng đối soát thành phần điều lệ (bản scan pdf có chữ ký)";
+  P.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:200},children:[run(sub,{size:S})]}));
+  const cell=(t,w,o)=>{o=o||{};const T=String(t==null?"":t),sh=o.head?"D9E2F3":/\(!\)/.test(T)?"FFF2CC":/^\s*Chưa có/i.test(T)?"EDEDED":null;
+    return new TableCell({width:{size:w,type:WidthType.DXA},borders:bds,margins:{top:50,bottom:50,left:80,right:80},shading:sh?{type:ShadingType.CLEAR,color:"auto",fill:sh}:undefined,
+      children:[new Paragraph({alignment:o.head?AlignmentType.CENTER:AlignmentType.LEFT,children:[run(T,{bold:!!o.head})]})]})};
+  muc.forEach(m=>{
+    const n=+m.muc,cols=["c1","c2","c3","c4","c5","c6"].map(k=>(m[k]||"").trim()),nc=cols.reduce((a,c,i)=>c?i+1:a,0),heads=cols.slice(0,nc);
+    const rs=dong.filter(z=>+z.muc===n).sort((a,b)=>+a.thu_tu-+b.thu_tu);
+    P.push(new Paragraph({keepNext:true,spacing:{before:220,after:90},children:[run(n+". "+(m.ten||""),{bold:true,size:20,color:BL})]}));
+    if(rs.length&&nc){
+      const wt=heads.map((h,i)=>Math.min(Math.max(h.length,...rs.map(r=>String(r["c"+(i+1)]||"").length),8),55)),sw=wt.reduce((a,b)=>a+b,0);
+      let ws=wt.map(w=>Math.max(1150,Math.round(TW*w/sw)));const ex=ws.reduce((a,b)=>a+b,0)-TW;if(ex)ws[ws.indexOf(Math.max(...ws))]-=ex;
+      P.push(new Table({width:{size:TW,type:WidthType.DXA},columnWidths:ws,layout:D.TableLayoutType?D.TableLayoutType.FIXED:undefined,
+        rows:[new TableRow({tableHeader:true,cantSplit:true,children:heads.map((h,i)=>cell(h,ws[i],{head:1}))}),
+          ...rs.map(r=>new TableRow({cantSplit:true,children:heads.map((h,i)=>cell(r["c"+(i+1)],ws[i]))}))]}));
+    }
+    gc.filter(z=>+z.muc===n).sort((a,b)=>+a.thu_tu-+b.thu_tu).forEach(g=>P.push(new Paragraph({spacing:{before:70,after:40},children:[run(g.c1||"",{size:SN})]})));
+  });
+  gc.filter(z=>!z.muc).forEach(g=>P.push(new Paragraph({spacing:{before:200},children:[run(g.c1||"",{size:SN,italics:true})]})));
+  return new Document({creator:"Phòng pháp chế",title:"Báo cáo sơ bộ hiện trạng hồ sơ pháp lý "+code,styles:{default:{document:{run:{font:F,size:S}}}},
+    sections:[{properties:{page:{size:{width:11906,height:16838},margin:{top:907,bottom:907,left:907,right:907}}},
+      footers:{default:new Footer({children:[new Paragraph({alignment:AlignmentType.CENTER,children:[run("Trang ",{size:SN}),new TextRun({children:[PageNumber.CURRENT],font:F,size:SN})]})]})},children:P}]});
+}
+async function mbcLoad(){if(window.docx)return;const U=["https://cdn.jsdelivr.net/npm/docx@9.7.1/dist/index.iife.js","https://unpkg.com/docx@9.7.1/dist/index.iife.js"];
+  for(const u of U){try{await new Promise((ok,no)=>{const s=document.createElement("script");s.src=u;s.onload=ok;s.onerror=no;document.head.appendChild(s)});if(window.docx)return}catch(e){}}
+  throw new Error("Không tải được thư viện docx (cần có mạng).")}
+async function mbcExport(){
+  const c=$("pfc").value;if(!c){alert("Chọn một công ty trước khi xuất báo cáo (mỗi công ty một file).");return}
+  if(!MBC_T||!MBC_T.length){alert("Chưa có tab mau_bc trong Sheet (hoặc chưa đọc được). Tạo tab mau_bc theo mẫu rồi tải lại dữ liệu.");return}
+  const rows=mbcRows(MBC_T);if(!rows.some(z=>z.loai==="DONG"&&same(z.co,c))){alert("Tab mau_bc chưa có dòng DONG của công ty "+c+".");return}
+  const b=$("ptpl"),t0=b.textContent;b.disabled=true;b.textContent="Đang tạo…";
+  try{await mbcLoad();const rec=coRec(c),doc=mbcBuild(window.docx,rows,c,rec,same),blob=await window.docx.Packer.toBlob(doc),a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);a.download="Bao_cao_so_bo_hien_trang_ho_so_phap_ly_"+c+".docx";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1e3)}
+  catch(e){alert("Không xuất được docx: "+e.message)}finally{b.disabled=false;b.textContent=t0}}
 function expCSV(){
   const S=SEC[sec];
   dl("ho_so_"+sec+"_"+today()+".csv","text/csv","\ufeff"+[S.f.map(f=>csvc(f.l)).join(","),...PD()[sec].map(x=>S.f.map(f=>csvc(f.t==="date"?fmt(x[f.k]):x[f.k])).join(","))].join("\r\n"));
