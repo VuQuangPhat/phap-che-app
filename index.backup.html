@@ -4860,7 +4860,7 @@ function mbcBuild(D,rows,code,rec,sameFn){
   const run=(t,o)=>new TextRun(Object.assign({text:t,font:F,size:S},o||{}));
   const P=[];
   P.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:20,after:0},children:[run("BÁO CÁO SƠ BỘ HIỆN TRẠNG HỒ SƠ PHÁP LÝ CỦA "+code,{bold:true,size:28,color:BL})]}));
-  const sub=(rec&&rec.name?rec.name+(rec.msdn?" (MST "+rec.msdn+")":"")+" – ":"")+"Bảng đối soát thành phần điều lệ (bản scan pdf có chữ ký)";
+  const sub=(rec&&rec.name?String(rec.name).replace(/^\s*CTCP\b/i,"Công ty Cổ phần")+(rec.msdn?" (MST "+rec.msdn+")":"")+" – ":"")+"Bảng đối soát thành phần điều lệ (bản scan pdf có chữ ký)";
   P.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:0,after:40},children:[run(sub,{size:S,bold:true})]}));
   const cell=(t,w,o)=>{o=o||{};const T=String(t==null?"":t),sh=o.head?"D9E2F3":/\(!\)/.test(T)?"FFF2CC":/^\s*Chưa có/i.test(T)?"EDEDED":null;
     return new TableCell({width:{size:w,type:WidthType.DXA},borders:bds,margins:{top:15,bottom:15,left:60,right:60},shading:sh?{type:ShadingType.CLEAR,color:"auto",fill:sh}:undefined,
