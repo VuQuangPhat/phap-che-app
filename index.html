@@ -851,7 +851,7 @@ const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",
 const br=s=>String(s).startsWith("\u0001")?String(s).slice(1):esc(s).replace(/\n/g,"<br>");
 const iso=d=>{const z=new Date(d.getTime()-d.getTimezoneOffset()*6e4);return z.toISOString().slice(0,10)};
 const today=()=>iso(new Date());
-const fmt=s=>s?s.split("-").reverse().join("/"):"";
+const fmt=s=>s?String(s).split("-").reverse().join("/"):"";
 const money=n=>Number(n||0).toLocaleString("vi-VN");
 const load=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}};
 let tasks=load(KEY,[]),budget=load(KB,[]),CFG=Object.assign({},DEF,load(KC,{}));
@@ -3012,7 +3012,8 @@ document.addEventListener("click",e=>{const bt=e.target.closest("[data-bcx]");if
   f.contentDocument.open();f.contentDocument.write(bcDoc(b,false));f.contentDocument.close();
   setTimeout(()=>{f.contentWindow.focus();f.contentWindow.print();setTimeout(()=>f.remove(),4000)},300)},true);
 /* ===== Đối soát mốc chi nhánh / VPĐD: bảng mốc theo ngày (tách từ cột ls), QĐ/BBH tự gắn theo cửa sổ dv.bb_truoc/dv.bb_sau ===== */
-function dvParse(x){const ms=[],bad=[];
+function dvIso(v){v=String(v||"").trim();let m=v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);if(m)return m[3]+"-"+m[2].padStart(2,"0")+"-"+m[1].padStart(2,"0");m=v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);return m?m[1]+"-"+m[2].padStart(2,"0")+"-"+m[3].padStart(2,"0"):""}
+function dvParse(x){const ms=[],bad=[];x=Object.assign({},x,{ngaylan1:dvIso(x.ngaylan1),ngayct:dvIso(x.ngayct)});
   String(x.ls||"").split(/\n+/).forEach(l=>{l=l.trim();if(!l)return;
     const url=(l.match(/https?:\/\/\S+/)||[""])[0].replace(/[).,;]+$/,""),t=url?l.replace(url,"").replace(/\s{2,}/g," ").trim():l,
       m=t.match(/^(Lần đầu|Lần\s*\d+|Chấm dứt)\s*,\s*(\d{1,2})\/(\d{1,2})\/(\d{4})\s*:?\s*(.*)$/i);
