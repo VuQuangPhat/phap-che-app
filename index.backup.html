@@ -3024,15 +3024,15 @@ function qtBox(ma){const rr=ruleRow(ma)||DEF_RULES.find(z=>z.ma===ma&&ma==="ds.q
     return`<style>.dvn{margin:14px 24px 0;padding:10px 14px;border:1px solid var(--line,#ddd);border-radius:8px;font-size:12.5px;line-height:1.5}.dvn ol{margin:8px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:8px}.dvcc{color:var(--mute);font-size:11.5px;margin-top:2px}</style><div class="dvn"><b>Quy tắc đối soát</b>${N.h?`<span> · ${esc(N.h.replace(/\.$/,""))}</span>`:""}<ol>${li}</ol>${chung?`<div class="dvcc" style="margin-top:6px"><b>Lưu ý chung:</b> ${esc(chung)}</div>`:""}</div>`}
 function dvIso(v){v=String(v||"").trim();let m=v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);if(m)return m[3]+"-"+m[2].padStart(2,"0")+"-"+m[1].padStart(2,"0");m=v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);return m?m[1]+"-"+m[2].padStart(2,"0")+"-"+m[3].padStart(2,"0"):""}
 function dvParse(x){const ms=[],bad=[];x=Object.assign({},x,{ngaylan1:dvIso(x.ngaylan1),ngayct:dvIso(x.ngayct)});
-  const TK=/(^|[\s;,.(])(GCN|BBHID|QDID|BBH|QD|QĐ|Xac nhan|Xác nhận)\s*[:=]\s*(\S+)/gi,cl=v=>String(v||"").replace(/[).,;]+$/,"");
+  const TK=/(^|[\s;,.(])(GCN|BBHID|QDID|DLK|BBH|QD|QĐ|Xac nhan|Xác nhận)\s*[:=]\s*(\S+)/gi,cl=v=>String(v||"").replace(/[).,;]+$/,"");
   String(x.ls||"").split(/\n+/).forEach(l=>{l=l.trim();if(!l)return;
     let dlv;const tk={};let t=l.replace(/(^|[\s;,.(])DL\s*:\s*\[([^\]]*)\]/i,(_,pre,v)=>{dlv=v.trim();return pre||" "}).replace(TK,(_,pre,k,v)=>{k=k.toLowerCase().replace("đ","d").replace(/\s+/g,"");if(k==="xacnhan")k="xn";tk[k]=cl(v);return pre||" "});
-    t=t.replace(/\b(GCN|BBH|QD|QĐ|Xac nhan|Xác nhận)\s*:\s*(?=$|[.;,])/gi,"");
+    t=t.replace(/\b(GCN|BBH|QD|QĐ|DLK|Xac nhan|Xác nhận)\s*:\s*(?=$|[.;,])/gi,"");
     const un=(t.match(/https?:\/\/\S+/)||[""])[0];if(un){t=t.replace(un," ");if(!tk.gcn)tk.gcn=cl(un)}
     t=t.replace(/\s{2,}/g," ").replace(/[\s;,.]+$/,"").trim();
     const m=t.match(/^(Lần đầu|Lần\s*\d+|Chấm dứt)\s*,\s*(\d{1,2})\/(\d{1,2})\/(\d{4})\s*:?\s*(.*)$/i);
     if(!m){bad.push(l);return}
-    ms.push({k:/^chấm dứt/i.test(m[1])?"end":/^lần đầu/i.test(m[1])?"first":"chg",lb:m[1].replace(/\s+/g," ").replace(/^lần/i,"Lần").replace(/^chấm/i,"Chấm"),ng:m[4]+"-"+m[3].padStart(2,"0")+"-"+m[2].padStart(2,"0"),nd:m[5].trim(),lk:/^https?:/i.test(tk.gcn||"")?tk.gcn:"",xn:/^https?:/i.test(tk.xn||"")?tk.xn:"",bbl:/^https?:/i.test(tk.bbh||"")?tk.bbh:"",qdl:/^https?:/i.test(tk.qd||"")?tk.qd:"",bbhid:tk.bbhid||"",qdid:tk.qdid||"",dl:dlv})});
+    ms.push({k:/^chấm dứt/i.test(m[1])?"end":/^lần đầu/i.test(m[1])?"first":"chg",lb:m[1].replace(/\s+/g," ").replace(/^lần/i,"Lần").replace(/^chấm/i,"Chấm"),ng:m[4]+"-"+m[3].padStart(2,"0")+"-"+m[2].padStart(2,"0"),nd:m[5].trim(),lk:/^https?:/i.test(tk.gcn||"")?tk.gcn:"",xn:/^https?:/i.test(tk.xn||"")?tk.xn:"",bbl:/^https?:/i.test(tk.bbh||"")?tk.bbh:"",qdl:/^https?:/i.test(tk.qd||"")?tk.qd:"",dlk:/^https?:/i.test(tk.dlk||"")?tk.dlk:"",bbx:/^x$/i.test(tk.bbh||""),qdx:/^x$/i.test(tk.qd||""),bbhid:tk.bbhid||"",qdid:tk.qdid||"",dl:dlv})});
   if(!ms.some(z=>z.k==="first")&&x.ngaylan1)ms.push({k:"first",lb:"Lần đầu",ng:x.ngaylan1,nd:"",lk:"",syn:1});
   if(!ms.some(z=>z.k==="end")&&x.ngayct)ms.push({k:"end",lb:"Chấm dứt",ng:x.ngayct,nd:"",lk:"",syn:1});
   const o={first:0,chg:1,end:2};ms.sort((a,b)=>a.ng.localeCompare(b.ng)||o[a.k]-o[b.k]);
@@ -3040,7 +3040,7 @@ function dvParse(x){const ms=[],bad=[];x=Object.assign({},x,{ngaylan1:dvIso(x.ng
   return{ms,bad}}
 function dvDs(r,D){D=D||PD();if(!r||!r.length)return;
   const wB=[-ruleNum("dv.bb_truoc",60),ruleNum("dv.bb_sau",3)],wD=[-ruleNum("ds.dl_truoc",60),ruleNum("ds.dl_sau",30)],wH=[-ruleNum("dv.hc_truoc",30),ruleNum("dv.hc_sau",90)];
-  const urlOf=z=>String(z.lk||"").trim(),hcOnly=t=>/(hành chính|không cần\s*(QĐ|BBH|quyết định))/i.test(t||"");
+  const urlOf=z=>String(z.lk||"").trim(),hcOnly=t=>/hành chính/i.test(t||"")&&!/thực chất/i.test(t||"");
   const A=(a,h)=>a?`<a href="${esc(h)}" target="_blank" rel="noopener" data-dlopen>${esc(a)}</a>`:"",NF='<span style="color:#c53030">Chưa tìm thấy file</span>';
   const cos=[...new Set(r.map(x=>x.co))].sort((a,b)=>ci(a)-ci(b));
   const out=cos.map(co=>{
@@ -3067,19 +3067,19 @@ function dvDs(r,D){D=D||PD();if(!r||!r.length)return;
         if(!bb.length&&m.bbl)bb.push({t:"BBH HĐQT (file)",h:m.bbl});
         if(!qd.length&&m.qdl)qd.push({t:"QĐ HĐQT (file)",h:m.qdl});
         const qdTxt=m.k==="first"&&x.qd&&!qd.length?x.qd:"";
-        if(needBB&&!bb.length&&!qd.length&&!qdTxt&&m.k!=="chg")W.push("(a) "+lab+": "+(m.k==="end"?"chấm dứt":"thành lập")+" chưa có QĐ/BBH HĐQT");
+        if(needBB&&!bb.length&&!qd.length&&!qdTxt&&!m.bbx&&!m.qdx&&m.k!=="chg")W.push("(a) "+lab+": "+(m.k==="end"?"chấm dứt":"thành lập")+" chưa có QĐ/BBH HĐQT");
         const dlT=m.dl!==undefined,dlRed=dlT&&m.dl&&!/^Không cần/i.test(m.dl);
         if(dlRed)W.push("\u0001"+(m.k==="first"?"(a) ":"(b) ")+lab+": "+m.dl);
-        if(!dlT&&needDL&&!dd.length)W.push(m.k==="first"?"(a) "+lab+": thành lập chưa có phụ lục Điều lệ":m.k==="end"?"(b) "+lab+": chấm dứt chưa có phụ lục Điều lệ":"(b) "+lab+": thay đổi thực chất nhưng chưa có phụ lục Điều lệ");
+        if(!dlT&&!m.dlk&&needDL&&!dd.length)W.push(m.k==="first"?"(a) "+lab+": thành lập chưa có phụ lục Điều lệ":m.k==="end"?"(b) "+lab+": chấm dứt chưa có phụ lục Điều lệ":"(b) "+lab+": thay đổi thực chất nhưng chưa có phụ lục Điều lệ");
         [...bb,...qd].filter(z=>z.ng&&z.ng>m.ng).forEach(z=>W.push("(d) "+lab+": "+z.t+" sau ngày giấy"));
         if(m.k==="end"&&!m.xn&&!m.lk&&!/(Phòng ĐKKD|Phòng Đăng ký|thông báo|xác nhận)/i.test(m.nd))W.push("(c) "+lab+": chấm dứt chưa có xác nhận của Phòng Đăng ký kinh doanh");
         const gl2=[m.lk?A("Mở giấy"+(m.lkc?" (link chung)":""),m.lk):"",m.xn?A("Xác nhận của Phòng ĐKKD",m.xn):""].filter(Boolean),
           gcn=gl2.length?gl2.join("<br>"):NF,
           NA='<span style="color:var(--mute)">Không cần (thay đổi hành chính)</span>',
-          cb=hc?NA:bb.length?bb.map(z=>A(z.t,z.h)||esc(z.t)).join("<br>"):(needBB?NF:"x"),
-          cq=hc?NA:qd.length?qd.map(z=>A(z.t,z.h)||esc(z.t)).join("<br>"):(qdTxt?'<span style="color:var(--mute)">'+esc(qdTxt)+" (chưa có file)</span>":(needBB?NF:"x")),
-          cdl=dlT?(m.dl?`<span style="color:${dlRed?"#c53030":"var(--mute)"}">${esc(m.dl)}</span>`:"x"):hc?NA:dd.length?dd.map(z=>A(z.t,z.h)||esc(z.t)).join("<br>"):(needDL?'<span style="color:#c53030">Chưa có phụ lục Điều lệ</span>':"x");
-        return `<tr><td class="t"><b>${esc(m.lb)}</b> · ${fmt(m.ng)}${m.nd?`<small>${esc(m.nd)}</small>`:""}</td><td>${gcn}</td><td>${cb}</td><td>${cq}</td><td>${cdl}</td></tr>`}).join("");
+          KC='<span style="color:var(--mute)">Không cần</span>',
+          cb=bb.length?bb.map(z=>A(z.t,z.h)||esc(z.t)).join("<br>"):m.bbx?KC:hc?"x":(needBB?NF:"x"),
+          cq=qd.length?qd.map(z=>A(z.t,z.h)||esc(z.t)).join("<br>"):m.qdx?KC:hc?"x":(qdTxt?'<span style="color:var(--mute)">'+esc(qdTxt)+" (chưa có file)</span>":(needBB?NF:"x")),
+          cdl=dlT?(m.dl?`<span style="color:${dlRed?"#c53030":"var(--mute)"}">${A(m.dl,m.dlk)||esc(m.dl)}</span>`:"x"):m.dlk?A("Mở phụ lục Điều lệ",m.dlk):hc?"x":dd.length?dd.map(z=>A(z.t,z.h)||esc(z.t)).join("<br>"):(needDL?'<span style="color:#c53030">Chưa có phụ lục Điều lệ</span>':"x");        return `<tr><td class="t"><b>${esc(m.lb)}</b> · ${fmt(m.ng)}${m.nd?`<small>${esc(m.nd)}</small>`:""}</td><td>${gcn}</td><td>${cb}</td><td>${cq}</td><td>${cdl}</td></tr>`}).join("");
       if(x.st==="Đang chấm dứt"||(x.st==="Đã chấm dứt"&&!end))W.push("(c) "+esc(x.ten)+": đang/đã chấm dứt nhưng chưa có mốc chấm dứt kèm xác nhận Phòng Đăng ký kinh doanh");
       if(first)gl.forEach(g=>{if(g.ngay<first.ng||(end&&end.ng<=g.ngay))return;const ok=ms.some(m=>{if(m.k==="first"&&m.ng>g.ngay)return false;const df=dayN(m.ng)-dayN(g.ngay);return m.k!=="end"&&df>=wH[0]&&df<=wH[1]});if(!ok)W.push("(e) GCN doanh nghiệp "+(g.lan||"")+" ngày "+fmt(g.ngay)+" đổi địa chỉ hành chính nhưng chưa có mốc cập nhật của đơn vị này")});
       bad.forEach(l=>W.push("Dòng không đọc được (cần dạng “Lần 2, 11/03/2024: nội dung”): “"+esc(l.length>80?l.slice(0,80)+"…":l)+"”"));
