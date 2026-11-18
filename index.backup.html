@@ -1747,10 +1747,9 @@ async function shSnapRead(sid){const titles=await shTitles(sid),want=titles.filt
 async function shReadSheet(sid,isA){
   const titles=await shTitles(sid);
   if(!titles.includes("_meta")||(isA&&!titles.includes("cfg")))return{o:null,rev:0};
-  const want=titles.filter(t=>t==="tasks"||t==="budget"||t==="cfg"||t==="_long"||t==="rc_items"||t==="mau_bc"||SH_TAB_R[t]||t.startsWith("prof_"));
+  const want=titles.filter(t=>t==="tasks"||t==="budget"||t==="cfg"||t==="_long"||t==="rc_items"||SH_TAB_R[t]||t.startsWith("prof_"));
   const j=await shApi("/values:batchGet?majorDimension=ROWS&valueRenderOption=UNFORMATTED_VALUE&"+want.map(t=>"ranges="+shRange(t)).join("&"),undefined,sid);
   const T={};(j.valueRanges||[]).forEach((vr,i)=>{T[want[i]]=(vr.values||[]).map(r=>r.map(c=>c===undefined?"":c))});
-  if(isA){MBC_T=T.mau_bc||null}delete T.mau_bc;
   SNAP[sid]=shSnapFrom(T);
   const rev=(await shGetRev(sid)).rev;let rc=[];try{rc=isA?shFromTable(T.rc_items||[]):[]}catch(e){console.error("rc_items",e)}return{o:shUnpack(T),rev,rc}}
 async function shGet(){
@@ -4889,9 +4888,15 @@ async function mbcLoad(){if(window.docx)return;const U=["https://cdn.jsdelivr.ne
   throw new Error("Không tải được thư viện docx (cần có mạng).")}
 async function mbcExport(){
   const c=$("pfc").value;if(!c){alert("Chọn một công ty trước khi xuất báo cáo (mỗi công ty một file).");return}
-  if(!MBC_T||!MBC_T.length){alert("Chưa có tab mau_bc trong Sheet (hoặc chưa đọc được). Tạo tab mau_bc theo mẫu rồi tải lại dữ liệu.");return}
+  const b=$("ptpl"),t0=b.textContent;b.disabled=true;b.textContent="Đang đọc mau_bc…";
+  try{
+    let T=null,err="";
+    for(const id of [SH&&SH.id,SH&&SH.id2].filter(Boolean)){
+      try{const j=await shApi("/values/"+shRange("mau_bc")+"?valueRenderOption=FORMATTED_VALUE",undefined,id);if(j.values&&j.values.length){T=j.values;break}}catch(e){err=e.message}}
+    if(!T){alert("Không đọc được tab mau_bc trong Sheet."+(err?" ("+err+")":" Tab chưa có hoặc đang trống.")+" Kiểm tra đã đăng nhập Google và tab đã tạo đúng tên.");return}
+    MBC_T=T}finally{b.disabled=false;b.textContent=t0}
   const rows=mbcRows(MBC_T);if(!rows.some(z=>z.loai==="DONG"&&same(z.co,c))){alert("Tab mau_bc chưa có dòng DONG của công ty "+c+".");return}
-  const b=$("ptpl"),t0=b.textContent;b.disabled=true;b.textContent="Đang tạo…";
+  b.disabled=true;b.textContent="Đang tạo…";
   try{await mbcLoad();const rec=coRec(c),doc=mbcBuild(window.docx,rows,c,rec,same),blob=await window.docx.Packer.toBlob(doc),a=document.createElement("a");
     a.href=URL.createObjectURL(blob);a.download="Bao_cao_so_bo_hien_trang_ho_so_phap_ly_"+c+".docx";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1e3)}
   catch(e){alert("Không xuất được docx: "+e.message)}finally{b.disabled=false;b.textContent=t0}}

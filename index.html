@@ -4855,32 +4855,32 @@ const mbcDate=v=>{if(typeof v==="number"&&v>30000&&v<80000){const d=new Date(Mat
 function mbcRows(T){const h=(T[0]||[]).map(x=>String(x||"").trim());return T.slice(1).map(r=>{const o={};h.forEach((k,i)=>{if(k)o[k]=mbcDate(r[i])});return o})}
 function mbcBuild(D,rows,code,rec,sameFn){
   const{Document,Packer,Paragraph,Table,TableRow,TableCell,TextRun,Footer,PageNumber,WidthType,ShadingType,BorderStyle,AlignmentType}=D;
-  const F="Arial",S=18,SN=17,BL="1F3864",TW=11906-2*907,bd={style:BorderStyle.SINGLE,size:4,color:"7F7F7F"},bds={top:bd,bottom:bd,left:bd,right:bd};
+  const F="Times New Roman",S=18,SN=17,BL="1F3864",TW=9838,bd={style:BorderStyle.SINGLE,size:4,color:"7F7F7F"},bds={top:bd,bottom:bd,left:bd,right:bd};
   const mine=z=>sameFn(z.co,code),muc=rows.filter(z=>z.loai==="MUC").sort((a,b)=>+a.muc-+b.muc),dong=rows.filter(z=>z.loai==="DONG"&&mine(z)),gc=rows.filter(z=>z.loai==="GC"&&mine(z));
   const run=(t,o)=>new TextRun(Object.assign({text:t,font:F,size:S},o||{}));
   const P=[];
-  P.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:80},children:[run("BÁO CÁO SƠ BỘ HIỆN TRẠNG HỒ SƠ PHÁP LÝ CỦA "+code,{bold:true,size:28,color:BL})]}));
+  P.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:20,after:0},children:[run("BÁO CÁO SƠ BỘ HIỆN TRẠNG HỒ SƠ PHÁP LÝ CỦA "+code,{bold:true,size:28,color:BL})]}));
   const sub=(rec&&rec.name?rec.name+(rec.msdn?" (MST "+rec.msdn+")":"")+" – ":"")+"Bảng đối soát thành phần điều lệ (bản scan pdf có chữ ký)";
-  P.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:200},children:[run(sub,{size:S})]}));
+  P.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:0,after:40},children:[run(sub,{size:S,bold:true})]}));
   const cell=(t,w,o)=>{o=o||{};const T=String(t==null?"":t),sh=o.head?"D9E2F3":/\(!\)/.test(T)?"FFF2CC":/^\s*Chưa có/i.test(T)?"EDEDED":null;
-    return new TableCell({width:{size:w,type:WidthType.DXA},borders:bds,margins:{top:50,bottom:50,left:80,right:80},shading:sh?{type:ShadingType.CLEAR,color:"auto",fill:sh}:undefined,
-      children:[new Paragraph({alignment:o.head?AlignmentType.CENTER:AlignmentType.LEFT,children:[run(T,{bold:!!o.head})]})]})};
+    return new TableCell({width:{size:w,type:WidthType.DXA},borders:bds,margins:{top:15,bottom:15,left:60,right:60},shading:sh?{type:ShadingType.CLEAR,color:"auto",fill:sh}:undefined,
+      children:[new Paragraph({alignment:o.head||o.ctr?AlignmentType.CENTER:AlignmentType.LEFT,spacing:{before:0,after:0},children:[run(T,{bold:!!o.head})]})]})};
   muc.forEach(m=>{
     const n=+m.muc,cols=["c1","c2","c3","c4","c5","c6"].map(k=>(m[k]||"").trim()),nc=cols.reduce((a,c,i)=>c?i+1:a,0),heads=cols.slice(0,nc);
     const rs=dong.filter(z=>+z.muc===n).sort((a,b)=>+a.thu_tu-+b.thu_tu);
-    P.push(new Paragraph({keepNext:true,spacing:{before:220,after:90},children:[run(n+". "+(m.ten||""),{bold:true,size:20,color:BL})]}));
+    P.push(new Paragraph({keepNext:true,spacing:{before:100,after:20},children:[run(n+". "+(m.ten||""),{bold:true,size:19,color:BL})]}));
     if(rs.length&&nc){
       const wt=heads.map((h,i)=>Math.min(Math.max(h.length,...rs.map(r=>String(r["c"+(i+1)]||"").length),8),55)),sw=wt.reduce((a,b)=>a+b,0);
-      let ws=wt.map(w=>Math.max(1150,Math.round(TW*w/sw)));const ex=ws.reduce((a,b)=>a+b,0)-TW;if(ex)ws[ws.indexOf(Math.max(...ws))]-=ex;
+      let ws=nc===6?[1150,900,3100,1200,1200,2288]:nc===5?[1150,900,4300,1900,1588]:wt.map(w=>Math.max(1150,Math.round(TW*w/sw)));const ex=ws.reduce((a,b)=>a+b,0)-TW;if(ex)ws[ws.indexOf(Math.max(...ws))]-=ex;
       P.push(new Table({width:{size:TW,type:WidthType.DXA},columnWidths:ws,layout:D.TableLayoutType?D.TableLayoutType.FIXED:undefined,
         rows:[new TableRow({tableHeader:true,cantSplit:true,children:heads.map((h,i)=>cell(h,ws[i],{head:1}))}),
-          ...rs.map(r=>new TableRow({cantSplit:true,children:heads.map((h,i)=>cell(r["c"+(i+1)],ws[i]))}))]}));
+          ...rs.map(r=>new TableRow({cantSplit:true,children:heads.map((h,i)=>cell(r["c"+(i+1)],ws[i],{ctr:!/^(Nội dung|Điều lệ)/.test(h)}))}))]}));
     }
-    gc.filter(z=>+z.muc===n).sort((a,b)=>+a.thu_tu-+b.thu_tu).forEach(g=>P.push(new Paragraph({spacing:{before:70,after:40},children:[run(g.c1||"",{size:SN})]})));
+    gc.filter(z=>+z.muc===n).sort((a,b)=>+a.thu_tu-+b.thu_tu).forEach(g=>P.push(new Paragraph({spacing:{before:30,after:0},children:[run(g.c1||"",{size:SN})]})));
   });
-  gc.filter(z=>!z.muc).forEach(g=>P.push(new Paragraph({spacing:{before:200},children:[run(g.c1||"",{size:SN,italics:true})]})));
+  gc.filter(z=>!z.muc).forEach(g=>P.push(new Paragraph({spacing:{before:30,after:0},children:[run(g.c1||"",{size:SN})]})));
   return new Document({creator:"Phòng pháp chế",title:"Báo cáo sơ bộ hiện trạng hồ sơ pháp lý "+code,styles:{default:{document:{run:{font:F,size:S}}}},
-    sections:[{properties:{page:{size:{width:11906,height:16838},margin:{top:907,bottom:907,left:907,right:907}}},
+    sections:[{properties:{page:{size:{width:11906,height:16838},margin:{top:560,bottom:520,left:900,right:900,header:708,footer:708}}},
       footers:{default:new Footer({children:[new Paragraph({alignment:AlignmentType.CENTER,children:[run("Trang ",{size:SN}),new TextRun({children:[PageNumber.CURRENT],font:F,size:SN})]})]})},children:P}]});
 }
 async function mbcLoad(){if(window.docx)return;const U=["https://cdn.jsdelivr.net/npm/docx@9.7.1/dist/index.iife.js","https://unpkg.com/docx@9.7.1/dist/index.iife.js"];
@@ -4898,7 +4898,7 @@ async function mbcExport(){
   const rows=mbcRows(MBC_T);if(!rows.some(z=>z.loai==="DONG"&&same(z.co,c))){alert("Tab mau_bc chưa có dòng DONG của công ty "+c+".");return}
   b.disabled=true;b.textContent="Đang tạo…";
   try{await mbcLoad();const rec=coRec(c),doc=mbcBuild(window.docx,rows,c,rec,same),blob=await window.docx.Packer.toBlob(doc),a=document.createElement("a");
-    a.href=URL.createObjectURL(blob);a.download="Bao_cao_so_bo_hien_trang_ho_so_phap_ly_"+c+".docx";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1e3)}
+    a.href=URL.createObjectURL(blob);a.download=new Date().toLocaleDateString("sv-SE").replace(/-/g,"")+"_kiem_soat_dieu_le_"+c+".docx";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1e3)}
   catch(e){alert("Không xuất được docx: "+e.message)}finally{b.disabled=false;b.textContent=t0}}
 function expCSV(){
   const S=SEC[sec];
