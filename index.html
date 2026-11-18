@@ -3041,7 +3041,7 @@ function dvParse(x){const ms=[],bad=[];x=Object.assign({},x,{ngaylan1:dvIso(x.ng
 function dvDs(r,D){D=D||PD();if(!r||!r.length)return;
   const wB=[-ruleNum("dv.bb_truoc",60),ruleNum("dv.bb_sau",3)],wD=[-ruleNum("ds.dl_truoc",60),ruleNum("ds.dl_sau",30)],wH=[-ruleNum("dv.hc_truoc",30),ruleNum("dv.hc_sau",90)];
   const urlOf=z=>String(z.lk||"").trim(),hcOnly=t=>/hành chính/i.test(t||"")&&!/thực chất/i.test(t||"");
-  const A=(a,h)=>a?`<a href="${esc(h)}" target="_blank" rel="noopener" data-dlopen>${esc(a)}</a>`:"",NF='<span style="color:#c53030">Chưa tìm thấy file</span>';
+  const A=(a,h)=>a&&h?`<a href="${esc(h)}" target="_blank" rel="noopener" data-dlopen>${esc(a)}</a>`:"",NF='<span style="color:#c53030">Chưa tìm thấy file</span>';
   const cos=[...new Set(r.map(x=>x.co))].sort((a,b)=>ci(a)-ci(b));
   const out=cos.map(co=>{
     const U=r.filter(x=>same(x.co,co)).map(x=>({x,...dvParse(x)})).filter(u=>u.ms.length||u.bad.length);if(!U.length)return"";
@@ -3059,7 +3059,7 @@ function dvDs(r,D){D=D||PD();if(!r||!r.length)return;
       const W=[],first=ms.find(m=>m.k==="first"),end=ms.find(m=>m.k==="end"),dlNo=/Điều lệ[^.;:]*không ghi/i.test(x.note||"");
       const rows=ms.map(m=>{
         const eb=byId(mtAll,m.bbhid)||byLk(mtAll,m.bbl),eq=byId(nqAll,m.qdid)||byLk(nqAll,m.qdl),
-          bbR=eb?[eb]:mt.filter(z=>aM.get(z)===m),qdR=eq?[eq]:nq.filter(z=>aN.get(z)===m),
+          bbR=eb?[eb]:(m.bbx||(m.k==="chg"&&hcOnly(m.nd)))?[]:mt.filter(z=>aM.get(z)===m),qdR=eq?[eq]:(m.qdx||(m.k==="chg"&&hcOnly(m.nd)))?[]:nq.filter(z=>aN.get(z)===m),
           dd=(m.k==="chg"&&hcOnly(m.nd)?[]:dl.filter(z=>aD.get(z)===m)).map(z=>({t:(z.loai==="Điều lệ đầy đủ"?"Điều lệ":"PL"+(z.lan?" lần "+z.lan:""))+" "+fmt(z.ngay),h:z.lk||""})),
           hc=m.k==="chg"&&hcOnly(m.nd),needBB=!hc,needDL=(m.k==="chg"&&!hc)||(dlNo&&(m.k==="first"||m.k==="end")),lab=m.lb+" ("+fmt(m.ng)+")";
         const rt=(z,pre)=>(z.so?pre+" "+z.so:pre)+(z.ngay?", "+fmt(z.ngay):""),
