@@ -3059,7 +3059,7 @@ function dvDs(r,D){D=D||PD();if(!r||!r.length)return;
       const W=[],first=ms.find(m=>m.k==="first"),end=ms.find(m=>m.k==="end"),dlNo=/Điều lệ[^.;:]*không ghi/i.test(x.note||"");
       const rows=ms.map(m=>{
         const eb=byId(mtAll,m.bbhid)||byLk(mtAll,m.bbl),eq=byId(nqAll,m.qdid)||byLk(nqAll,m.qdl),
-          bbR=eb?[eb]:(m.bbx||hc)?[]:mt.filter(z=>aM.get(z)===m),qdR=eq?[eq]:(m.qdx||hc)?[]:nq.filter(z=>aN.get(z)===m),
+          bbR=eb?[eb]:(m.bbx||(m.k==="chg"&&hcOnly(m.nd)))?[]:mt.filter(z=>aM.get(z)===m),qdR=eq?[eq]:(m.qdx||(m.k==="chg"&&hcOnly(m.nd)))?[]:nq.filter(z=>aN.get(z)===m),
           dd=(m.k==="chg"&&hcOnly(m.nd)?[]:dl.filter(z=>aD.get(z)===m)).map(z=>({t:(z.loai==="Điều lệ đầy đủ"?"Điều lệ":"PL"+(z.lan?" lần "+z.lan:""))+" "+fmt(z.ngay),h:z.lk||""})),
           hc=m.k==="chg"&&hcOnly(m.nd),needBB=!hc,needDL=(m.k==="chg"&&!hc)||(dlNo&&(m.k==="first"||m.k==="end")),lab=m.lb+" ("+fmt(m.ng)+")";
         const rt=(z,pre)=>(z.so?pre+" "+z.so:pre)+(z.ngay?", "+fmt(z.ngay):""),
