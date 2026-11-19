@@ -4875,7 +4875,7 @@ function mbcBuild(D,rows,code,rec,sameFn){
     P.push(new Paragraph({keepNext:true,spacing:{before:100,after:20},children:[run(String(m.muc).trim()+(/\./.test(String(m.muc))?" ":". ")+(m.ten||""),{bold:true,size:19,color:BL})]}));
     if(rs.length&&nc){
       const wt=heads.map((h,i)=>Math.min(Math.max(h.length,...rs.map(r=>String(r["c"+(i+1)]||"").length),8),55)),sw=wt.reduce((a,b)=>a+b,0);
-      let ws=nc===6?[1150,900,3100,1200,1200,2288]:nc===7?[1000,950,1000,3038,1200,1200,1450]:nc===5?[1150,900,4300,1900,1588]:wt.map(w=>Math.max(1150,Math.round(TW*w/sw)));const ex=ws.reduce((a,b)=>a+b,0)-TW;if(ex)ws[ws.indexOf(Math.max(...ws))]-=ex;
+      let ws=nc===6?[1150,900,3100,1200,1200,2288]:nc===7?[950,850,850,2700,1050,1050,2388]:nc===5?[1150,900,4300,1900,1588]:wt.map(w=>Math.max(1150,Math.round(TW*w/sw)));const ex=ws.reduce((a,b)=>a+b,0)-TW;if(ex)ws[ws.indexOf(Math.max(...ws))]-=ex;
       P.push(new Table({width:{size:TW,type:WidthType.DXA},columnWidths:ws,layout:D.TableLayoutType?D.TableLayoutType.FIXED:undefined,
         rows:[new TableRow({tableHeader:true,cantSplit:true,children:heads.map((h,i)=>cell(h,ws[i],{head:1}))}),
           ...rs.map(r=>new TableRow({cantSplit:true,children:heads.map((h,i)=>cell(r["c"+(i+1)],ws[i],{ctr:!/^(Nội dung|Điều lệ)/.test(h)}))}))]}));
