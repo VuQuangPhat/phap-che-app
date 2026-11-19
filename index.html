@@ -2240,6 +2240,7 @@ const SEC={
        {k:"tb",l:"Ngày gửi thông báo mời họp",t:"date"},
        {k:"han",l:"Thời hạn thông báo theo Điều lệ (số ngày, để trống = theo luật)",t:"int"},
        {k:"so",l:"Số biên bản (VD: 01/2026/HLM/BBH-ĐHCĐ)"},
+       {k:"gcn_lan",l:"Gắn vào lần GCN (VD: Lần 8; để trống = tự ghép theo ngày, dùng khi ngày họp nằm ngoài cửa sổ tự ghép)"},
        {k:"tv",l:"Tổng số thành viên HĐQT",t:"int"},
        {k:"dh",l:"Số thành viên HĐQT dự họp",t:"int"},
        {k:"cpdh",l:"Tỷ lệ cổ phần có quyền biểu quyết dự họp ĐHĐCĐ (%)",t:"dec"},
@@ -2254,6 +2255,7 @@ const SEC={
     f:[{k:"co",l:"Doanh nghiệp",list:"p_codes"},
        {k:"mt",l:"Cuộc họp liên quan (chọn theo tiêu đề)",list:"p_mt",full:1},
        {k:"so",l:"Số nghị quyết / quyết định",ph:"VD: 01/2026/NQ-HĐQT"},
+       {k:"gcn_lan",l:"Gắn vào lần GCN (VD: Lần 8; để trống = tự ghép theo ngày, dùng khi ngày ban hành nằm ngoài cửa sổ tự ghép)"},
        {k:"ngay",l:"Ngày ban hành",t:"date"},
        {k:"nd",l:"Nội dung nghị quyết",t:"area",full:1},
        {k:"vd",l:"Tỷ lệ cần đạt để thông qua",t:"sel",o:["Thông thường (trên 50%)","Từ 65% (theo luật hoặc Điều lệ)"]},
@@ -2904,12 +2906,18 @@ function dsMerge(co){
     r.id=z.id;if(!r.ngay)r.ngay=z.ngay||"";if(!r.nd)r.nd=z.nd||"";r.mbbh=z.bbh;r.mnq=z.nq;r.mdl=z.dlq;r.note=z.note});
   /* mỗi văn bản chỉ gắn vào MỘT lần GCN: lần gần ngày nhất trong cửa sổ (cửa sổ đọc từ quy_tac, mặc định 60 ngày trước / 30 ngày sau với điều lệ, 60 / 3 với biên bản, nghị quyết) */
   const asg=(arr,lo,hi)=>{const m=new Map();(arr||[]).filter(z=>same(z.co,co)&&z.ngay).forEach(z=>{let best=null,bd=1e9;rows.forEach(r=>{const G=r.ngay?dayN(r.ngay):NaN;if(isNaN(G))return;const df=dayN(z.ngay)-G;if(df>=lo&&df<=hi&&Math.abs(df)<bd){bd=Math.abs(df);best=r}});if(best)m.set(z,best)});return m};
-  const WD=[-ruleNum("ds.dl_truoc",60),ruleNum("ds.dl_sau",30)],WB=[-ruleNum("ds.bb_truoc",60),ruleNum("ds.bb_sau",3)],aDl=asg(d.dl,WD[0],WD[1]),aMt=asg(d.mt,WB[0],WB[1]),aNq=asg(d.nq,WB[0],WB[1]);
+  const WD=[-ruleNum("ds.dl_truoc",60),ruleNum("ds.dl_sau",30)],WB=[-ruleNum("ds.bb_truoc",60),ruleNum("ds.bb_sau",3)],aDl=asg(d.dl,WD[0],WD[1]);
+  /* ghép tay: cột gcn_lan (VD "Lần 8") của prof_mt / prof_nq gắn thẳng văn bản vào lần GCN đó, bỏ qua cửa sổ ngày; để trống thì tự ghép theo ngày như cũ */
+  const lanK=v=>{const t=String(v||""),m=t.match(/\d+/);return m?"#"+(+m[0]):norm(t)},
+    man=(arr,m)=>{(arr||[]).filter(z=>same(z.co,co)&&z.ngay&&String(z.gcn_lan||"").trim()).forEach(z=>{const r=rows.find(x=>lanK(x.lan)===lanK(z.gcn_lan));if(r)m.set(z,r)});return m},
+    aMt=man(d.mt,asg(d.mt,WB[0],WB[1])),aNq=man(d.nq,asg(d.nq,WB[0],WB[1]));
   rows.forEach(r=>{const near=(arr,m)=>(arr||[]).filter(z=>m.get(z)===r);
     const dl=near(d.dl,aDl),mt=near(d.mt,aMt),nq=near(d.nq,aNq);dl.forEach(z=>used.add(z.id));
     const NFT="Chưa tìm thấy file";
     r.dlq=dl.length?dl.map(z=>fmt(z.ngay)+(z.loai==="Điều lệ đầy đủ"?" (điều lệ)":" (phụ lục"+(z.lan?" lần "+z.lan:"")+")")).join("; "):(r.mdl||NFT);
-    const mrg=(base,ex,soOnly)=>{const o=[];base.forEach(z=>o.push({ng:z.ngay,t:fmt(z.ngay),lk:""}));ex.forEach(z=>{const i=o.find(q=>q.ng===z.ng);if(i){if(!i.lk&&z.lk)i.lk=z.lk;if(z.so){if(soOnly)i.t=z.so;else if(i.t.indexOf("số")<0)i.t+=" (số "+z.so+")"}}else o.push({ng:z.ng,t:z.so?(soOnly?z.so:fmt(z.ng)+" (số "+z.so+")"):fmt(z.ng),lk:z.lk||""})});return o};
+    /* BBH (soOnly): hiện số hiệu, không có số thì hiện ngày. NQ: "ngày (số …)". Số và link lấy từ prof_mt / prof_nq (so, lk); trùng ngày với prof_dl (bbh_*, nq_*) thì giữ số và link đã có, chỉ bổ sung chỗ còn thiếu */
+    const mrg=(base,ex,soOnly)=>{const o=[];base.forEach(z=>{const so=String(z.so||"").trim();o.push({ng:z.ngay,so:!!so,lk:z.lk||"",t:soOnly?(so||fmt(z.ngay)):fmt(z.ngay)+(so?" (số "+so+")":"")})});
+      ex.forEach(z=>{const i=o.find(q=>q.ng===z.ng);if(i){if(!i.lk&&z.lk)i.lk=z.lk;if(z.so&&!i.so){i.so=true;if(soOnly)i.t=z.so;else i.t+=" (số "+z.so+")"}}else o.push({ng:z.ng,so:!!z.so,t:z.so?(soOnly?z.so:fmt(z.ng)+" (số "+z.so+")"):fmt(z.ng),lk:z.lk||""})});return o};
     r.bbhz=mrg(mt,dl.filter(z=>z.bbh_ngay).map(z=>({ng:z.bbh_ngay,so:z.bbh_so,lk:z.bbh_lk})),true);
     r.nqz=mrg(nq,dl.filter(z=>z.nq_ngay).map(z=>({ng:z.nq_ngay,so:z.nq_so,lk:z.nq_lk})));
     r.bbh=r.bbhz.length?r.bbhz.map(i=>i.t).join("; "):(r.mbbh||NFT);
@@ -2948,7 +2956,8 @@ function rDs(r,all){
   $("pstats").innerHTML=st(R.length,"Lần thay đổi ghi nhận")+st(R.filter(x=>nfd(x.dlq)).length,"Chưa tìm thấy điều lệ",R.some(x=>nfd(x.dlq))?"late":"")+st(R.filter(x=>nfd(x.bbh)||nfd(x.nq)).length,"Chưa tìm thấy biên bản hoặc nghị quyết",R.some(x=>nfd(x.bbh)||nfd(x.nq))?"late":"")+st(R.filter(x=>dsLech(x)).length,"Ngày chứng từ sau ngày cấp GCN",R.some(x=>dsLech(x))?"late":"");
   if(!R.length){$("plist").innerHTML=gW+empty()+'<p class="tcnote" style="margin:8px 24px">Bảng này tự lấy lịch sử GCN từ mục Pháp nhân, điều lệ từ mục Điều lệ, họp và nghị quyết từ tab Họp HĐQT / ĐHĐCĐ. Dòng nhập tay chỉ để bổ sung chỗ app chưa có.</p>';return}
   const lkc=(arr,v,app)=>arr&&arr.length?arr.map(i=>i.lk?`<a href="${esc(i.lk)}" target="_blank" rel="noopener" data-dlopen>${esc(i.t)}</a>`:esc(i.t)).join("; ")+(app?' <small class="s" style="color:var(--ok)">app</small>':""):nfc(v,app);
-  const nfc=(v,app)=>nfd(v)?'<span style="color:#c53030">'+esc(v)+'</span>':esc(v||"")+(app?' <small class="s" style="color:var(--ok)">app</small>':"");
+  const mki=t=>/\(i\)/i.test(t||"")?'<span style="background:rgba(112,173,71,.25);padding:0 3px;border-radius:3px">'+esc(t)+'</span>':esc(t||"");
+  const nfc=(v,app)=>nfd(v)?'<span style="color:#c53030">'+esc(v)+'</span>':mki(v)+(app?' <small class="s" style="color:var(--ok)">app</small>':"");
   $("plist").innerHTML=gW+`<table class="m"><thead><tr><th>Pháp nhân</th><th>Ngày GCN</th><th>GCN ĐKKD</th><th>Nội dung</th><th>Biên bản họp</th><th>Nghị quyết</th><th>Điều lệ</th></tr></thead><tbody>`+
   R.map(x=>`<tr${x.id?` data-id="${x.id}"`:""}><td>${chip(x.co)}</td><td>${x.ngay?fmt(x.ngay):""}</td><td>${esc(x.lan||"")}</td><td class="t">${esc(x.nd||"")}${dsLech(x)?'<small class="s" style="color:#b7791f">Ngày chứng từ sau ngày cấp GCN: cần đối chiếu bản gốc</small>':""}</td><td>${lkc(x.bbhz,x.bbh,x.src&&x.src.bbh)}</td><td>${lkc(x.nqz,x.nq,x.src&&x.src.nq)}</td><td>${x.dlz&&x.dlz.length?x.dlz.map(z=>{const t=esc(fmt(z.ngay)+(z.loai==="Điều lệ đầy đủ"?" (điều lệ)":" (phụ lục"+(z.lan?" lần "+z.lan:"")+")"));return z.lk?`<a href="${esc(z.lk)}" target="_blank" rel="noopener" data-dlopen title="Mở file điều lệ">${t}</a>`:t}).join("; ")+' <small class="s" style="color:var(--ok)">app</small>':nfc(x.dlq,x.src&&x.src.dlq)}</td></tr>`).join("")+`</tbody></table>`+
   M.filter(o=>o.m.extra.length).map(o=>`<p class="tcnote" style="margin:8px 24px">${esc(o.c)}: văn bản điều lệ trên app chưa gắn với lần GCN nào: ${o.m.extra.map(z=>esc((z.loai==="Điều lệ đầy đủ"?"Điều lệ":"Phụ lục"+(z.lan?" lần "+z.lan:""))+" "+fmt(z.ngay))).join("; ")}.</p>`).join("");
@@ -4872,7 +4881,7 @@ function mbcBuild(D,rows,code,rec,sameFn,own){
   P.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:20,after:0},children:[run("BÁO CÁO SƠ BỘ HIỆN TRẠNG HỒ SƠ PHÁP LÝ CỦA "+code,{bold:true,size:28,color:BL})]}));
   const sub=(rec&&rec.name?String(rec.name).replace(/^\s*CTCP\b/i,"Công ty Cổ phần")+(rec.msdn?" (MST "+rec.msdn+")":"")+" – ":"")+"Bảng đối soát thành phần điều lệ (bản scan pdf có chữ ký)";
   P.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:0,after:40},children:[run(sub,{size:S,bold:true})]}));
-  const cell=(t,w,o)=>{o=o||{};const T=String(t==null?"":t),sh=o.head||o.lab?"D9E2F3":o.grey?"EDEDED":/\(!\)/.test(T)?"FFF2CC":/^\s*Chưa có|\(chưa có file\)/i.test(T)?"EDEDED":null;
+  const cell=(t,w,o)=>{o=o||{};const T=String(t==null?"":t),sh=o.head||o.lab?"D9E2F3":o.grey?"EDEDED":/\(!\)/.test(T)?"FFF2CC":/\(i\)/i.test(T)?"E2EFDA":/^\s*Chưa có|\(chưa có file\)/i.test(T)?"EDEDED":null;
     return new TableCell({width:{size:w,type:WidthType.DXA},borders:bds,margins:{top:15,bottom:15,left:60,right:60},shading:sh?{type:ShadingType.CLEAR,color:"auto",fill:sh}:undefined,
       children:[new Paragraph({alignment:o.head||o.ctr?AlignmentType.CENTER:AlignmentType.LEFT,spacing:{before:0,after:0},children:[run(T,{bold:!!(o.head||o.lab)})]})]})};
   const tbl=(heads,rs,ws0)=>{const nc=heads.length;
