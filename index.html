@@ -4856,11 +4856,13 @@ function mbcRows(T){const h=(T[0]||[]).map(x=>String(x||"").trim());return T.sli
 function mbcBuild(D,rows,code,rec,sameFn){
   const{Document,Packer,Paragraph,Table,TableRow,TableCell,TextRun,Footer,PageNumber,WidthType,ShadingType,BorderStyle,AlignmentType}=D;
   const F="Times New Roman",S=18,SN=17,BL="1F3864",TW=9838,bd={style:BorderStyle.SINGLE,size:4,color:"7F7F7F"},bds={top:bd,bottom:bd,left:bd,right:bd};
-  const mine=z=>sameFn(z.co,code),muc=rows.filter(z=>z.loai==="MUC").sort((a,b)=>+a.muc-+b.muc),dong0=rows.filter(z=>z.loai==="DONG"&&mine(z)),gc=rows.filter(z=>z.loai==="GC"&&mine(z));
-  /* Dòng GHI_DE đè lên dòng DONG cùng khóa muc + thu_tu + ten: ô c1..c7 nào có chữ thì thay ô đó (ô trống giữ nguyên) */
-  const kk=z=>String(z.muc==null?"":z.muc).trim()+"|"+(+z.thu_tu)+"|"+String(z.ten||"").trim(),ghi={};
-  rows.filter(z=>z.loai==="GHI_DE"&&mine(z)).forEach(z=>{ghi[kk(z)]=Object.assign(ghi[kk(z)]||{},z)});
-  const dong=dong0.map(z=>{const g=ghi[kk(z)];if(!g)return z;const o=Object.assign({},z);["c1","c2","c3","c4","c5","c6","c7"].forEach(k=>{if(String(g[k]||"").trim()!=="")o[k]=g[k]});return o});
+  const mine=z=>sameFn(z.co,code),muc=rows.filter(z=>z.loai==="MUC"),dong0=rows.filter(z=>z.loai==="DONG"&&mine(z)),gc=rows.filter(z=>z.loai==="GC"&&mine(z));
+  /* Dòng GHI_DE đè lên dòng DONG cùng muc + thu_tu, và ten trống / bằng ten của DONG / bằng "ngày GCN|lần".
+     Mục 2.n: chỉ đè c4 (BBH), c5 (QĐ), c6 (Điều lệ). Mục khác: đè c1..c7. Ô nào có chữ thì thay, ô trống giữ nguyên. */
+  const ms=z=>String(z.muc==null?"":z.muc).trim(),ghiL=rows.filter(z=>z.loai==="GHI_DE"&&mine(z));
+  const dong=dong0.map(z=>{const gs=ghiL.filter(g=>ms(g)===ms(z)&&+g.thu_tu===+z.thu_tu&&(!String(g.ten||"").trim()||String(g.ten).trim()===String(z.ten||"").trim()||String(g.ten).trim()===String(z.c1||"").trim()+"|"+String(z.c2||"").trim()));
+    if(!gs.length)return z;const o=Object.assign({},z),ks=/^2\./.test(ms(z))?["c4","c5","c6"]:["c1","c2","c3","c4","c5","c6","c7"];
+    gs.forEach(g=>ks.forEach(k=>{if(String(g[k]||"").trim()!=="")o[k]=g[k]}));return o});
   const run=(t,o)=>new TextRun(Object.assign({text:t,font:F,size:S},o||{}));
   const P=[];
   /* Ô F (c1) của dòng GC: mỗi dòng (\n) là một đoạn Word riêng; dòng chú giải "x = không cần" có thêm dòng trống ~4pt phía trên */
@@ -4872,18 +4874,26 @@ function mbcBuild(D,rows,code,rec,sameFn){
   const cell=(t,w,o)=>{o=o||{};const T=String(t==null?"":t),sh=o.head?"D9E2F3":/\(!\)/.test(T)?"FFF2CC":/^\s*Chưa có|\(chưa có file\)/i.test(T)?"EDEDED":null;
     return new TableCell({width:{size:w,type:WidthType.DXA},borders:bds,margins:{top:15,bottom:15,left:60,right:60},shading:sh?{type:ShadingType.CLEAR,color:"auto",fill:sh}:undefined,
       children:[new Paragraph({alignment:o.head||o.ctr?AlignmentType.CENTER:AlignmentType.LEFT,spacing:{before:0,after:0},children:[run(T,{bold:!!o.head})]})]})};
-  muc.forEach(m=>{
-    const n=+m.muc,cols=["c1","c2","c3","c4","c5","c6","c7"].map(k=>(m[k]||"").trim()),nc=cols.reduce((a,c,i)=>c?i+1:a,0),heads=cols.slice(0,nc);
-    const rs=dong.filter(z=>+z.muc===n).sort((a,b)=>+a.thu_tu-+b.thu_tu);
-    P.push(new Paragraph({keepNext:true,spacing:{before:100,after:20},children:[run(String(m.muc).trim()+(/\./.test(String(m.muc))?" ":". ")+(m.ten||""),{bold:true,size:19,color:BL})]}));
-    if(rs.length&&nc){
-      const wt=heads.map((h,i)=>Math.min(Math.max(h.length,...rs.map(r=>String(r["c"+(i+1)]||"").length),8),55)),sw=wt.reduce((a,b)=>a+b,0);
-      let ws=nc===6?[1150,900,3100,1200,1200,2288]:nc===7?[950,850,850,2700,1050,1050,2388]:nc===5?[1150,900,4300,1900,1588]:wt.map(w=>Math.max(1150,Math.round(TW*w/sw)));const ex=ws.reduce((a,b)=>a+b,0)-TW;if(ex)ws[ws.indexOf(Math.max(...ws))]-=ex;
-      P.push(new Table({width:{size:TW,type:WidthType.DXA},columnWidths:ws,layout:D.TableLayoutType?D.TableLayoutType.FIXED:undefined,
-        rows:[new TableRow({tableHeader:true,cantSplit:true,children:heads.map((h,i)=>cell(h,ws[i],{head:1}))}),
-          ...rs.map(r=>new TableRow({cantSplit:true,children:heads.map((h,i)=>cell(r["c"+(i+1)],ws[i],{ctr:!/^(Nội dung|Điều lệ)/.test(h)}))}))]}));
+  const tbl=(heads,rs,ws0)=>{const nc=heads.length;
+    const wt=heads.map((h,i)=>Math.min(Math.max(h.length,...rs.map(r=>String(r["c"+(i+1)]||"").length),8),55)),sw=wt.reduce((a,b)=>a+b,0);
+    let ws=ws0||(nc===6?[1150,900,3100,1200,1200,2288]:nc===7?[950,850,850,2700,1050,1050,2388]:nc===5?[1150,900,4300,1900,1588]:wt.map(w=>Math.max(1150,Math.round(TW*w/sw))));const ex=ws.reduce((a,b)=>a+b,0)-TW;if(ex)ws[ws.indexOf(Math.max(...ws))]-=ex;
+    P.push(new Table({width:{size:TW,type:WidthType.DXA},columnWidths:ws,layout:D.TableLayoutType?D.TableLayoutType.FIXED:undefined,
+      rows:[new TableRow({tableHeader:true,cantSplit:true,children:heads.map((h,i)=>cell(h,ws[i],{head:1}))}),
+        ...rs.map(r=>new TableRow({cantSplit:true,children:heads.map((h,i)=>cell(r["c"+(i+1)],ws[i],{ctr:!/^(Nội dung|Điều lệ)/.test(h)}))}))]}))};
+  const ttl=t=>P.push(new Paragraph({keepNext:true,spacing:{before:100,after:20},children:[run(t,{bold:true,size:19,color:BL})]}));
+  const byTt=(a,b)=>+a.thu_tu-+b.thu_tu,gcOf=k=>gc.filter(z=>ms(z)===k).sort(byTt).forEach(g=>gcP(g));
+  const H6=["Ngày GCN","Lần","Nội dung","Biên bản HĐQT","Quyết định HĐQT","Điều lệ"],W6=[1150,900,3100,1200,1200,2288];
+  /* Các mục nguyên: từ dòng MUC không có dấu chấm, cộng mục có đơn vị con "n.m" ở DONG/GC */
+  const subOf=n=>[...new Set(dong0.concat(gc).map(ms).filter(k=>k.indexOf(n+".")===0&&/^\d+\.\d+$/.test(k)))].sort((x,y)=>+x.split(".")[1]-+y.split(".")[1]);
+  const ints=[...new Set(muc.map(ms).filter(k=>/^\d+$/.test(k)).concat(dong0.concat(gc).map(ms).filter(k=>/^\d+\.\d+$/.test(k)).map(k=>k.split(".")[0])))].sort((x,y)=>+x-+y);
+  ints.forEach(k=>{
+    const m=muc.find(z=>ms(z)===k),subs=subOf(k),rsP=dong.filter(z=>ms(z)===k).sort(byTt);
+    if(m&&(!subs.length||rsP.length)){
+      const cols=["c1","c2","c3","c4","c5","c6","c7"].map(c=>(m[c]||"").trim()),nc=cols.reduce((a,c,i)=>c?i+1:a,0);
+      ttl(k+". "+(m.ten||""));if(rsP.length&&nc)tbl(cols.slice(0,nc),rsP);gcOf(k);
     }
-    gc.filter(z=>+z.muc===n).sort((a,b)=>+a.thu_tu-+b.thu_tu).forEach(g=>gcP(g));
+    subs.forEach(sk=>{const rs=dong.filter(z=>ms(z)===sk).sort(byTt),mm=muc.find(z=>ms(z)===sk),nm=String((rs[0]&&rs[0].ten)||(mm&&mm.ten)||"").trim();
+      ttl(sk+" "+nm);if(rs.length)tbl(H6,rs,W6);gcOf(sk)});
   });
   const gcEnd=gc.filter(z=>!String(z.muc||"").trim());
   if(gcEnd.length)P.push(new Paragraph({spacing:{before:0,after:0},children:[run("",{size:8})]}));
