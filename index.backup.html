@@ -4853,15 +4853,15 @@ $("ptpl").onclick=()=>sec==="ds"?mbcExport():dl("mau_ho_so_"+sec+".csv","text/cs
 let MBC_T=null;
 const mbcDate=v=>{if(typeof v==="number"&&v>30000&&v<80000){const d=new Date(Math.round((v-25569)*864e5));return String(d.getUTCDate()).padStart(2,"0")+"/"+String(d.getUTCMonth()+1).padStart(2,"0")+"/"+d.getUTCFullYear()}return v==null?"":String(v)};
 function mbcRows(T){const h=(T[0]||[]).map(x=>String(x||"").trim());return T.slice(1).map(r=>{const o={};h.forEach((k,i)=>{if(k)o[k]=mbcDate(r[i])});return o})}
-function mbcBuild(D,rows,code,rec,sameFn){
+function mbcBuild(D,rows,code,rec,sameFn,own){
   const{Document,Packer,Paragraph,Table,TableRow,TableCell,TextRun,Footer,PageNumber,WidthType,ShadingType,BorderStyle,AlignmentType}=D;
   const F="Times New Roman",S=18,SN=17,BL="1F3864",TW=9838,bd={style:BorderStyle.SINGLE,size:4,color:"7F7F7F"},bds={top:bd,bottom:bd,left:bd,right:bd};
   const mine=z=>sameFn(z.co,code),muc=rows.filter(z=>z.loai==="MUC"),dong0=rows.filter(z=>z.loai==="DONG"&&mine(z)),gc=rows.filter(z=>z.loai==="GC"&&mine(z));
   /* Dòng GHI_DE đè lên dòng DONG cùng muc + thu_tu, và ten trống / bằng ten của DONG / bằng "ngày GCN|lần".
-     Mục 2.n: chỉ đè c4 (BBH), c5 (QĐ), c6 (Điều lệ). Mục khác: đè c1..c7. Ô nào có chữ thì thay, ô trống giữ nguyên. */
+     Mục con n.m (vd 3.1): chỉ đè c4 (BBH), c5 (QĐ), c6 (Điều lệ). Mục khác: đè c1..c7. Ô nào có chữ thì thay, ô trống giữ nguyên. */
   const ms=z=>String(z.muc==null?"":z.muc).trim(),ghiL=rows.filter(z=>z.loai==="GHI_DE"&&mine(z));
   const dong=dong0.map(z=>{const gs=ghiL.filter(g=>ms(g)===ms(z)&&+g.thu_tu===+z.thu_tu&&(!String(g.ten||"").trim()||String(g.ten).trim()===String(z.ten||"").trim()||String(g.ten).trim()===String(z.c1||"").trim()+"|"+String(z.c2||"").trim()));
-    if(!gs.length)return z;const o=Object.assign({},z),ks=/^2\./.test(ms(z))?["c4","c5","c6"]:["c1","c2","c3","c4","c5","c6","c7"];
+    if(!gs.length)return z;const o=Object.assign({},z),ks=/^\d+\.\d+$/.test(ms(z))?["c4","c5","c6"]:["c1","c2","c3","c4","c5","c6","c7"];
     gs.forEach(g=>ks.forEach(k=>{if(String(g[k]||"").trim()!=="")o[k]=g[k]}));return o});
   const run=(t,o)=>new TextRun(Object.assign({text:t,font:F,size:S},o||{}));
   const P=[];
@@ -4871,22 +4871,51 @@ function mbcBuild(D,rows,code,rec,sameFn){
   P.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:20,after:0},children:[run("BÁO CÁO SƠ BỘ HIỆN TRẠNG HỒ SƠ PHÁP LÝ CỦA "+code,{bold:true,size:28,color:BL})]}));
   const sub=(rec&&rec.name?String(rec.name).replace(/^\s*CTCP\b/i,"Công ty Cổ phần")+(rec.msdn?" (MST "+rec.msdn+")":"")+" – ":"")+"Bảng đối soát thành phần điều lệ (bản scan pdf có chữ ký)";
   P.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:0,after:40},children:[run(sub,{size:S,bold:true})]}));
-  const cell=(t,w,o)=>{o=o||{};const T=String(t==null?"":t),sh=o.head?"D9E2F3":/\(!\)/.test(T)?"FFF2CC":/^\s*Chưa có|\(chưa có file\)/i.test(T)?"EDEDED":null;
+  const cell=(t,w,o)=>{o=o||{};const T=String(t==null?"":t),sh=o.head||o.lab?"D9E2F3":o.grey?"EDEDED":/\(!\)/.test(T)?"FFF2CC":/^\s*Chưa có|\(chưa có file\)/i.test(T)?"EDEDED":null;
     return new TableCell({width:{size:w,type:WidthType.DXA},borders:bds,margins:{top:15,bottom:15,left:60,right:60},shading:sh?{type:ShadingType.CLEAR,color:"auto",fill:sh}:undefined,
-      children:[new Paragraph({alignment:o.head||o.ctr?AlignmentType.CENTER:AlignmentType.LEFT,spacing:{before:0,after:0},children:[run(T,{bold:!!o.head})]})]})};
+      children:[new Paragraph({alignment:o.head||o.ctr?AlignmentType.CENTER:AlignmentType.LEFT,spacing:{before:0,after:0},children:[run(T,{bold:!!(o.head||o.lab)})]})]})};
   const tbl=(heads,rs,ws0)=>{const nc=heads.length;
     const wt=heads.map((h,i)=>Math.min(Math.max(h.length,...rs.map(r=>String(r["c"+(i+1)]||"").length),8),55)),sw=wt.reduce((a,b)=>a+b,0);
     let ws=ws0||(nc===6?[1150,900,3100,1200,1200,2288]:nc===7?[950,850,850,2700,1050,1050,2388]:nc===5?[1150,900,4300,1900,1588]:wt.map(w=>Math.max(1150,Math.round(TW*w/sw))));const ex=ws.reduce((a,b)=>a+b,0)-TW;if(ex)ws[ws.indexOf(Math.max(...ws))]-=ex;
     P.push(new Table({width:{size:TW,type:WidthType.DXA},columnWidths:ws,layout:D.TableLayoutType?D.TableLayoutType.FIXED:undefined,
       rows:[new TableRow({tableHeader:true,cantSplit:true,children:heads.map((h,i)=>cell(h,ws[i],{head:1}))}),
-        ...rs.map(r=>new TableRow({cantSplit:true,children:heads.map((h,i)=>cell(r["c"+(i+1)],ws[i],{ctr:!/^(Nội dung|Điều lệ)/.test(h)}))}))]}))};
+        ...rs.map(r=>new TableRow({cantSplit:true,children:heads.map((h,i)=>cell(r["c"+(i+1)],ws[i],{ctr:!/^(Nội dung|Điều lệ|Cổ đông|Ghi chú)/.test(h),grey:r.grey}))}))]}))};
   const ttl=t=>P.push(new Paragraph({keepNext:true,spacing:{before:100,after:20},children:[run(t,{bold:true,size:19,color:BL})]}));
   const byTt=(a,b)=>+a.thu_tu-+b.thu_tu,gcOf=k=>gc.filter(z=>ms(z)===k).sort(byTt).forEach(g=>gcP(g));
   const H6=["Ngày GCN","Lần","Nội dung","Biên bản HĐQT","Quyết định HĐQT","Điều lệ"],W6=[1150,900,3100,1200,1200,2288];
+  /* Mục 1 (app tự dựng từ prof_co / prof_own): thông tin pháp nhân + cổ đông hiện hành.
+     Bảng cũ (Sheet còn dòng DONG có muc = "1") thì coi là bản Sheet chưa đánh số lại và không dựng mục 1 mới. */
+  const legacy=dong.some(z=>ms(z)==="1");
+  if(!legacy){
+    rec=rec||{};
+    const vn=n=>Number(n).toLocaleString("vi-VN",{maximumFractionDigits:2}),fd=v=>{if(v==null||v==="")return"";if(typeof v==="number")return mbcDate(v);const t=String(v);const m=t.match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[3]+"/"+m[2]+"/"+m[1]:t},
+      par=+rec.menhgia||10000,vdl=+rec.vdl||0,CC="Chưa có";
+    let nd="";String(rec.gcnls||"").split(/\n+/).forEach(l=>{const m=l.match(/^(.*?),\s*\d{1,2}\/\d{1,2}\/\d{4}:\s*(.*)$/);if(m){const tx=m[2].trim(),k=tx.split(/NĐDPL\s*:/i);nd=(k.length>1?k[k.length-1]:tx).trim()}});
+    const r1=[["Tên doanh nghiệp",rec.name||code],["Mã số doanh nghiệp",rec.msdn||CC],
+      ["GCN ĐKDN hiện hành",rec.lan||rec.ngay?"Lần "+(rec.lan||"?")+(rec.ngay?", ngày "+fd(rec.ngay):"")+(rec.cqdk?" ("+rec.cqdk+")":""):CC],
+      ["Trụ sở chính",rec.addr||CC],
+      ["Vốn điều lệ",vdl?vn(vdl)+" đồng, tương ứng "+vn(Math.round(vdl/par))+" cổ phần, mệnh giá "+vn(par)+" đồng/cổ phần":CC],
+      ["Người đại diện theo pháp luật",nd||CC]];
+    const nk=t=>String(t||"").trim().toLowerCase();
+    r1.forEach(r=>{const g=rows.filter(z=>z.loai==="GHI_DE"&&mine(z)&&ms(z)==="1"&&nk(z.ten)===nk(r[0])).pop();if(g&&String(g.c1||"").trim()!=="")r[1]=g.c1});
+    ttl("1. Thông tin pháp nhân, vốn điều lệ, người đại diện và cổ đông hiện hành");
+    P.push(new Table({width:{size:TW,type:WidthType.DXA},columnWidths:[2200,7638],layout:D.TableLayoutType?D.TableLayoutType.FIXED:undefined,
+      rows:r1.map(r=>new TableRow({cantSplit:true,children:[cell(r[0],2200,{lab:1}),cell(r[1],7638)]}))}));
+    P.push(new Paragraph({spacing:{before:0,after:0},children:[run("",{size:8})]}));
+    const H4=["Cổ đông","Số cổ phần","Tỷ lệ","Ghi chú"],W4=[3700,1700,1200,3238],pc=x=>own&&own.sh?x/own.sh*100:0;
+    let r2=[];
+    if(own&&own.rows&&own.rows.length){
+      const all=own.rows.slice().sort((a,b)=>b.shares-a.shares),many=all.length>10,big=many?all.filter(x=>pc(x.shares)>=5):all,rest=many?all.filter(x=>pc(x.shares)<5):[];
+      r2=big.map(x=>({c1:x.holder,c2:vn(x.shares),c3:vn(pc(x.shares))+"%",c4:x.note||""}));
+      if(rest.length){const rs=rest.reduce((a,x)=>a+x.shares,0);r2.push({c1:"Còn lại "+rest.length+" cổ đông, xem sổ cổ đông",c2:vn(rs),c3:vn(pc(rs))+"%",c4:""})}
+      r2.push({c1:"Tổng cộng",c2:vn(own.sh),c3:"100%",c4:own.ok===true?"Khớp vốn điều lệ":own.ok===false?"(!) "+own.msg:(own.msg||"")});
+    }else r2=[{c1:CC,c2:"",c3:"",c4:"",grey:1}];
+    tbl(H4,r2,W4);gcOf("1");
+  }
   /* Các mục nguyên: từ dòng MUC không có dấu chấm, cộng mục có đơn vị con "n.m" ở DONG/GC */
   const subOf=n=>[...new Set(dong0.concat(gc).map(ms).filter(k=>k.indexOf(n+".")===0&&/^\d+\.\d+$/.test(k)))].sort((x,y)=>+x.split(".")[1]-+y.split(".")[1]);
   const ints=[...new Set(muc.map(ms).filter(k=>/^\d+$/.test(k)).concat(dong0.concat(gc).map(ms).filter(k=>/^\d+\.\d+$/.test(k)).map(k=>k.split(".")[0])))].sort((x,y)=>+x-+y);
-  ints.forEach(k=>{
+  ints.forEach(k=>{if(k==="1"&&!legacy)return;
     const m=muc.find(z=>ms(z)===k),subs=subOf(k),rsP=dong.filter(z=>ms(z)===k).sort(byTt);
     if(m&&(!subs.length||rsP.length)){
       const cols=["c1","c2","c3","c4","c5","c6","c7"].map(c=>(m[c]||"").trim()),nc=cols.reduce((a,c,i)=>c?i+1:a,0);
@@ -4916,7 +4945,9 @@ async function mbcExport(){
     MBC_T=T}finally{b.disabled=false;b.textContent=t0}
   const rows=mbcRows(MBC_T);if(!rows.some(z=>z.loai==="DONG"&&same(z.co,c))){alert("Tab mau_bc chưa có dòng DONG của công ty "+c+".");return}
   b.disabled=true;b.textContent="Đang tạo…";
-  try{await mbcLoad();const rec=coRec(c),doc=mbcBuild(window.docx,rows,c,rec,same),blob=await window.docx.Packer.toBlob(doc),a=document.createElement("a");
+  try{await mbcLoad();const rec=coRec(c),og=grp(PD().own.filter(x=>same(x.co,c))),g0=og.slice().sort((x,y)=>x.asof<y.asof?1:x.asof>y.asof?-1:0)[0],
+    own=g0?{asof:g0.asof,par:g0.par,vdl:g0.vdl,sh:g0.sh,ok:g0.ok,msg:g0.msg,rows:g0.rows.map(r=>({holder:r.holder,shares:+r.shares||0,note:r.note||""}))}:null,
+    doc=mbcBuild(window.docx,rows,c,rec,same,own),blob=await window.docx.Packer.toBlob(doc),a=document.createElement("a");
     a.href=URL.createObjectURL(blob);a.download=new Date().toLocaleDateString("sv-SE").replace(/-/g,"")+"_kiem_soat_dieu_le_"+c+".docx";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1e3)}
   catch(e){alert("Không xuất được docx: "+e.message)}finally{b.disabled=false;b.textContent=t0}}
 function expCSV(){

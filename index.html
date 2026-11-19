@@ -1697,7 +1697,7 @@ async function shAuth(interactive,fresh){
   await shLoadGsi();
   const pr=new Promise((ok,no)=>{
     const tc=google.accounts.oauth2.initTokenClient({client_id:SH.client,hint:fresh?undefined:(()=>{try{return localStorage.getItem("phapche_sh_mail")||undefined}catch(e){return undefined}})(),scope:"https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/userinfo.email",prompt:interactive?"":"none",
-      callback:r=>{if(r.error)return no(new Error(r.error==="interaction_required"||r.error==="popup_closed"?"Phiên đăng nhập đã hết hạn: bấm Đăng nhập Google (một lần bấm)":r.error));shTok=r.access_token;shExp=Date.now()+(+r.expires_in||3600)*1000;try{const v=JSON.stringify({t:shTok,exp:shExp});sessionStorage.setItem("phapche_sh_tok2",v);localStorage.setItem("phapche_sh_tok2",v)}catch(e){}ok(shTok)},
+      callback:r=>{if(r.error)return no(new Error(r.error==="interaction_required"||r.error==="popup_closed"?"Phiên đăng nhập đã hết hạn: bấm Đăng nhập Google (một lần bấm)":r.error));if(!/auth\/spreadsheets/.test(r.scope||""))return no(new Error("Chưa cấp quyền Google Trang tính: bấm Đăng nhập Google, khi hộp thoại hiện ra hãy tích chọn mục xem và chỉnh sửa Google Trang tính rồi bấm Tiếp tục"));shTok=r.access_token;shExp=Date.now()+(+r.expires_in||3600)*1000;try{const v=JSON.stringify({t:shTok,exp:shExp});sessionStorage.setItem("phapche_sh_tok2",v);localStorage.setItem("phapche_sh_tok2",v)}catch(e){}ok(shTok)},
       error_callback:e=>no(new Error("Phiên đăng nhập đã hết hạn: bấm Đăng nhập Google (một lần bấm)"))});
     tc.requestAccessToken(fresh?{prompt:"select_account"}:interactive?{}:{prompt:"none"})});if(!interactive&&!fresh){shAuthP=pr;const cl=()=>{shAuthP=null};pr.then(cl,cl)}return pr}
 async function shApi(path,opt,sid){
@@ -1805,7 +1805,7 @@ async function shInit(){
       if(confirm("Máy này có thay đổi chưa ghi lên Google Sheet.\nOK = ghi lên (ghi đè bản trên Sheet).\nCancel = bỏ thay đổi và tải bản từ Sheet.")){await shPush(true)}else{await shPull()}return}
     const d=await shGet();gateOpen();if(d===null){await shPush(true);return}
     ghApply(d);shSrcSet();ghStatus("Đã tải từ Google Sheet lúc "+new Date().toLocaleTimeString("vi-VN"))
-  }catch(e){const gg=$("gate_go");if(gg)gg.style.visibility="";if(/403/.test(e.message)){shTok=null;shExp=0;shMail="";try{sessionStorage.removeItem("mau_sh_tok2");localStorage.removeItem("mau_sh_tok2");localStorage.removeItem("mau_sh_mail")}catch(_){}}gateMsg("Không vào được: "+e.message);ghStatus("Lỗi Google Sheet: "+e.message+" (đang dùng dữ liệu của máy này)",true)}}
+  }catch(e){const gg=$("gate_go");if(gg)gg.style.visibility="";if(/403/.test(e.message)){shTok=null;shExp=0;shMail="";try{sessionStorage.removeItem("phapche_sh_tok2");localStorage.removeItem("phapche_sh_tok2");localStorage.removeItem("phapche_sh_mail")}catch(_){}}gateMsg("Không vào được: "+e.message);ghStatus("Lỗi Google Sheet: "+e.message+" (đang dùng dữ liệu của máy này)",true)}}
 const shDlg=document.createElement("dialog");
 shDlg.id="shdlg";shDlg.style.cssText=ghDlg.style.cssText;
 shDlg.innerHTML=`<h2 style="margin:0 0 8px;font-size:16px">Đồng bộ dữ liệu với Google Sheet</h2>
