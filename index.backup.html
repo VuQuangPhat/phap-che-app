@@ -2102,7 +2102,7 @@ const SEC={
     f:[{k:"co",l:"Doanh nghiệp",list:"p_codes"},{k:"loai",l:"Loại văn bản",t:"sel",o:DL_L},{k:"ten",l:"Tên văn bản",full:1},{k:"lan",l:"Lần sửa đổi (với phụ lục)"},
        {k:"ngay",l:"Ngày hiệu lực",t:"date"},{k:"st",l:"Tình trạng",t:"sel",o:DL_S},{k:"cc",l:"Căn cứ (nghị quyết, quyết định, GCN ĐKDN liên quan)",full:1},
        {k:"nd",l:"Nội dung chính, điều khoản được sửa",full:1},{k:"file",l:"Tên file bản gốc (scan)",full:1},{k:"lk",l:"Link mở bản gốc PDF (Google Drive hoặc đường dẫn)",full:1},
-       {k:"nv",l:"Toàn văn",t:"area",full:1},{k:"bbh_ngay",l:"Biên bản họp: ngày",t:"date"},{k:"bbh_lk",l:"Biên bản họp: link file",full:1},{k:"bbh_so",l:"Biên bản họp: số"},{k:"nq_so",l:"Nghị quyết/quyết định: số"},{k:"nq_ngay",l:"Nghị quyết/quyết định: ngày",t:"date"},{k:"nq_lk",l:"Nghị quyết/quyết định: link file",full:1},{k:"note",l:"Ghi chú",t:"area",full:1}]},
+       {k:"nv",l:"Toàn văn",t:"area",full:1},{k:"bbh_ngay",l:"Biên bản họp: ngày",t:"date"},{k:"bbh_lk",l:"Biên bản họp: link file",full:1},{k:"bbh_so",l:"Biên bản họp: số"},{k:"nq_so",l:"Nghị quyết/quyết định: số"},{k:"nq_ngay",l:"Nghị quyết/quyết định: ngày",t:"date"},{k:"nq_lk",l:"Nghị quyết/quyết định: link file",full:1},{k:"gcn_lan",l:"Gắn vào lần GCN (VD: Lần 3; nhiều lần: Lần 3, Lần 4; để trống = tự ghép theo ngày; x hoặc - = không gắn lần nào)"},{k:"note",l:"Ghi chú",t:"area",full:1}]},
   uq:{lab:"Ủy quyền",one:"văn bản ủy quyền",req:["co","a","b"],
     key:o=>[o.co,o.b,o.so,o.ngay].map(norm).join("|"),
     f:[{k:"co",l:"Doanh nghiệp (Bên ủy quyền)",list:"p_codes"},{k:"a",l:"Người đại diện theo pháp luật (Bên A)",list:"p_names"},{k:"at",l:"Chức danh Bên A"},
@@ -2240,7 +2240,7 @@ const SEC={
        {k:"tb",l:"Ngày gửi thông báo mời họp",t:"date"},
        {k:"han",l:"Thời hạn thông báo theo Điều lệ (số ngày, để trống = theo luật)",t:"int"},
        {k:"so",l:"Số biên bản (VD: 01/2026/HLM/BBH-ĐHCĐ)"},
-       {k:"gcn_lan",l:"Gắn vào lần GCN (VD: Lần 8; để trống = tự ghép theo ngày, dùng khi ngày họp nằm ngoài cửa sổ tự ghép)"},
+       {k:"gcn_lan",l:"Gắn vào lần GCN (VD: Lần 8; nhiều lần: Lần 3, Lần 4; để trống = tự ghép theo ngày; x hoặc - = không gắn lần nào, dùng cho họp không liên quan GCN)"},
        {k:"tv",l:"Tổng số thành viên HĐQT",t:"int"},
        {k:"dh",l:"Số thành viên HĐQT dự họp",t:"int"},
        {k:"cpdh",l:"Tỷ lệ cổ phần có quyền biểu quyết dự họp ĐHĐCĐ (%)",t:"dec"},
@@ -2255,7 +2255,7 @@ const SEC={
     f:[{k:"co",l:"Doanh nghiệp",list:"p_codes"},
        {k:"mt",l:"Cuộc họp liên quan (chọn theo tiêu đề)",list:"p_mt",full:1},
        {k:"so",l:"Số nghị quyết / quyết định",ph:"VD: 01/2026/NQ-HĐQT"},
-       {k:"gcn_lan",l:"Gắn vào lần GCN (VD: Lần 8; để trống = tự ghép theo ngày, dùng khi ngày ban hành nằm ngoài cửa sổ tự ghép)"},
+       {k:"gcn_lan",l:"Gắn vào lần GCN (VD: Lần 8; nhiều lần: Lần 3, Lần 4; để trống = tự ghép theo ngày; x hoặc - = không gắn lần nào, dùng cho họp không liên quan GCN)"},
        {k:"ngay",l:"Ngày ban hành",t:"date"},
        {k:"nd",l:"Nội dung nghị quyết",t:"area",full:1},
        {k:"vd",l:"Tỷ lệ cần đạt để thông qua",t:"sel",o:["Thông thường (trên 50%)","Từ 65% (theo luật hoặc Điều lệ)"]},
@@ -2905,21 +2905,27 @@ function dsMerge(co){
   d.ds.filter(z=>same(z.co,co)).forEach(z=>{let r=rows.find(x=>norm(x.lan)===norm(z.lan));if(!r){r={co,lan:z.lan,ngay:z.ngay||"",nd:z.nd||""};rows.push(r)}
     r.id=z.id;if(!r.ngay)r.ngay=z.ngay||"";if(!r.nd)r.nd=z.nd||"";r.mbbh=z.bbh;r.mnq=z.nq;r.mdl=z.dlq;r.note=z.note});
   /* mỗi văn bản chỉ gắn vào MỘT lần GCN: lần gần ngày nhất trong cửa sổ (cửa sổ đọc từ quy_tac, mặc định 60 ngày trước / 30 ngày sau với điều lệ, 60 / 3 với biên bản, nghị quyết) */
-  const asg=(arr,lo,hi)=>{const m=new Map();(arr||[]).filter(z=>same(z.co,co)&&z.ngay).forEach(z=>{let best=null,bd=1e9;rows.forEach(r=>{const G=r.ngay?dayN(r.ngay):NaN;if(isNaN(G))return;const df=dayN(z.ngay)-G;if(df>=lo&&df<=hi&&Math.abs(df)<bd){bd=Math.abs(df);best=r}});if(best)m.set(z,best)});return m};
-  const WD=[-ruleNum("ds.dl_truoc",60),ruleNum("ds.dl_sau",30)],WB=[-ruleNum("ds.bb_truoc",60),ruleNum("ds.bb_sau",3)],aDl=asg(d.dl,WD[0],WD[1]);
-  /* ghép tay: cột gcn_lan (VD "Lần 8") của prof_mt / prof_nq gắn thẳng văn bản vào lần GCN đó, bỏ qua cửa sổ ngày; để trống thì tự ghép theo ngày như cũ */
-  const lanK=v=>{const t=String(v||""),m=t.match(/\d+/);return m?"#"+(+m[0]):norm(t)},
-    man=(arr,m)=>{(arr||[]).filter(z=>same(z.co,co)&&z.ngay&&String(z.gcn_lan||"").trim()).forEach(z=>{const r=rows.find(x=>lanK(x.lan)===lanK(z.gcn_lan));if(r)m.set(z,r)});return m},
-    aMt=man(d.mt,asg(d.mt,WB[0],WB[1])),aNq=man(d.nq,asg(d.nq,WB[0],WB[1]));
-  rows.forEach(r=>{const near=(arr,m)=>(arr||[]).filter(z=>m.get(z)===r);
+  const asg=(arr,lo,hi)=>{const m=new Map();(arr||[]).filter(z=>same(z.co,co)&&z.ngay).forEach(z=>{let best=null,bd=1e9;rows.forEach(r=>{const G=r.ngay?dayN(r.ngay):NaN;if(isNaN(G))return;const df=dayN(z.ngay)-G;if(df>=lo&&df<=hi&&Math.abs(df)<bd){bd=Math.abs(df);best=r}});if(best)m.set(z,[best])});return m};
+  const WD=[-ruleNum("ds.dl_truoc",60),ruleNum("ds.dl_sau",30)],WB=[-ruleNum("ds.bb_truoc",60),ruleNum("ds.bb_sau",3)];
+  /* cột gcn_lan (prof_mt, prof_nq, prof_dl): "Lần 8" gắn thẳng vào lần đó, bỏ qua cửa sổ ngày; "Lần 3, Lần 4" gắn một văn bản vào nhiều lần; "x" hoặc "-" = không gắn lần nào (loại khỏi mọi lần); để trống hoặc không khớp lần nào thì tự ghép theo ngày */
+  const lanK=v=>{const t=String(v||"").trim(),m=t.match(/\d+/);return m?"#"+(+m[0]):norm(t)},
+    man=(arr,m)=>{(arr||[]).filter(z=>same(z.co,co)&&z.ngay&&String(z.gcn_lan||"").trim()).forEach(z=>{const v=String(z.gcn_lan).trim();if(/^[x\-–—]$/i.test(v)){m.delete(z);return}
+      const rs=[];v.split(/[,;]+/).forEach(t=>{const r=rows.find(x=>lanK(x.lan)===lanK(t));if(r&&!rs.includes(r))rs.push(r)});if(rs.length)m.set(z,rs)});return m},
+    aMt=man(d.mt,asg(d.mt,WB[0],WB[1])),aNq=man(d.nq,asg(d.nq,WB[0],WB[1])),aDl=man(d.dl,asg(d.dl,WD[0],WD[1]));
+  rows.forEach(r=>{const near=(arr,m)=>(arr||[]).filter(z=>(m.get(z)||[]).includes(r));
     const dl=near(d.dl,aDl),mt=near(d.mt,aMt),nq=near(d.nq,aNq);dl.forEach(z=>used.add(z.id));
     const NFT="Chưa tìm thấy file";
     r.dlq=dl.length?dl.map(z=>fmt(z.ngay)+(z.loai==="Điều lệ đầy đủ"?" (điều lệ)":" (phụ lục"+(z.lan?" lần "+z.lan:"")+")")).join("; "):(r.mdl||NFT);
     /* BBH (soOnly): hiện số hiệu, không có số thì hiện ngày. NQ: "ngày (số …)". Số và link lấy từ prof_mt / prof_nq (so, lk); trùng ngày với prof_dl (bbh_*, nq_*) thì giữ số và link đã có, chỉ bổ sung chỗ còn thiếu */
-    const mrg=(base,ex,soOnly)=>{const o=[];base.forEach(z=>{const so=String(z.so||"").trim();o.push({ng:z.ngay,so:!!so,lk:z.lk||"",t:soOnly?(so||fmt(z.ngay)):fmt(z.ngay)+(so?" (số "+so+")":"")})});
-      ex.forEach(z=>{const i=o.find(q=>q.ng===z.ng);if(i){if(!i.lk&&z.lk)i.lk=z.lk;if(z.so&&!i.so){i.so=true;if(soOnly)i.t=z.so;else i.t+=" (số "+z.so+")"}}else o.push({ng:z.ng,so:!!z.so,t:z.so?(soOnly?z.so:fmt(z.ng)+" (số "+z.so+")"):fmt(z.ng),lk:z.lk||""})});return o};
-    r.bbhz=mrg(mt,dl.filter(z=>z.bbh_ngay).map(z=>({ng:z.bbh_ngay,so:z.bbh_so,lk:z.bbh_lk})),true);
-    r.nqz=mrg(nq,dl.filter(z=>z.nq_ngay).map(z=>({ng:z.nq_ngay,so:z.nq_so,lk:z.nq_lk})));
+    const isX=v=>/^[x\-–—]$/i.test(String(v||"").trim()),
+      mk=(ng,so,lk,soOnly)=>{ng=/^\d{4}-\d{2}-\d{2}/.test(String(ng||""))?ng:"";so=String(so||"").trim();return{ng,so:!!so,sv:so,lk:isX(so)?"":(lk||""),t:ng?(soOnly?(so||fmt(ng)):fmt(ng)+(so?" (số "+so+")":"")):so}},
+      mrg=(base,ex,soOnly)=>{const o=[],add=i=>{const q=o.find(k=>(i.sv&&k.sv===i.sv)||(i.ng&&k.ng===i.ng));
+        if(q){if(!q.lk&&i.lk)q.lk=i.lk;if(!q.ng&&i.ng)q.ng=i.ng;if(i.sv&&!q.sv){q.sv=i.sv;q.so=true;q.t=soOnly?i.sv:fmt(q.ng)+" (số "+i.sv+")"}return}
+        if(i.t)o.push(i)};
+      base.forEach(z=>add(mk(z.ngay,z.so,z.lk,soOnly)));ex.forEach(z=>add(mk(z.ng,z.so,z.lk,soOnly)));return o.some(i=>!isX(i.sv))?o.filter(i=>!isX(i.sv)):o};
+    /* BBH/NQ ghi trong prof_dl: lấy cả dòng chỉ có số (kể cả "x" = không cần), "x" hiện như chữ thường, không link */
+    r.bbhz=mrg(mt,dl.filter(z=>z.bbh_ngay||z.bbh_so).map(z=>({ng:z.bbh_ngay,so:z.bbh_so,lk:z.bbh_lk})),true);
+    r.nqz=mrg(nq,dl.filter(z=>z.nq_ngay||z.nq_so).map(z=>({ng:z.nq_ngay,so:z.nq_so,lk:z.nq_lk})));
     r.bbh=r.bbhz.length?r.bbhz.map(i=>i.t).join("; "):(r.mbbh||NFT);
     r.nq=r.nqz.length?r.nqz.map(i=>i.t).join("; "):(r.mnq||NFT);
     r.dlz=dl;r.src={dlq:dl.length,bbh:r.bbhz.length,nq:r.nqz.length}});
