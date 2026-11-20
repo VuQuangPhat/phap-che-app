@@ -2447,7 +2447,7 @@ const th4=document.createElement("button");th4.id="tpct";th4.textContent="Hợp 
 const th5=document.createElement("button");th5.id="tpcp";th5.textContent="Tuân thủ";nav.appendChild(th5);
 const th6=document.createElement("button");th6.id="tpmau";th6.textContent="HĐ mẫu";nav.appendChild(th6);
 const vp=document.createElement("div");vp.id="vprof";vp.hidden=true;
-const VISTAB=["dash","tl","rc","|","co","dl","dv","|","ds","|","hq","ppl","pos","uq","|","own","bo","|","prj","pl","vay"];
+const VISTAB=["dash","tl","|","co","dl","dv","|","ds","|","hq","ppl","pos","uq","|","own","bo","|","prj","pl","vay"];
 vp.innerHTML=`<nav class="tabs" id="psub">${VISTAB.map(k=>k==="|"?'<span class="gsep"></span>':`<button data-s="${k}">${k==="dash"?"Tổng quan":k==="tl"?"Lịch sử":k==="hq"?"HĐQT":k==="rc"?"Đối soát hồ sơ":SEC[k].lab}</button>`).join("")}<span class="gsep"></span><button data-s="me">Thông tin của tôi</button><span style="margin-left:auto;display:flex;gap:6px;align-items:center;padding-left:12px"><button id="ppdf" class="primary">Xuất PDF mục này</button><button id="ppdfall">Xuất PDF toàn bộ</button></span></nav>
 <div id="gcobar" class="gcobar"></div>
 <div id="pprint"></div>
@@ -2543,6 +2543,7 @@ function gcoBar(){
 }
 $("gcobar").onclick=e=>{const b=e.target.closest("[data-g]");if(!b)return;GCO=b.dataset.g;renderProf()};
 function renderProf(){
+  if(sec==="rc")sec="dash";
   refreshLists();gcoBar();if([...$("pfc").options].some(o=>o.value===GCO))$("pfc").value=GCO;
   document.querySelectorAll("#psub [data-s]").forEach(b=>b.style.display=HIDE.includes(sec)?"none":"");vp.dataset.sec=sec;document.querySelectorAll("#psub button").forEach(b=>b.classList.toggle("on",b.dataset.s===sec));
   if(sec==="me"){$("pflt").hidden=true;$("pstats").hidden=true;rMe();return}
@@ -2714,7 +2715,7 @@ function rDash(){
   d.prj.forEach(x=>{const pc=prjCo(x),pf=pc?x.name+": ":"";if(!x.owner)W.push([pc||x.name,pf+"thiếu chủ đầu tư","prj",x.name]);if(!x.nddpl)W.push([pc||x.name,pf+"thiếu NĐDPL / người điều hành dự án","prj",x.name])});
   const BOM=boModel().out.filter(o=>!GCO||same(o.c,GCO));BOM.forEach(o=>o.warn.forEach(w=>{if(w.k==="miss")W.push([o.c,"CSHHL "+w.b.name+" ("+nf(w.b.t)+"%) đạt ngưỡng 25% nhưng chưa ghi nhận kê khai","bo"]);else if(w.k==="diff")W.push([o.c,"CSHHL "+w.b.name+": tỷ lệ đã kê khai "+nf(w.tl)+"% lệch với số tính từ sở hữu vốn "+nf(w.b.t)+"%, cần đối chiếu","bo"])}));
   BOM.forEach(o=>{if(o.g&&o.g.asof&&(new Date(today())-new Date(o.g.asof))/864e5>ruleNum("bo.so_lieu_cu_ngay",183))W.push([o.c,"Số liệu sở hữu vốn chốt "+fmt(o.g.asof)+" đã quá 6 tháng, cần xác nhận lại cơ cấu cổ đông (ảnh hưởng xác định CSHHL)","own"])});
-  rcGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"rc"]));hsGaps().filter(g=>!g.soft).forEach(g=>W.push([g.c,g.t,"hs"]));govGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"pos"]));cpGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"cp"]));intGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,wSecOf(g.t)]));
+  hsGaps().filter(g=>!g.soft).forEach(g=>W.push([g.c,g.t,"hs"]));govGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"pos"]));cpGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"cp"]));intGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,wSecOf(g.t)]));
   const MG=mtGaps();MG.filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"mt"]));ctGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"ct"]));mauGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"mau"]));plGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"pl"]));vayGaps().filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"vay"]));(window.__nldGaps?window.__nldGaps():[]).filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"nld"]));(window.__invGaps?window.__invGaps():[]).filter(g=>g.h).forEach(g=>W.push([g.c,g.t,"inv"]));
   const nBO=new Set(BOM.flatMap(o=>o.bo.map(b=>b.key))).size;
   const pB=`<div class="panel full"><h3>Chủ sở hữu hưởng lợi theo doanh nghiệp (ngưỡng ${TH25()}%)</h3>${BOM.length?BOM.map(o=>`<div class="act" style="cursor:pointer;align-items:flex-start" data-wgo="bo" data-wc="${esc(o.c)}" data-wt=""><span class="d">${chip(o.c)}</span><span style="flex:1">${o.bo.length?o.bo.map(b=>`<b>${esc(b.name)}</b> ${nf(b.t)}%${b.d>0&&b.i>0.005?` <small style="color:var(--mute)">(TT ${nf(b.d)}% + GT ${nf(b.i)}%)</small>`:""} ${(()=>{const s=boStat(o,b);return s==="Đã đăng ký"?'<small style="color:var(--ok)">đã kê khai</small>':s==="Đang thực hiện đăng ký"?'<span class="dkp">đang kê khai</span>':s==="Chưa đăng ký"?'<span class="wn1">⚠ chưa kê khai</span>':s==="Chưa ghi nhận"?'<span class="wn1">⚠ chưa ghi nhận kê khai</span>':""})()}`).join("<br>"):'<small style="color:var(--warn)">Chưa có cá nhân đạt 25%: xét tiêu chí kiểm soát</small>'}</span></div>`).join(""):'<small style="color:var(--mute)">Chưa có dữ liệu sở hữu vốn.</small>'}</div>`;

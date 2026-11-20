@@ -1645,7 +1645,9 @@ function shDec(c){if(c===undefined||c===null||c==="")return undefined;if(typeof 
 function shTable(arr){const keys=[];arr.forEach(r=>Object.keys(r||{}).forEach(k=>{if(!keys.includes(k))keys.push(k)}));if(!keys.length)keys.push("id");
   return [keys,...arr.map(r=>keys.map(k=>shEnc(r[k])))]}
 let shLongMap={};
-function shFromTable(v){if(!v||!v.length)return[];const h=v[0];return v.slice(1).filter(r=>r.some(c=>c!==""&&c!==undefined)).map(r=>{const o={};h.forEach((k,i)=>{let c=r[i];if(typeof c==="string"&&/^§L\d+$/.test(c))c=shLongMap[c.slice(2)]||"";const x=shDec(c);if(x!==undefined)o[k]=x});return o})}
+/* ô ngày nhập trực tiếp trên Google Sheet có thể bị đọc về dạng số (số ngày kể từ 30/12/1899): đổi lại thành yyyy-mm-dd cho các cột ngày để app không lỗi khi so sánh, sắp xếp */
+let SH_DK=null;const shDateKey=k=>{if(/(^|_)ngay\d*$/.test(k))return true;try{if(!SH_DK){SH_DK=new Set();Object.values(SEC).forEach(z=>(z.f||[]).forEach(f=>{if(f.t==="date")SH_DK.add(f.k)}))}return SH_DK.has(k)}catch(e){return false}};
+function shFromTable(v){if(!v||!v.length)return[];const h=v[0];return v.slice(1).filter(r=>r.some(c=>c!==""&&c!==undefined)).map(r=>{const o={};h.forEach((k,i)=>{let c=r[i];if(typeof c==="string"&&/^§L\d+$/.test(c))c=shLongMap[c.slice(2)]||"";let x=shDec(c);if(x!==undefined){if(typeof x==="number"&&x>30000&&x<80000&&shDateKey(k))x=new Date(Math.round((x-25569)*864e5)).toISOString().slice(0,10);o[k]=x}});return o})}
 const shIsRows=a=>Array.isArray(a)&&a.every(r=>r&&typeof r==="object"&&!Array.isArray(r));
 /* state -> {tab:[[...]]}; tab tên: tasks, budget, prof_<k>, cfg (key/seq/chunk) */
 /* ===== Quy tắc pháp lý đọc từ tab quy_tac của Sheet (CFG.prof.qt); không có thì dùng mặc định bên dưới và ghi mặc định lên Sheet ===== */
