@@ -2925,13 +2925,15 @@ function dsMerge(co){
         if(i.t)o.push(i)};
       base.forEach(z=>add(mk(z.ngay,z.so,z.lk,soOnly,{t:kind,z})));ex.forEach(z=>add(mk(z.ng,z.so,z.lk,soOnly,z.src)));return o.some(i=>!isX(i.sv))?o.filter(i=>!isX(i.sv)):o};
     /* BBH/NQ ghi trong prof_dl: lấy cả dòng chỉ có số (kể cả "x" = không cần), "x" hiện như chữ thường, không link */
-    r.bbhz=mrg(mt,dl.filter(z=>z.bbh_ngay||z.bbh_so).map(z=>({ng:z.bbh_ngay,so:z.bbh_so,lk:z.bbh_lk,src:{t:"dl",z,f:"bbh"}})),true,"mt");
-    r.nqz=mrg(nq,dl.filter(z=>z.nq_ngay||z.nq_so).map(z=>({ng:z.nq_ngay,so:z.nq_so,lk:z.nq_lk,src:{t:"dl",z,f:"nq"}})),false,"nq");
+    r.bbhzA=mrg(mt,dl.filter(z=>z.bbh_ngay||z.bbh_so).map(z=>({ng:z.bbh_ngay,so:z.bbh_so,lk:z.bbh_lk,src:{t:"dl",z,f:"bbh"}})),true,"mt");
+    r.nqzA=mrg(nq,dl.filter(z=>z.nq_ngay||z.nq_so).map(z=>({ng:z.nq_ngay,so:z.nq_so,lk:z.nq_lk,src:{t:"dl",z,f:"nq"}})),false,"nq");
+    /* biên bản, nghị quyết lấy từ tab họp / nghị quyết mà chưa có số hiệu lẫn link thì không hiện trong bảng (vẫn có trong khung sửa để điền) */
+    const vis=i=>!(i.src&&i.src.t!=="dl"&&!i.sv&&!i.lk);r.bbhz=r.bbhzA.filter(vis);r.nqz=r.nqzA.filter(vis);
     r.bbh=r.bbhz.length?r.bbhz.map(i=>i.t).join("; "):(r.mbbh||NFT);
     r.nq=r.nqz.length?r.nqz.map(i=>i.t).join("; "):(r.mnq||NFT);
     r.dlz=dl;r.src={dlq:dl.length,bbh:r.bbhz.length,nq:r.nqz.length};
     /* ô BBH / NQ / Điều lệ nhập tay trong prof_ds (bbh, nq, dlq) thắng dữ liệu tự ghép; để trống thì tự lấy từ các tab họp, nghị quyết, điều lệ */
-    const hv=v=>String(v||"").trim();r.hand={};r.bbhz0=r.bbhz.slice();r.nqz0=r.nqz.slice();r.dlz0=r.dlz.slice();
+    const hv=v=>String(v||"").trim();r.hand={};r.bbhz0=r.bbhzA.slice();r.nqz0=r.nqzA.slice();r.dlz0=r.dlz.slice();
     if(hv(r.mbbh)){r.bbh=hv(r.mbbh);r.bbhz=[];r.src.bbh=0;r.hand.bbh=1}
     if(hv(r.mnq)){r.nq=hv(r.mnq);r.nqz=[];r.src.nq=0;r.hand.nq=1}
     if(hv(r.mdl)){r.dlq=hv(r.mdl);r.dlz=[];r.src.dlq=0;r.hand.dl=1}});
@@ -2978,7 +2980,7 @@ function rDs(r,all){
 }
 /* Bấm vào cả dòng của lần GCN (tab Đối soát điều lệ) để tự sửa: lần, ngày, nội dung, link GCN. Ghi đè đúng dòng đó trong prof_co.gcnls (dạng "Lần X, dd/mm/yyyy: nội dung") và dòng cùng số thứ tự trong prof_co.lkgcnls */
 const gdlg=document.createElement("dialog");gdlg.id="gcndlg";gdlg.style.width="min(720px,95vw)";gdlg.style.maxHeight="92vh";gdlg.style.overflow="auto";
-gdlg.innerHTML=`<h2 id="gcnt">Sửa lần GCN</h2><div class="grid"><label>Lần<input id="gcn_lan" placeholder="VD: Lần 8"></label><label>Ngày cấp GCN<input id="gcn_ng" type="date"></label><label class="full">Nội dung<textarea id="gcn_nd" rows="4"></textarea></label><label class="full">Link file GCN (để trống nếu chưa có)<input id="gcn_lk" placeholder="https://"></label><div class="full" id="gcn_items"></div><label class="full">Biên bản họp: chữ gõ tay thay cả cột (để trống = dùng văn bản ở trên)<input id="gcn_bbh"></label><label class="full">Nghị quyết: chữ gõ tay thay cả cột<input id="gcn_nq"></label><label class="full">Điều lệ: chữ gõ tay thay cả cột<input id="gcn_dl"></label></div><p class="tcnote" style="margin:6px 0">Sửa số hiệu, link ở phần văn bản là sửa thẳng vào tab họp, nghị quyết, điều lệ tương ứng. Ba ô chữ gõ tay không có link.</p><p class="tcnote" id="gcn_msg" style="margin:6px 0;color:#c53030"></p><div class="foot"><button id="gcn_x">Đóng</button><button class="primary" id="gcn_ok">Lưu lên Sheet</button></div>`;
+gdlg.innerHTML=`<h2 id="gcnt">Sửa lần GCN</h2><div class="grid"><label>Lần<input id="gcn_lan" placeholder="VD: Lần 8"></label><label>Ngày cấp GCN<input id="gcn_ng" type="date"></label><label class="full">Nội dung<textarea id="gcn_nd" rows="4"></textarea></label><label class="full">Link file GCN (để trống nếu chưa có)<input id="gcn_lk" placeholder="https://"></label><div class="full" id="gcn_items"></div><label class="full">Biên bản họp: chữ gõ tay thay cả cột (để trống = dùng văn bản ở trên)<input id="gcn_bbh"></label><label class="full">Nghị quyết: chữ gõ tay thay cả cột<input id="gcn_nq"></label><label class="full">Điều lệ: chữ gõ tay thay cả cột<input id="gcn_dl"></label></div><p class="tcnote" style="margin:6px 0">Sửa số hiệu, link ở phần văn bản là sửa thẳng vào tab họp, nghị quyết, điều lệ tương ứng. Biên bản, nghị quyết chưa có số hiệu lẫn link thì không hiện trong bảng, nhưng vẫn liệt kê ở đây để anh điền. Bấm "Gỡ" thì văn bản không hiện ở lần GCN này nữa (không bị xóa khỏi tab gốc, chỉ gắn "x" ở cột gcn_lan). Ba ô chữ gõ tay không có link.</p><p class="tcnote" id="gcn_msg" style="margin:6px 0;color:#c53030"></p><div class="foot"><button id="gcn_x">Đóng</button><button class="primary" id="gcn_ok">Lưu lên Sheet</button></div>`;
 document.body.appendChild(gdlg);
 let gcnCur=null;
 $("plist").addEventListener("click",e=>{const tr=e.target.closest("tr[data-gcnedit]");if(!tr||e.target.closest("a"))return;e.stopPropagation();
@@ -2986,21 +2988,25 @@ $("plist").addEventListener("click",e=>{const tr=e.target.closest("tr[data-gcned
   const L=String(c.gcnls||"").split(/\r?\n/),K=String(c.lkgcnls||"").split(/\r?\n/),m=(L[+i]||"").match(/^(.*?),\s*(\d{1,2})\/(\d{1,2})\/(\d{4}):\s*(.*)$/);if(!m)return;
   const hr=dsMerge(co).rows.find(r=>r.gi===+i)||{};gcnCur={c,i:+i,co,lan0:m[1].trim(),it:{bbh:(hr.bbhz0||[]).filter(q=>q.src&&q.src.z),nq:(hr.nqz0||[]).filter(q=>q.src&&q.src.z),dl:hr.dlz0||[]}};
   const inp=(f,v,ph,fl)=>`<input data-f="${f}" value="${esc(v||"")}" placeholder="${ph}" style="flex:${fl||1};min-width:0">`,
-    ln=(k,a,fn)=>a.length?`<b style="font-size:12px">${k}</b>`+a.map((q,j)=>`<div data-gi="${k==="Điều lệ"?"dl":k==="Nghị quyết"?"nq":"bbh"}|${j}" style="display:flex;gap:6px;margin:4px 0;flex-wrap:wrap">${fn(q)}</div>`).join(""):"";
-  $("gcn_items").innerHTML=ln("Biên bản họp",gcnCur.it.bbh,q=>inp("so",q.src.t==="dl"?q.src.z[q.src.f+"_so"]:q.src.z.so,"Số hiệu"+(q.ng?" (ngày "+fmt(q.ng)+")":""),1)+inp("lk",q.src.t==="dl"?q.src.z[q.src.f+"_lk"]:q.src.z.lk,"Link","1.5"))
-   +ln("Nghị quyết",gcnCur.it.nq,q=>inp("so",q.src.t==="dl"?q.src.z[q.src.f+"_so"]:q.src.z.so,"Số hiệu"+(q.ng?" (ngày "+fmt(q.ng)+")":""),1)+inp("lk",q.src.t==="dl"?q.src.z[q.src.f+"_lk"]:q.src.z.lk,"Link","1.5"))
+    ln=(k,a,fn)=>a.length?`<b style="font-size:12px">${k}</b>`+a.map((q,j)=>`<div data-gi="${k==="Điều lệ"?"dl":k==="Nghị quyết"?"nq":"bbh"}|${j}" style="display:flex;gap:6px;margin:4px 0;flex-wrap:wrap;align-items:center">${fn(q)}<button type="button" data-rm title="Gỡ văn bản này khỏi lần GCN này" style="flex:0 0 auto">Gỡ</button></div>`).join(""):"";
+  const bn=q=>{const dl=q.src.t==="dl",z=q.src.z;return `<input data-f="ngay" type="date" value="${esc((dl?z[q.src.f+"_ngay"]:z.ngay)||"")}" style="flex:0 0 150px" title="Ngày họp / ngày ban hành">`+inp("so",dl?z[q.src.f+"_so"]:z.so,"Số hiệu",1)+inp("lk",dl?z[q.src.f+"_lk"]:z.lk,"Link","1.5")};
+  $("gcn_items").innerHTML=ln("Biên bản họp",gcnCur.it.bbh,bn)+ln("Nghị quyết",gcnCur.it.nq,bn)
    +ln("Điều lệ",gcnCur.it.dl,z=>`<input data-f="ngay" type="date" value="${esc(z.ngay||"")}" style="flex:0 0 150px"><select data-f="loai" style="flex:0 0 190px">${["Điều lệ đầy đủ","Phụ lục sửa đổi, bổ sung"].concat(z.loai&&!/^(Điều lệ đầy đủ|Phụ lục sửa đổi, bổ sung)$/.test(z.loai)?[z.loai]:[]).map(o=>`<option${o===z.loai?" selected":""}>${esc(o)}</option>`).join("")}</select>`+inp("lan",z.lan,"Phụ lục lần số",".6")+inp("lk",z.lk,"Link","1.5"));$("gcn_bbh").value=hr.mbbh||"";$("gcn_nq").value=hr.mnq||"";$("gcn_dl").value=hr.mdl||"";$("gcnt").textContent="Sửa "+co+" · "+m[1].trim();$("gcn_lan").value=m[1].trim();$("gcn_ng").value=m[4]+"-"+m[3].padStart(2,"0")+"-"+m[2].padStart(2,"0");$("gcn_nd").value=m[5];$("gcn_lk").value=(K[+i]||"").trim();$("gcn_msg").textContent="";gdlg.showModal()},true);
 $("gcn_x").onclick=()=>gdlg.close();
+gdlg.addEventListener("click",e=>{const b=e.target.closest("[data-rm]");if(!b)return;const r=b.closest("[data-gi]"),on=r.dataset.rm!=="1";r.dataset.rm=on?"1":"";r.style.opacity=on?".45":"";r.style.textDecoration=on?"line-through":"";b.textContent=on?"Hoàn lại":"Gỡ"});
 $("gcn_ok").onclick=()=>{if(!gcnCur)return;const lan=$("gcn_lan").value.replace(/,/g," ").replace(/\s+/g," ").trim(),ng=$("gcn_ng").value,nd=$("gcn_nd").value.replace(/\s*\n\s*/g," ").trim(),lk=$("gcn_lk").value.trim(),M=$("gcn_msg");
   if(!lan){M.textContent="Chưa nhập lần";return}if(!/^\d{4}-\d{2}-\d{2}$/.test(ng)){M.textContent="Chưa chọn ngày cấp GCN";return}
   if(!nd){M.textContent="Nội dung không được để trống";return}
   if(lk&&!/^https?:\/\//i.test(lk)){M.textContent="Link phải bắt đầu bằng http:// hoặc https://";return}
-  const E=[...$("gcn_items").querySelectorAll("[data-gi]")].map(el=>{const [k,j]=el.dataset.gi.split("|"),g=f=>{const x=el.querySelector('[data-f="'+f+'"]');return x?x.value.trim():""};return{k,j:+j,so:g("so"),lk:g("lk"),ngay:g("ngay"),loai:g("loai"),lan:g("lan")}});
-  for(const e of E){if(e.lk&&!/^https?:\/\//i.test(e.lk)){M.textContent="Link phải bắt đầu bằng http:// hoặc https://";return}if(e.k==="dl"&&e.ngay&&!/^\d{4}-\d{2}-\d{2}$/.test(e.ngay)){M.textContent="Ngày điều lệ không hợp lệ";return}}
+  const E=[...$("gcn_items").querySelectorAll("[data-gi]")].map(el=>{const [k,j]=el.dataset.gi.split("|"),g=f=>{const x=el.querySelector('[data-f="'+f+'"]');return x?x.value.trim():""};let so=g("so"),ng2=g("ngay");const pm=so.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s*\(\s*số\s*(.*?)\s*\)\s*$/i);if(pm&&k!=="dl"){ng2=pm[3]+"-"+pm[2].padStart(2,"0")+"-"+pm[1].padStart(2,"0");so=pm[4]}
+    return{k,j:+j,so,lk:g("lk"),ngay:k==="dl"?g("ngay"):ng2,loai:g("loai"),lan:g("lan"),rm:el.dataset.rm==="1"}});
+  for(const e of E){if(e.lk&&!/^https?:\/\//i.test(e.lk)){M.textContent="Link phải bắt đầu bằng http:// hoặc https://";return}if(e.ngay&&!/^\d{4}-\d{2}-\d{2}$/.test(e.ngay)){M.textContent="Ngày không hợp lệ";return}}
   const {c,i}=gcnCur,L=String(c.gcnls||"").split(/\r?\n/),K=String(c.lkgcnls||"").split(/\r?\n/);
   while(K.length<L.length)K.push("");L[i]=lan+", "+ng.slice(8)+"/"+ng.slice(5,7)+"/"+ng.slice(0,4)+": "+nd;K[i]=lk;
   c.gcnls=L.join("\n");c.lkgcnls=K.slice(0,L.length).join("\n").replace(/\n+$/,"");
-  E.forEach(e=>{const q=gcnCur.it[e.k][e.j];if(!q)return;if(e.k==="dl"){q.ngay=e.ngay;q.loai=e.loai;q.lan=e.lan;q.lk=e.lk}else if(q.src.t==="dl"){q.src.z[q.src.f+"_so"]=e.so;q.src.z[q.src.f+"_lk"]=e.lk}else{q.src.z.so=e.so;q.src.z.lk=e.lk}});
+  E.forEach(e=>{const q=gcnCur.it[e.k][e.j];if(!q)return;
+    if(e.rm){if(e.k==="dl")q.gcn_lan="x";else if(q.src.t==="dl"){const z=q.src.z,f=q.src.f;z[f+"_so"]="";z[f+"_lk"]="";z[f+"_ngay"]=""}else{q.src.z.so=e.so;q.src.z.lk=e.lk;q.src.z.gcn_lan="x"}return}
+    if(e.k==="dl"){q.ngay=e.ngay;q.loai=e.loai;q.lan=e.lan;q.lk=e.lk}else if(q.src.t==="dl"){const z=q.src.z,f=q.src.f;z[f+"_so"]=e.so;z[f+"_lk"]=e.lk;if(e.ngay)z[f+"_ngay"]=e.ngay}else{const z=q.src.z;z.so=e.so;z.lk=e.lk;if(e.ngay&&e.ngay!==z.ngay){if(!String(z.gcn_lan||"").trim())z.gcn_lan=lan;z.ngay=e.ngay}}});
   const bb=$("gcn_bbh").value.trim(),nq=$("gcn_nq").value.trim(),dq=$("gcn_dl").value.trim(),d=PD();d.ds=d.ds||[];
   const z=d.ds.find(y=>same(y.co,gcnCur.co)&&norm(y.lan)===norm(gcnCur.lan0));
   if(z){z.lan=lan;z.ngay=ng;z.nd=nd;z.bbh=bb;z.nq=nq;z.dlq=dq}else if(bb||nq||dq)d.ds.push({id:uid(),co:gcnCur.co,lan,ngay:ng,nd,bbh:bb,nq,dlq:dq});
