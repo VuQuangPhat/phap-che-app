@@ -2004,7 +2004,10 @@ body.pjmode #psub button[data-s]:not([data-s=prj]):not([data-s=pl]):not([data-s=
 #vprof details.pjg{border:1px solid var(--line);border-radius:10px;background:var(--card);margin:8px 0;padding:8px 12px}
 #vprof details.pjg>summary{cursor:pointer;font-size:14px}#vprof details.pjg>summary small{color:var(--mute);margin-left:8px}
 #vprof .pjh{margin:12px 0 4px;font-size:12px;letter-spacing:.03em;text-transform:uppercase;color:var(--mute)}
-#vprof .pjw{overflow-x:auto}#vprof details.pjg>summary small{margin-left:6px}#vprof .pjn{color:var(--mute);font-weight:400}#vprof table.pjk{width:100%;border-collapse:collapse;font-size:13px;margin:4px 0}
+#vprof .pjw{overflow-x:auto}#vprof details.pjg>summary small{margin-left:6px}#vprof .pjn{color:var(--mute);font-weight:400}#vprof .hqc{display:inline-block;padding:0 9px;border-radius:99px;font-weight:600;font-size:12.5px;line-height:1.7;color:var(--ink);background:color-mix(in srgb,var(--cc) 14%,var(--card));border:1px solid color-mix(in srgb,var(--cc) 55%,var(--card));white-space:nowrap}
+#vprof details.hqn{font-size:12.5px;color:var(--mute)}#vprof details.hqn>summary{cursor:pointer;list-style:none}#vprof details.hqn>summary u{color:var(--brand)}
+#vprof tr.hqpr>td{background:var(--bg);padding:8px 14px}
+#vprof table.pjk{width:100%;border-collapse:collapse;font-size:13px;margin:4px 0}
 #vprof table.pjk th,#vprof table.pjk td{text-align:left;padding:5px 8px;border:1px solid var(--line);vertical-align:top}
 #vprof table.pjk th{background:var(--bg);font-size:12px;color:var(--mute);font-weight:600}
 #vprof table.pjk small{display:block;color:var(--mute)}
@@ -2067,7 +2070,7 @@ const HSG=[
  {id:"kh",lab:"Thủ tục khác",ds:"Cấp lại, cấp đổi, cập nhật thông tin, công bố, cam kết xã hội.",items:[{t:"Cấp lại giấy chứng nhận / giấy xác nhận ĐKDN",m:[26]},{t:"Cấp đổi, bổ sung, cập nhật thông tin ĐKDN",m:[21,22,24]},{t:"Công bố nội dung đăng ký doanh nghiệp",m:[32]},{t:"Phản hồi kết quả rà soát thông tin ĐKDN",m:[20]},{t:"Dừng thực hiện thủ tục đăng ký doanh nghiệp",m:[33]},{t:"Cam kết mục tiêu xã hội, môi trường",m:[34,35,36]}]}];
 const HSI=HSG.flatMap(g=>g.items.map(i=>({...i,g:g.id})));
 const MREP=[1,2,3,4,5,10,12,27,30],MGONE=[11];
-const HIDE=["hs","mt","nq","ct","cp","mau"];
+const HIDE=["hs","ct","cp","mau"];
 const CTL=["Thuê / cho thuê","Mua bán / cung cấp","Dịch vụ","Xây dựng / thi công","Lao động","Hợp tác / đầu tư","Vay / tín dụng","Bảo mật (NDA)","Khác"],CTS=["Chờ review","Đang review","Đã trả ý kiến","Đã ký"],CTR=["Chưa đánh giá","Thấp","Trung bình","Cao"];
 const MTL=["Họp HĐQT định kỳ","Họp HĐQT bất thường","Lấy ý kiến HĐQT bằng văn bản","ĐHĐCĐ thường niên","ĐHĐCĐ bất thường","Lấy ý kiến cổ đông bằng văn bản"];
 const MTS=["Dự kiến","Đã gửi thông báo","Đã họp","Hoãn / hủy"],BBS=["Chưa lập","Đã lập, chờ ký","Đã ký"],NQS=["Chưa thực hiện","Đang thực hiện","Đã hoàn thành","Hủy"];
@@ -2197,6 +2200,9 @@ const SEC={
        {k:"to",l:"Hiệu lực đến (để trống nếu còn hiệu lực)",t:"date"},
        {k:"uq",l:"Văn bản bổ nhiệm / ủy quyền (số, ngày)",full:1},
        {k:"dk",l:"Đăng ký thay đổi với cơ quan đăng ký",t:"sel",o:DKS},
+       {k:"mt_bat_dau",l:"Cuộc họp bổ nhiệm / bắt đầu (id trong Cuộc họp, nhiều id ngăn cách bằng dấu chấm phẩy)",full:1},
+       {k:"mt_ket_thuc",l:"Cuộc họp miễn nhiệm / kết thúc (id, ngăn cách bằng dấu chấm phẩy)",full:1},
+       {k:"do_chac",l:"Độ chắc của dữ liệu",t:"sel",o:["","chắc","cần xác nhận","trùng","thiếu"]},
        {k:"note",l:"Ghi chú",t:"area",full:1}]},
   own:{lab:"Sở hữu vốn",one:"dòng cổ đông",req:["co","holder"],
     key:o=>[o.co,o.holder,o.asof].map(norm).join("|"),
@@ -2461,13 +2467,13 @@ if(!nav||!$("vdash")){console.error("Module Pháp lý doanh nghiệp: không tì
 const tp=document.createElement("button");
 tp.id="tp";tp.textContent="Pháp lý doanh nghiệp";nav.appendChild(tp);
 const th2=document.createElement("button");th2.id="tphs";th2.textContent="Hồ sơ nộp Sở TC";nav.appendChild(th2);
-const th3=document.createElement("button");th3.id="tphop";th3.textContent="Họp HĐQT / ĐHĐCĐ";nav.appendChild(th3);
+const th3=document.createElement("button");th3.id="tphop";th3.textContent="HĐQT / ĐHĐCĐ";th3.style.display="none";nav.appendChild(th3);
 const th4=document.createElement("button");th4.id="tpct";th4.textContent="Hợp đồng";nav.appendChild(th4);
 const th5=document.createElement("button");th5.id="tpcp";th5.textContent="Tuân thủ";nav.appendChild(th5);
 const th6=document.createElement("button");th6.id="tpmau";th6.textContent="HĐ mẫu";nav.appendChild(th6);
 const vp=document.createElement("div");vp.id="vprof";vp.hidden=true;
-const VISTAB=["dash","tl","|","co","dl","dv","|","ds","|","hq","ppl","pos","uq","|","own","bo","|","vay"];
-vp.innerHTML=`<nav class="tabs" id="psub">${VISTAB.map(k=>k==="|"?'<span class="gsep"></span>':`<button data-s="${k}">${k==="dash"?"Tổng quan":k==="tl"?"Lịch sử":k==="hq"?"HĐQT":k==="rc"?"Đối soát hồ sơ":SEC[k].lab}</button>`).join("")}<span class="gsep"></span><button data-s="prj">Dự án</button><button data-s="pl">Pháp lý dự án, đất đai</button><button data-s="invx">Quy trình đầu tư KCN/CCN</button><button data-s="me">Thông tin của tôi</button><span style="margin-left:auto;display:flex;gap:6px;align-items:center;padding-left:12px"><button id="ppdf" class="primary">Xuất PDF mục này</button><button id="ppdfall">Xuất PDF toàn bộ</button></span></nav>
+const VISTAB=["dash","tl","|","co","dl","dv","|","ds","|","hq","mt","ppl","pos","uq","|","own","bo","|","vay"];
+vp.innerHTML=`<nav class="tabs" id="psub">${VISTAB.map(k=>k==="|"?'<span class="gsep"></span>':`<button data-s="${k}">${k==="dash"?"Tổng quan":k==="tl"?"Lịch sử":k==="hq"?"HĐQT và BKS":k==="mt"?"HĐQT / ĐHĐCĐ":k==="rc"?"Đối soát hồ sơ":SEC[k].lab}</button>`).join("")}<span class="gsep"></span><button data-s="prj">Dự án</button><button data-s="pl">Pháp lý dự án, đất đai</button><button data-s="invx">Quy trình đầu tư KCN/CCN</button><button data-s="me">Thông tin của tôi</button><span style="margin-left:auto;display:flex;gap:6px;align-items:center;padding-left:12px"><button id="ppdf" class="primary">Xuất PDF mục này</button><button id="ppdfall">Xuất PDF toàn bộ</button></span></nav>
 <div id="gcobar" class="gcobar"></div>
 <div id="pprint"></div>
 <section class="stats" id="pstats"></section>
@@ -2495,7 +2501,7 @@ document.body.appendChild(dlg);
 
 /* ---------- Điều hướng ---------- */
 function showProf(){
-  if(HIDE.includes(sec)||sec==="prj"||sec==="pl"||sec==="invx")sec="dash";
+  if(HIDE.includes(sec)||sec==="mt"||sec==="nq"||sec==="prj"||sec==="pl"||sec==="invx")sec="dash";
   view="prof";["vlist","vbud","vdash"].forEach(i=>$(i).hidden=true);vp.hidden=false;
   ["tl","tb","td"].forEach(i=>$(i).classList.remove("on"));th2.classList.remove("on");th3.classList.remove("on");th4.classList.remove("on");th5.classList.remove("on");th6.classList.remove("on");tp.classList.add("on");renderProf();
 }
@@ -2513,13 +2519,13 @@ function showMau(){
 }
 function showHop(){
   sec=mtTab==="nq"?"nq":"mt";view="prof";["vlist","vbud","vdash"].forEach(i=>$(i).hidden=true);vp.hidden=false;
-  ["tl","tb","td"].forEach(i=>$(i).classList.remove("on"));tp.classList.remove("on");th2.classList.remove("on");th3.classList.add("on");th4.classList.remove("on");th5.classList.remove("on");th6.classList.remove("on");$("pq").value="";renderProf();
+  ["tl","tb","td"].forEach(i=>$(i).classList.remove("on"));tp.classList.add("on");th2.classList.remove("on");th3.classList.remove("on");th4.classList.remove("on");th5.classList.remove("on");th6.classList.remove("on");$("pq").value="";renderProf();
 }
 function showHs(){
   sec="hs";view="prof";["vlist","vbud","vdash"].forEach(i=>$(i).hidden=true);vp.hidden=false;
   ["tl","tb","td"].forEach(i=>$(i).classList.remove("on"));tp.classList.remove("on");th3.classList.remove("on");th4.classList.remove("on");th5.classList.remove("on");th6.classList.remove("on");th2.classList.add("on");$("pq").value="";renderProf();
 }
-tp.onclick=showProf;th2.onclick=showHs;th3.onclick=showHop;th4.onclick=showCt;th5.onclick=showCp;th6.onclick=showMau;
+tp.onclick=showProf;th2.onclick=showHs;th3.onclick=()=>{hqMode="now";if(mtTab==="nq")mtTab="all";showHop()};th4.onclick=showCt;th5.onclick=showCp;th6.onclick=showMau;
 ["tl","tb","td"].forEach(i=>$(i).addEventListener("click",()=>{vp.hidden=true;tp.classList.remove("on");th2.classList.remove("on");th3.classList.remove("on");th4.classList.remove("on");th5.classList.remove("on");th6.classList.remove("on")}));
 const _render=render;
 render=function(){if(view==="prof")renderProf();else _render()};
@@ -2529,7 +2535,7 @@ $("csv").onclick=()=>{if(view==="prof"){if(sec==="tl"||sec==="hq"||sec==="rc")al
 const _cs=$("csave").onclick;
 $("csave").onclick=()=>{const p=CFG.prof;_cs();if(p){CFG.prof=p;saveC()}};
 window.__showPj=s=>{sec=s||"prj";view="prof";["vlist","vbud","vdash","vtc","vinv"].forEach(i=>{const e=document.getElementById(i);if(e)e.hidden=true});vp.hidden=false;["tl","tb","td"].forEach(i=>$(i).classList.remove("on"));[tp,th2,th3,th4,th5,th6].forEach(b=>b.classList.remove("on"));$("pq").value="";renderProf()};
-$("psub").onclick=e=>{const b=e.target.closest("[data-s]");if(!b)return;if(b.dataset.s==="invx"){if(window.__showInv)window.__showInv();return}sec=b.dataset.s;$("pq").value="";renderProf()};
+$("psub").onclick=e=>{const b=e.target.closest("[data-s]");if(!b)return;if(b.dataset.s==="invx"){if(window.__showInv)window.__showInv();return}sec=b.dataset.s;if(sec==="mt"){hqMode="now";if(mtTab==="nq")mtTab="all"}$("pq").value="";renderProf()};
 $("pq").addEventListener("input",renderProf);$("pfc").addEventListener("input",()=>{GCO=$("pfc").value;renderProf()});
 
 /* ---------- Hiển thị ---------- */
@@ -2566,7 +2572,7 @@ function renderProf(){
   if(sec==="rc")sec="dash";
   refreshLists();gcoBar();if([...$("pfc").options].some(o=>o.value===GCO))$("pfc").value=GCO;
   document.body.classList.toggle("pjmode",sec==="prj"||sec==="pl");{const ti=document.getElementById("tpinv");if(ti)ti.classList.toggle("on",sec==="prj"||sec==="pl");if(sec==="prj"||sec==="pl")tp.classList.remove("on")}
-  document.querySelectorAll("#psub [data-s]").forEach(b=>b.style.display=HIDE.includes(sec)?"none":"");vp.dataset.sec=sec;document.querySelectorAll("#psub button").forEach(b=>b.classList.toggle("on",b.dataset.s===sec));
+  document.querySelectorAll("#psub [data-s]").forEach(b=>b.style.display=HIDE.includes(sec)?"none":"");vp.dataset.sec=sec;document.querySelectorAll("#psub button").forEach(b=>b.classList.toggle("on",b.dataset.s===sec||(sec==="nq"&&b.dataset.s==="mt")));
   if(sec==="me"){$("pflt").hidden=true;$("pstats").hidden=true;rMe();return}
   if(sec==="tl"){$("pflt").hidden=true;$("pstats").hidden=true;rTl();return}
   if(sec==="rc"){$("pflt").hidden=false;$("pstats").hidden=false;$("pfc").hidden=false;["padd","padd2","pcol","pexpd","pimp","ptpl","pexp"].forEach(i=>$(i).hidden=true);try{rRc()}catch(err){console.error(err);$("plist").innerHTML='<div class="panel full warnp"><h3>⚠ Mục này không hiển thị được do lỗi dữ liệu hoặc mã</h3><p style="margin:6px 0">'+esc((err&&err.message)||err)+"</p></div>"}return}
@@ -2574,11 +2580,11 @@ function renderProf(){
   const dsh=sec==="dash";$("pflt").hidden=dsh;$("pstats").hidden=dsh;if(dsh){try{rDash()}catch(err){console.error(err);$("plist").innerHTML='<div class="panel full warnp" style="margin:0 0 12px"><h3>⚠ Mục này không hiển thị được do lỗi dữ liệu hoặc mã</h3><p style="margin:6px 0">Chụp màn hình dòng này gửi lại để sửa: <b>'+esc((err&&err.message)||err)+" | "+esc(String((err&&err.stack)||"").split("\n")[1]||"").trim()+"</b></p></div>"}return}
   const all=PD()[sec],q=$("pq").value.toLowerCase().trim(),c=$("pfc").value;
   $("pfc").hidden=false;$("padd").textContent="Thêm "+SEC[sec].one;$("ptpl").textContent=sec==="ds"?"Xuất docx":"Tải mẫu CSV";$("padd2").hidden=sec!=="ppl";$("pcol").hidden=$("pexpd").hidden=!(sec==="own"||sec==="pos");
-  document.querySelectorAll("#psub button").forEach(b=>b.classList.toggle("on",b.dataset.s===sec));
+  document.querySelectorAll("#psub button").forEach(b=>b.classList.toggle("on",b.dataset.s===sec||(sec==="nq"&&b.dataset.s==="mt")));
   const fk=sec==="co"?"code":"co";
   const posOf=n=>PD().pos.filter(p=>same(p.name,n));
   const r=all.filter(x=>(!c||(sec==="prj"?same(prjCo(x),c):sec==="ppl"?posOf(x.name).some(p=>same(p.co,c)):same(x[fk],c)))&&(!q||(Object.values(x).join(" ")+(sec==="ppl"?" "+posOf(x.name).map(p=>Object.values(p).join(" ")).join(" "):"")).toLowerCase().includes(q)));
-  try{({lt:rLt,ds:rDs,bc:rBc,co:rCo,dv:rDv,dl:rDl,uq:rUq,ppl:rPpl,pos:rPos,own:rOwn,bo:rBo,hs:rHs,mt:rMt,nq:rNq,ct:rCt,cp:rCp,prj:rPrj,pl:rPl,vay:rVay,mau:rMau})[sec](r,all)}
+  try{({lt:rLt,ds:rDs,bc:rBc,co:rCo,dv:rDv,dl:rDl,uq:rUq,ppl:rPpl,pos:rPos,own:rOwn,bo:rBo,hs:rHs,mt:rMtX,nq:rNqX,ct:rCt,cp:rCp,prj:rPrj,pl:rPl,vay:rVay,mau:rMau})[sec](r,all)}
   catch(err){console.error(err);$("plist").innerHTML='<div class="panel full warnp" style="margin:0 0 12px"><h3>⚠ Mục này không hiển thị được do lỗi dữ liệu hoặc mã</h3><p style="margin:6px 0">Chụp màn hình dòng này gửi lại để sửa: <b>'+esc((err&&err.message)||err)+" | "+esc(String((err&&err.stack)||"").split("\n")[1]||"").trim()+"</b></p></div>"}
 }
 
@@ -2638,6 +2644,47 @@ function rHq(){
   $("plist").innerHTML=h+`</tbody></table></div><small style="display:block;margin-top:8px;color:var(--mute)">Tab này tự tổng hợp từ mục Chức vụ; muốn sửa thì sửa ở mục Chức vụ. Công ty chưa có dòng nào nghĩa là chưa nhập chức vụ HĐQT trong hồ sơ.</small>`;
 }
 
+/* ===== Tab HĐQT / ĐHĐCĐ gộp: chế độ Hiện hành (người đang giữ chức) và Lịch sử họp ===== */
+let hqMode="now";const hqF={ns:false,uc:false};
+const hqIds=v=>String(v==null?"":v).split(/[;,\s]+/).filter(Boolean);
+const hqMtOf=id=>PD().mt.find(m=>String(m.id)===String(id));
+const hqUnconf=x=>{const c=norm(x.do_chac||"");return!!c&&c!=="chac"};
+const hqChac=v=>{v=String(v||"").trim();if(!v)return"";const k=norm(v),c=k==="chac"?"var(--ok)":/canxacnhan/.test(k)?"#b7791f":k==="trung"?"#6b5b95":k==="thieu"?"var(--seal)":"var(--mute)";return `<span class="hqc" style="--cc:${c}">${esc(v)}</span>`};
+const hqNote=t=>{t=String(t||"").trim();if(!t)return"";const o=t.replace(/\s+/g," ");return o.length<=70?`<small>${esc(o)}</small>`:`<details class="hqn"><summary>${esc(o.slice(0,70))}… <u>Chi tiết</u></summary>${esc(t)}</details>`};
+const hqPosOf=m=>PD().pos.filter(x=>hqIds(x.mt_bat_dau).includes(String(m.id))||hqIds(x.mt_ket_thuc).includes(String(m.id)));
+const hqPassM=m=>(!hqF.ns||(m.st==="Đã họp"&&m.bb!=="Đã ký"))&&(!hqF.uc||hqPosOf(m).some(hqUnconf));
+const hqPosBtn=m=>{const n=hqPosOf(m).length;return n?`<small class="s"><a href="#" data-hqpos="${esc(m.id)}">Chức vụ phát sinh (${n})</a></small>`:""};
+function hqPosRow(m){const L=hqPosOf(m);if(!L.length)return"";
+  return `<tr class="hqpr" data-hqr="${esc(m.id)}" hidden><td colspan="7"><table class="m"><thead><tr><th>Họ và tên</th><th>Pháp nhân</th><th>Vai trò</th><th>Phát sinh</th><th>Độ chắc</th></tr></thead><tbody>${L.map(x=>`<tr><td>${esc(x.name)}${hqNote(x.note)}</td><td>${chip(x.co)}</td><td>${esc(x.role)}<small class="s">${esc(x.title)}</small></td><td>${hqIds(x.mt_bat_dau).includes(String(m.id))?"Bổ nhiệm, bắt đầu":""}${hqIds(x.mt_ket_thuc).includes(String(m.id))?"Miễn nhiệm, kết thúc":""}</td><td>${hqChac(x.do_chac)}</td></tr>`).join("")}</tbody></table></td></tr>`}
+function hqBar(){const b=(k,t)=>`<button data-hqm="${k}"${hqMode===k?' class="on"':""}>${t}</button>`;
+  return `<nav class="hsn">${b("now","Hiện hành")}${b("hist","Lịch sử họp")}<span style="margin-left:auto;display:flex;gap:14px;flex-wrap:wrap;font-size:13px"><label><input type="checkbox" data-hqf="ns"${hqF.ns?" checked":""}> Chỉ hiện chưa có bản ký</label><label><input type="checkbox" data-hqf="uc"${hqF.uc?" checked":""}> Chỉ hiện chưa xác nhận</label></span></nav>`}
+function hqBasis(x){return hqIds(x.mt_bat_dau).map(id=>{const m=hqMtOf(id);return m?`<div><a href="#" data-hqgo="${esc(id)}">${esc((m.loai||"")+(m.ngay?" "+fmt(m.ngay):""))}</a>${m.lk?" "+lkA(m.lk,"Biên bản"):""}${m.st==="Đã họp"&&m.bb!=="Đã ký"?' <small class="wn1">chưa có bản ký</small>':""}</div>`:`<div><small class="s">${esc(id)} (không thấy cuộc họp)</small></div>`}).join("")}
+function rHqNow(){
+  const t0=today(),q=$("pq").value.toLowerCase().trim();
+  ["padd","padd2","pcol","pexpd","pimp","ptpl","pexp"].forEach(i=>$(i).hidden=true);
+  const isH=x=>/HĐQT|Hội đồng quản trị/i.test((x.role||"")+" "+(x.title||"")),isK=x=>/kiểm soát|BKS/i.test((x.role||"")+" "+(x.title||""));
+  const base=PD().pos.filter(x=>(isH(x)||isK(x))&&activeP(x,t0)&&gcf(x));
+  const nosign=x=>unsgTag(x)!==""||hqIds(x.mt_bat_dau).some(id=>{const m=hqMtOf(id);return !m||(m.st==="Đã họp"&&m.bb!=="Đã ký")});
+  const r=base.filter(x=>(!q||Object.values(x).join(" ").toLowerCase().includes(q))&&(!hqF.ns||nosign(x))&&(!hqF.uc||hqUnconf(x)));
+  $("pstats").innerHTML=st([...new Set(base.map(x=>norm(x.co)))].length,"Công ty có HĐQT, BKS đang hiệu lực")+st(base.filter(isH).length,"Thành viên HĐQT")+st(base.filter(x=>!isH(x)&&isK(x)).length,"Kiểm soát viên")+st(base.filter(hqUnconf).length,"Chưa xác nhận",base.some(hqUnconf)?"late":"")+st(base.filter(nosign).length,"Chưa có bản ký",base.some(nosign)?"late":"");
+  if(!r.length){$("plist").innerHTML=hqBar()+`<div class="empty">${base.length?"Không có chức vụ nào khớp bộ lọc.":"Chưa có chức vụ HĐQT hoặc Ban kiểm soát đang hiệu lực. Nhập ở mục Chức vụ."}</div>`;return}
+  const ord=x=>/Chủ tịch/i.test(x.role+" "+x.title)?0:/Trưởng/i.test(x.role+" "+x.title)?1:2;
+  const gs=[...new Set(r.map(x=>x.co))].sort((a,b)=>ci(a)-ci(b)||String(a).localeCompare(String(b)));
+  const row=x=>{const m0=hqIds(x.mt_bat_dau).map(hqMtOf).find(Boolean);return `<tr><td class="t"><b>${esc(x.name)}</b>${hqNote(x.note)}</td><td>${esc(x.role)}<small class="s">${esc(x.title)}</small></td><td>${x.from?fmt(x.from):m0&&m0.ngay?fmt(m0.ngay)+'<small class="s">theo cuộc họp</small>':"…"}</td><td>${hqBasis(x)||esc(x.uq)}</td><td>${hqChac(x.do_chac)}</td></tr>`};
+  const blk=(rs,lab)=>rs.length?`<tr><td colspan="5" style="font-weight:600;background:var(--bg2,rgba(127,127,127,.06))">${lab} (${rs.length})</td></tr>`+[...rs].sort((a,b)=>ord(a)-ord(b)||String(a.name).localeCompare(String(b.name),"vi")).map(row).join(""):"";
+  let h=`<div style="overflow-x:auto"><table class="m" style="min-width:680px"><thead><tr><th>Họ và tên</th><th>Vai trò, chức danh</th><th>Hiệu lực từ</th><th>Căn cứ</th><th>Độ chắc</th></tr></thead><tbody>`;
+  gs.forEach(g=>{const rs=r.filter(x=>same(x.co,g));h+=`<tr class="tot g ${cx(g)}"><td colspan="5">${chip(g)}</td></tr>`+blk(rs.filter(isH),"Hội đồng quản trị")+blk(rs.filter(x=>!isH(x)&&isK(x)),"Ban kiểm soát")});
+  $("plist").innerHTML=hqBar()+h+`</tbody></table></div><small style="display:block;margin-top:8px;color:var(--mute)">Chỉ hiện người đang giữ chức, tổng hợp từ mục Chức vụ. Cột Căn cứ lấy từ cuộc họp gắn trong cột mt_bat_dau của chức vụ; bấm vào để xem cuộc họp ở chế độ Lịch sử họp.</small>`}
+function rMtX(r,a){if(sec==="nq")hqMode="hist";if(hqMode==="now"){rHqNow();return}["padd","pimp","ptpl","pexp"].forEach(i=>$(i).hidden=false);rMt(r,a);$("plist").innerHTML=hqBar()+$("plist").innerHTML}
+function rNqX(r,a){hqMode="hist";["padd","pimp","ptpl","pexp"].forEach(i=>$(i).hidden=false);rNq(r,a);$("plist").innerHTML=hqBar()+$("plist").innerHTML}
+$("plist").addEventListener("click",e=>{
+  const m=e.target.closest("[data-hqm]");if(m){e.stopPropagation();hqMode=m.dataset.hqm;if(hqMode==="now"&&sec==="nq")sec="mt";renderProf();return}
+  const p=e.target.closest("[data-hqpos]");if(p){e.preventDefault();e.stopPropagation();const r=$("plist").querySelector('tr[data-hqr="'+p.dataset.hqpos+'"]');if(r)r.hidden=!r.hidden;return}
+  const g=e.target.closest("[data-hqgo]");if(g){e.preventDefault();e.stopPropagation();const id=g.dataset.hqgo;hqMode="hist";mtTab="mt";sec="mt";hqF.ns=hqF.uc=false;renderProf();
+    setTimeout(()=>{const tr=document.querySelector('#plist tr[data-id="'+id+'"]');if(tr){const x=$("plist").querySelector('tr[data-hqr="'+id+'"]');if(x)x.hidden=false;tr.classList.add("flash");tr.scrollIntoView({block:"center",behavior:"smooth"});setTimeout(()=>tr.classList.remove("flash"),2600)}},60)}
+},true);
+$("plist").addEventListener("change",e=>{const f=e.target.closest("[data-hqf]");if(f){e.stopPropagation();hqF[f.dataset.hqf]=f.checked;renderProf()}},true);
+
 /* ===== bấm vào cảnh báo để nhảy đúng tab, đúng công ty, đúng dòng cần xem ===== */
 const wSecOf=t=>{t=String(t||"");return /CSHHL|chủ sở hữu hưởng lợi/i.test(t)?"bo":/góp|cổ đông|cổ phần|sở hữu vốn|cơ cấu sở hữu/i.test(t)?"own":/Điều lệ/i.test(t)?"dl":/NĐDPL|HĐQT|BKS|Ban kiểm soát|Chủ tịch|Tổng Giám đốc|ủy quyền|thành viên/i.test(t)?"pos":/hồ sơ nộp|đăng ký/i.test(t)?"hs":"co"};
 function warnRec(s,co,t){
@@ -2648,7 +2695,7 @@ function warnRec(s,co,t){
 function warnGo(s,co,t){
   if(s==="nld"||s==="inv"){const b=[...document.querySelectorAll("nav button, .tabs button")].find(x=>s==="nld"?/Người lao động/.test(x.textContent):/^Đầu tư/.test(x.textContent.trim()));if(b){b.click();return}}
   const cs=COS(),top={hs:showHs,ct:showCt,cp:showCp,mau:showMau};
-  if(s==="mt"||s==="nq"){mtTab=s==="nq"?"nq":(mtTab==="nq"?"all":mtTab);showHop()}else if(top[s])top[s]();else{sec=s;showProf()}
+  if(s==="mt"||s==="nq"){hqMode="hist";mtTab=s==="nq"?"nq":(mtTab==="nq"?"all":mtTab);showHop()}else if(top[s])top[s]();else{sec=s;showProf()}
   GCO=cs.some(c=>same(c,co))?co:"";
   const r=warnRec(s,GCO,t);$("pq").value=r.kw||(s==="ppl"||s==="prj"?co:"");
   if(s==="ppl"||s==="prj")GCO="";
@@ -2763,7 +2810,7 @@ function rDash(){
   /* dự án */
   const pJ=`<div class="panel"><h3>Dự án (${d.prj.length})</h3>${d.prj.length?d.prj.map(x=>`<div style="padding:6px 0;border-bottom:1px solid var(--line)"><b>${esc(x.name)}</b><br><small style="color:var(--mute)">${[x.owner?"CĐT: "+esc(x.owner):"",x.dt!==""&&x.dt!=null?"đất "+nf(x.dt)+" m²":"",x.tvdt?"vốn đầu tư "+bil(x.tvdt):"","việc đang xử lý: "+op(x)].filter(Boolean).join(" | ")}</small></div>`).join(""):'<small style="color:var(--mute)">Chưa có dự án.</small>'}</div>`;
   const upM=d.mt.filter(m=>m.st!=="Đã họp"&&m.st!=="Hoãn / hủy"&&m.ngay>=t0).sort((a,b)=>a.ngay.localeCompare(b.ngay)).slice(0,6),openNq=d.nq.filter(n=>n.st!=="Đã hoàn thành"&&n.st!=="Hủy");
-  const pM=`<div class="panel full"><h3>Họp HĐQT / ĐHĐCĐ và nghị quyết đang thực hiện</h3>${upM.length?upM.map(m=>`<div class="act" style="cursor:pointer" data-wgo="mt" data-wc="${esc(m.co)}" data-wt="${esc(m.ten||m.loai)}"><span class="d">${chip(m.co)}</span><span>${esc(m.ten||m.loai)} <small style="color:var(--mute)">${esc(m.loai)}</small></span><span style="margin-left:auto;white-space:nowrap">${fmt(m.ngay)} (còn ${dDiff(t0,m.ngay)} ngày)</span></div>`).join(""):'<small style="color:var(--mute)">Chưa có cuộc họp sắp tới.</small>'}<div style="margin-top:6px"><small style="color:var(--mute)">Nghị quyết đang thực hiện: ${openNq.length}${openNq.filter(n=>n.han&&n.han<t0).length?` | <b class="late-d">quá hạn: ${openNq.filter(n=>n.han&&n.han<t0).length}</b>`:""}</small></div></div>`;
+  const pM=`<div class="panel full"><h3>HĐQT / ĐHĐCĐ và nghị quyết đang thực hiện</h3>${upM.length?upM.map(m=>`<div class="act" style="cursor:pointer" data-wgo="mt" data-wc="${esc(m.co)}" data-wt="${esc(m.ten||m.loai)}"><span class="d">${chip(m.co)}</span><span>${esc(m.ten||m.loai)} <small style="color:var(--mute)">${esc(m.loai)}</small></span><span style="margin-left:auto;white-space:nowrap">${fmt(m.ngay)} (còn ${dDiff(t0,m.ngay)} ngày)</span></div>`).join(""):'<small style="color:var(--mute)">Chưa có cuộc họp sắp tới.</small>'}<div style="margin-top:6px"><small style="color:var(--mute)">Nghị quyết đang thực hiện: ${openNq.length}${openNq.filter(n=>n.han&&n.han<t0).length?` | <b class="late-d">quá hạn: ${openNq.filter(n=>n.han&&n.han<t0).length}</b>`:""}</small></div></div>`;
   const cdn=d.ct.filter(h=>h.st==="Đã trả ý kiến"||h.st==="Đã ký"),cop=d.ct.filter(h=>!(h.st==="Đã trả ý kiến"||h.st==="Đã ký")),cex=d.ct.filter(h=>h.hh&&h.st!=="Chờ review"&&dDiff(t0,h.hh)<=60);
   const pC=`<div class="panel full"><h3>Hợp đồng review (${d.ct.length})</h3>${d.ct.length?`<small>Đã trả ý kiến: <b>${cdn.length}</b> | Chờ / đang review: <b>${cop.length}</b>${cop.some(h=>h.hen&&h.hen<t0)?` | <b class="late-d">quá hạn: ${cop.filter(h=>h.hen&&h.hen<t0).length}</b>`:""} | Rủi ro cao: <b>${d.ct.filter(h=>h.rr==="Cao").length}</b> | Sắp hết hạn (60 ngày): <b>${cex.length}</b></small>`:'<small style="color:var(--mute)">Chưa có hợp đồng nào.</small>'}</div>`;
   const K=`<div class="panel full"><div class="kpis">${kpi(cos.length,"Pháp nhân")}${kpi(bil(sum(d.co,"vdl")),"Tổng vốn điều lệ")}${kpi(bil(sum(d.co,"vtg")),"Tổng vốn thực góp")}${kpi(new Set(act.map(x=>norm(x.name))).size,"Nhân sự đang giữ chức vụ")}${kpi(nBO,"Chủ sở hữu hưởng lợi (cá nhân)")}${kpi(d.prj.length,"Dự án")}${kpi(bil(sum(d.prj,"tvdt")),"Tổng vốn đầu tư dự án")}${kpi(DKI.filter(i=>i.dk===IP).length,"Đang đăng ký với CQNN")}${kpi(W.length,"Cảnh báo",W.length?"late":"")}</div></div>`;
@@ -4349,8 +4396,9 @@ function rMt(r,all){
   $("pstats").innerHTML=st(all.length,"Cuộc họp ghi nhận")+st(all.filter(m=>m.st==="Đã họp").length,"Đã họp")+st(up.length,"Sắp diễn ra")+st(Nq.filter(n=>n.st!=="Đã hoàn thành"&&n.st!=="Hủy").length,"Nghị quyết đang thực hiện")+st(gaps.filter(g=>g.h).length,"Cảnh báo cần xử lý",gaps.some(g=>g.h)?"late":"");
   let body;
   if(mtTab==="nq"){rNq(r,Nq);return}
-  const lst=list=>list.length?`<table class="m"><thead><tr><th>Doanh nghiệp</th><th>Cuộc họp</th><th>Ngày giờ</th><th>Thông báo</th><th>Dự họp</th><th>Biên bản</th><th>Tình trạng</th></tr></thead><tbody>${[...list].sort((a,b)=>String(b.ngay||"").localeCompare(String(a.ngay||""))).map(m=>{const w=mtChecks(m).filter(x=>x.h).length,n=Nq.filter(q=>q.mt===mtTitle(m)).length;
-    return `<tr data-id="${m.id}"><td>${chip(m.co)}</td><td class="t">${esc(m.ten||m.loai)}<small>${esc(m.loai)}${m.lan&&isGM(m.loai)?" - "+esc(m.lan):""}</small>${n?`<small class="s">${n} nghị quyết</small>`:""}</td><td>${m.ngay?fmt(m.ngay):""}${m.gio?" "+esc(m.gio):""}</td><td>${m.tb?fmt(m.tb):'<span style="color:var(--mute)">-</span>'}</td><td>${isGM(m.loai)?(m.cpdh!==""&&m.cpdh!=null?nf(m.cpdh)+"% CP":""):(m.tv?(m.dh!==""&&m.dh!=null?m.dh:"?")+"/"+m.tv:"")}</td><td>${m.st==="Đã họp"?(m.bb==="Đã ký"?'<span style="color:var(--ok)">Đã ký</span>':'<span class="wn1">⚠ '+esc(m.bb||"Chưa lập")+"</span>"):esc(m.bb||"")}</td><td>${mtSt(m)}${w?` <span class="wn1">⚠ ${w}</span>`:""}</td></tr>`}).join("")}</tbody></table>`:`<div class="empty" style="margin:8px 0">Chưa có cuộc họp nào. Bấm "Thêm cuộc họp".</div>`;
+  const lst0=list=>list.length?`<table class="m"><thead><tr><th>Doanh nghiệp</th><th>Cuộc họp</th><th>Ngày giờ</th><th>Thông báo</th><th>Dự họp</th><th>Biên bản</th><th>Tình trạng</th></tr></thead><tbody>${[...list].sort((a,b)=>String(b.ngay||"").localeCompare(String(a.ngay||""))).map(m=>{const w=mtChecks(m).filter(x=>x.h).length,n=Nq.filter(q=>q.mt===mtTitle(m)).length;
+    return `<tr data-id="${m.id}"><td>${chip(m.co)}</td><td class="t">${esc(m.ten||m.loai)}<small>${esc(m.loai)}${m.lan&&isGM(m.loai)?" - "+esc(m.lan):""}</small>${n?`<small class="s">${n} nghị quyết</small>`:""}${hqPosBtn(m)}</td><td>${m.ngay?fmt(m.ngay):""}${m.gio?" "+esc(m.gio):""}</td><td>${m.tb?fmt(m.tb):'<span style="color:var(--mute)">-</span>'}</td><td>${isGM(m.loai)?(m.cpdh!==""&&m.cpdh!=null?nf(m.cpdh)+"% CP":""):(m.tv?(m.dh!==""&&m.dh!=null?m.dh:"?")+"/"+m.tv:"")}</td><td>${m.st==="Đã họp"?(m.bb==="Đã ký"?'<span style="color:var(--ok)">Đã ký</span>':'<span class="wn1">⚠ '+esc(m.bb||"Chưa lập")+"</span>"):esc(m.bb||"")}</td><td>${mtSt(m)}${w?` <span class="wn1">⚠ ${w}</span>`:""}</td></tr>${hqPosRow(m)}`}).join("")}</tbody></table>`:`<div class="empty" style="margin:8px 0">${hqF.ns||hqF.uc?"Không có cuộc họp nào khớp bộ lọc.":'Chưa có cuộc họp nào. Bấm "Thêm cuộc họp".'}</div>`;
+  const lst=list=>lst0(list.filter(hqPassM));
   if(mtTab==="mt")body=`<h3 class="hsh">Danh sách cuộc họp</h3>${lst(r)}`;
   else{
     const rows=cos.map(c=>{const mine=all.filter(m=>same(m.co,c)),last=[...mine].filter(m=>m.st==="Đã họp").sort((a,b)=>b.ngay.localeCompare(a.ngay))[0],nx=[...mine].filter(m=>m.st!=="Đã họp"&&m.st!=="Hoãn / hủy"&&m.ngay>=t0).sort((a,b)=>a.ngay.localeCompare(b.ngay))[0],ws=gaps.filter(g=>g.h&&same(g.c,c)).length,nqo=Nq.filter(n=>same(n.co,c)&&n.st!=="Đã hoàn thành"&&n.st!=="Hủy").length;

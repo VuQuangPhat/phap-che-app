@@ -2006,6 +2006,7 @@ body.pjmode #psub button[data-s]:not([data-s=prj]):not([data-s=pl]):not([data-s=
 #vprof .pjh{margin:12px 0 4px;font-size:12px;letter-spacing:.03em;text-transform:uppercase;color:var(--mute)}
 #vprof .pjw{overflow-x:auto}#vprof details.pjg>summary small{margin-left:6px}#vprof .pjn{color:var(--mute);font-weight:400}#vprof .hqc{display:inline-block;padding:0 9px;border-radius:99px;font-weight:600;font-size:12.5px;line-height:1.7;color:var(--ink);background:color-mix(in srgb,var(--cc) 14%,var(--card));border:1px solid color-mix(in srgb,var(--cc) 55%,var(--card));white-space:nowrap}
 #vprof details.hqn{font-size:12.5px;color:var(--mute)}#vprof details.hqn>summary{cursor:pointer;list-style:none}#vprof details.hqn>summary u{color:var(--brand)}
+#vprof td.hqw{background:color-mix(in srgb,var(--warn,#b7791f) 10%,var(--card));font-size:12.5px;color:var(--ink)}
 #vprof tr.hqpr>td{background:var(--bg);padding:8px 14px}
 #vprof table.pjk{width:100%;border-collapse:collapse;font-size:13px;margin:4px 0}
 #vprof table.pjk th,#vprof table.pjk td{text-align:left;padding:5px 8px;border:1px solid var(--line);vertical-align:top}
@@ -2203,6 +2204,7 @@ const SEC={
        {k:"mt_bat_dau",l:"Cuộc họp bổ nhiệm / bắt đầu (id trong Cuộc họp, nhiều id ngăn cách bằng dấu chấm phẩy)",full:1},
        {k:"mt_ket_thuc",l:"Cuộc họp miễn nhiệm / kết thúc (id, ngăn cách bằng dấu chấm phẩy)",full:1},
        {k:"do_chac",l:"Độ chắc của dữ liệu",t:"sel",o:["","chắc","cần xác nhận","trùng","thiếu"]},
+       {k:"nhiem_ky",l:"Nhiệm kỳ (dạng 2025-2030)"},
        {k:"note",l:"Ghi chú",t:"area",full:1}]},
   own:{lab:"Sở hữu vốn",one:"dòng cổ đông",req:["co","holder"],
     key:o=>[o.co,o.holder,o.asof].map(norm).join("|"),
@@ -2645,38 +2647,55 @@ function rHq(){
 }
 
 /* ===== Tab HĐQT / ĐHĐCĐ gộp: chế độ Hiện hành (người đang giữ chức) và Lịch sử họp ===== */
-let hqMode="now";const hqF={ns:false,uc:false};
+let hqMode="now";const hqF={ns:false,uc:false,tr:false,ex:false};
 const hqIds=v=>String(v==null?"":v).split(/[;,\s]+/).filter(Boolean);
 const hqMtOf=id=>PD().mt.find(m=>String(m.id)===String(id));
 const hqUnconf=x=>{const c=norm(x.do_chac||"");return!!c&&c!=="chac"};
+const hqTrung=x=>norm(x.do_chac||"")==="trung";
+const hqRoleH=x=>["chutichhdqt","thanhvienhdqt"].includes(norm(x.role)),hqRoleK=x=>["kiemsoatvien","truongbankiemsoat"].includes(norm(x.role));
+const hqNk=x=>{const m=String(x.nhiem_ky||"").match(/(\d{4})\s*[-–]\s*(\d{4})/);return m?{a:+m[1],b:+m[2]}:null};
+const hqEnded=(x,t0)=>!!((x.to&&x.to<t0)||(hqNk(x)&&hqNk(x).b+"-12-31"<t0));
+const hqPend=x=>/chờ/i.test(x.note||"")||/canxacnhan/.test(norm(x.do_chac||""));
 const hqChac=v=>{v=String(v||"").trim();if(!v)return"";const k=norm(v),c=k==="chac"?"var(--ok)":/canxacnhan/.test(k)?"#b7791f":k==="trung"?"#6b5b95":k==="thieu"?"var(--seal)":"var(--mute)";return `<span class="hqc" style="--cc:${c}">${esc(v)}</span>`};
 const hqNote=t=>{t=String(t||"").trim();if(!t)return"";const o=t.replace(/\s+/g," ");return o.length<=70?`<small>${esc(o)}</small>`:`<details class="hqn"><summary>${esc(o.slice(0,70))}… <u>Chi tiết</u></summary>${esc(t)}</details>`};
-const hqPosOf=m=>PD().pos.filter(x=>hqIds(x.mt_bat_dau).includes(String(m.id))||hqIds(x.mt_ket_thuc).includes(String(m.id)));
+const hqWKey=n=>{const m=String(n||"").match(/CHƯA XÁC MINH:[^;.]*/);return m?m[0].trim():""};
+const hqStrip=(n,keys)=>{let t=String(n||"");keys.forEach(k=>{t=t.split(k).join("")});return t.replace(/\s{2,}/g," ").replace(/([.!?])\s*[;,]\s*/g,"$1 ").replace(/^[\s;.,]+|[\s;,]+$/g,"")};
+const hqPosOf=m=>PD().pos.filter(x=>(hqF.tr||!hqTrung(x))&&(hqIds(x.mt_bat_dau).includes(String(m.id))||hqIds(x.mt_ket_thuc).includes(String(m.id))));
 const hqPassM=m=>(!hqF.ns||(m.st==="Đã họp"&&m.bb!=="Đã ký"))&&(!hqF.uc||hqPosOf(m).some(hqUnconf));
 const hqPosBtn=m=>{const n=hqPosOf(m).length;return n?`<small class="s"><a href="#" data-hqpos="${esc(m.id)}">Chức vụ phát sinh (${n})</a></small>`:""};
 function hqPosRow(m){const L=hqPosOf(m);if(!L.length)return"";
   return `<tr class="hqpr" data-hqr="${esc(m.id)}" hidden><td colspan="7"><table class="m"><thead><tr><th>Họ và tên</th><th>Pháp nhân</th><th>Vai trò</th><th>Phát sinh</th><th>Độ chắc</th></tr></thead><tbody>${L.map(x=>`<tr><td>${esc(x.name)}${hqNote(x.note)}</td><td>${chip(x.co)}</td><td>${esc(x.role)}<small class="s">${esc(x.title)}</small></td><td>${hqIds(x.mt_bat_dau).includes(String(m.id))?"Bổ nhiệm, bắt đầu":""}${hqIds(x.mt_ket_thuc).includes(String(m.id))?"Miễn nhiệm, kết thúc":""}</td><td>${hqChac(x.do_chac)}</td></tr>`).join("")}</tbody></table></td></tr>`}
-function hqBar(){const b=(k,t)=>`<button data-hqm="${k}"${hqMode===k?' class="on"':""}>${t}</button>`;
-  return `<nav class="hsn">${b("now","Hiện hành")}${b("hist","Lịch sử họp")}<span style="margin-left:auto;display:flex;gap:14px;flex-wrap:wrap;font-size:13px"><label><input type="checkbox" data-hqf="ns"${hqF.ns?" checked":""}> Chỉ hiện chưa có bản ký</label><label><input type="checkbox" data-hqf="uc"${hqF.uc?" checked":""}> Chỉ hiện chưa xác nhận</label></span></nav>`}
-function hqBasis(x){return hqIds(x.mt_bat_dau).map(id=>{const m=hqMtOf(id);return m?`<div><a href="#" data-hqgo="${esc(id)}">${esc((m.loai||"")+(m.ngay?" "+fmt(m.ngay):""))}</a>${m.lk?" "+lkA(m.lk,"Biên bản"):""}${m.st==="Đã họp"&&m.bb!=="Đã ký"?' <small class="wn1">chưa có bản ký</small>':""}</div>`:`<div><small class="s">${esc(id)} (không thấy cuộc họp)</small></div>`}).join("")}
+function hqBar(){const b=(k,t)=>`<button data-hqm="${k}"${hqMode===k?' class="on"':""}>${t}</button>`,c=(k,t)=>`<label><input type="checkbox" data-hqf="${k}"${hqF[k]?" checked":""}> ${t}</label>`,nt=PD().pos.filter(hqTrung).length;
+  return `<nav class="hsn">${b("now","Hiện hành")}${b("hist","Lịch sử họp")}<span style="margin-left:auto;display:flex;gap:6px 14px;flex-wrap:wrap;font-size:13px">${c("ns","Chỉ hiện chưa có bản ký")}${c("uc","Chỉ hiện chưa xác nhận")}${hqMode==="now"?c("ex","Hiện cả đã hết hiệu lực"):""}${nt?c("tr","Hiện dòng trùng ("+nt+")"):""}</span></nav>`}
+function hqBad(){const bad=[];PD().pos.forEach(x=>["mt_bat_dau","mt_ket_thuc"].forEach(k=>hqIds(x[k]).forEach(id=>{if(!hqMtOf(id))bad.push(esc(x.name)+" ("+esc(x.co)+", "+k+"): "+esc(id))})));
+  return bad.length?`<div class="panel full warnp" style="margin:0 0 12px"><h3>⚠ ${bad.length} id cuộc họp không có trong mục Cuộc họp (prof_mt)</h3><small>${bad.join("<br>")}</small></div>`:""}
+function hqBasis(x){const e=hqIds(x.mt_ket_thuc).map(id=>{const m=hqMtOf(id);return m?`<div class="s">Kết thúc: <a href="#" data-hqgo="${esc(id)}">${esc((m.loai||"")+(m.ngay?" "+fmt(m.ngay):""))}</a></div>`:""}).join("");
+  const a=hqIds(x.mt_bat_dau).map(id=>{const m=hqMtOf(id);return m?`<div><a href="#" data-hqgo="${esc(id)}">${esc((m.loai||"")+(m.ngay?" "+fmt(m.ngay):""))}</a>${m.lk?" "+lkA(m.lk,"Biên bản"):""}${m.st==="Đã họp"&&m.bb!=="Đã ký"?' <small class="wn1">chưa có bản ký</small>':""}</div>`:`<div><small class="s">${esc(id)} (không thấy cuộc họp)</small></div>`}).join("");
+  return a+e}
 function rHqNow(){
   const t0=today(),q=$("pq").value.toLowerCase().trim();
   ["padd","padd2","pcol","pexpd","pimp","ptpl","pexp"].forEach(i=>$(i).hidden=true);
-  const isH=x=>/HĐQT|Hội đồng quản trị/i.test((x.role||"")+" "+(x.title||"")),isK=x=>/kiểm soát|BKS/i.test((x.role||"")+" "+(x.title||""));
-  const base=PD().pos.filter(x=>(isH(x)||isK(x))&&activeP(x,t0)&&gcf(x));
+  const roleOk=x=>hqRoleH(x)||hqRoleK(x);
+  const pool=PD().pos.filter(x=>roleOk(x)&&gcf(x)&&!hqTrung(x));
+  const act=x=>!hqEnded(x,t0)&&(!x.from||x.from<=t0);
   const nosign=x=>unsgTag(x)!==""||hqIds(x.mt_bat_dau).some(id=>{const m=hqMtOf(id);return !m||(m.st==="Đã họp"&&m.bb!=="Đã ký")});
-  const r=base.filter(x=>(!q||Object.values(x).join(" ").toLowerCase().includes(q))&&(!hqF.ns||nosign(x))&&(!hqF.uc||hqUnconf(x)));
-  $("pstats").innerHTML=st([...new Set(base.map(x=>norm(x.co)))].length,"Công ty có HĐQT, BKS đang hiệu lực")+st(base.filter(isH).length,"Thành viên HĐQT")+st(base.filter(x=>!isH(x)&&isK(x)).length,"Kiểm soát viên")+st(base.filter(hqUnconf).length,"Chưa xác nhận",base.some(hqUnconf)?"late":"")+st(base.filter(nosign).length,"Chưa có bản ký",base.some(nosign)?"late":"");
-  if(!r.length){$("plist").innerHTML=hqBar()+`<div class="empty">${base.length?"Không có chức vụ nào khớp bộ lọc.":"Chưa có chức vụ HĐQT hoặc Ban kiểm soát đang hiệu lực. Nhập ở mục Chức vụ."}</div>`;return}
-  const ord=x=>/Chủ tịch/i.test(x.role+" "+x.title)?0:/Trưởng/i.test(x.role+" "+x.title)?1:2;
+  const list=PD().pos.filter(x=>roleOk(x)&&gcf(x)&&(hqF.tr||!hqTrung(x))&&(hqF.ex||hqTrung(x)||act(x)));
+  const r=list.filter(x=>(!q||Object.values(x).join(" ").toLowerCase().includes(q))&&(!hqF.ns||nosign(x))&&(!hqF.uc||hqUnconf(x)));
+  const A=pool.filter(act);
+  $("pstats").innerHTML=st([...new Set(A.filter(hqRoleH).map(x=>norm(x.co)))].length,"Công ty có HĐQT đang hiệu lực")+st(A.filter(hqRoleH).length,"Thành viên HĐQT")+st(A.filter(hqRoleK).length,"Kiểm soát viên")+st(pool.filter(x=>hqEnded(x,t0)).length,"Đã hết hiệu lực")+st(A.filter(hqUnconf).length,"Chưa xác nhận",A.some(hqUnconf)?"late":"");
+  if(!r.length){$("plist").innerHTML=hqBar()+hqBad()+`<div class="empty">${list.length?"Không có chức vụ nào khớp bộ lọc.":"Chưa có chức vụ HĐQT hoặc Ban kiểm soát đang hiệu lực. Nhập ở mục Chức vụ, vai trò Chủ tịch HĐQT, Thành viên HĐQT, Kiểm soát viên, Trưởng Ban kiểm soát."}</div>`;return}
+  const ord=x=>/Chủ tịch/i.test(x.role)?0:/Trưởng/i.test(x.role)?1:2;
   const gs=[...new Set(r.map(x=>x.co))].sort((a,b)=>ci(a)-ci(b)||String(a).localeCompare(String(b)));
-  const row=x=>{const m0=hqIds(x.mt_bat_dau).map(hqMtOf).find(Boolean);return `<tr><td class="t"><b>${esc(x.name)}</b>${hqNote(x.note)}</td><td>${esc(x.role)}<small class="s">${esc(x.title)}</small></td><td>${x.from?fmt(x.from):m0&&m0.ngay?fmt(m0.ngay)+'<small class="s">theo cuộc họp</small>':"…"}</td><td>${hqBasis(x)||esc(x.uq)}</td><td>${hqChac(x.do_chac)}</td></tr>`};
-  const blk=(rs,lab)=>rs.length?`<tr><td colspan="5" style="font-weight:600;background:var(--bg2,rgba(127,127,127,.06))">${lab} (${rs.length})</td></tr>`+[...rs].sort((a,b)=>ord(a)-ord(b)||String(a.name).localeCompare(String(b.name),"vi")).map(row).join(""):"";
-  let h=`<div style="overflow-x:auto"><table class="m" style="min-width:680px"><thead><tr><th>Họ và tên</th><th>Vai trò, chức danh</th><th>Hiệu lực từ</th><th>Căn cứ</th><th>Độ chắc</th></tr></thead><tbody>`;
-  gs.forEach(g=>{const rs=r.filter(x=>same(x.co,g));h+=`<tr class="tot g ${cx(g)}"><td colspan="5">${chip(g)}</td></tr>`+blk(rs.filter(isH),"Hội đồng quản trị")+blk(rs.filter(x=>!isH(x)&&isK(x)),"Ban kiểm soát")});
-  $("plist").innerHTML=hqBar()+h+`</tbody></table></div><small style="display:block;margin-top:8px;color:var(--mute)">Chỉ hiện người đang giữ chức, tổng hợp từ mục Chức vụ. Cột Căn cứ lấy từ cuộc họp gắn trong cột mt_bat_dau của chức vụ; bấm vào để xem cuộc họp ở chế độ Lịch sử họp.</small>`}
-function rMtX(r,a){if(sec==="nq")hqMode="hist";if(hqMode==="now"){rHqNow();return}["padd","pimp","ptpl","pexp"].forEach(i=>$(i).hidden=false);rMt(r,a);$("plist").innerHTML=hqBar()+$("plist").innerHTML}
-function rNqX(r,a){hqMode="hist";["padd","pimp","ptpl","pexp"].forEach(i=>$(i).hidden=false);rNq(r,a);$("plist").innerHTML=hqBar()+$("plist").innerHTML}
+  const row=(x,keys)=>{const m0=hqIds(x.mt_bat_dau).map(hqMtOf).find(Boolean),nk=hqNk(x),dead=hqEnded(x,t0)||hqTrung(x);
+    const hl=nk?`<b>Nhiệm kỳ ${esc(x.nhiem_ky)}</b>${m0&&m0.ngay?`<div class="s">Bầu: ${fmt(m0.ngay)}</div>`:""}<div class="s">Hiệu lực: ${x.from?fmt(x.from)+(hqPend(x)?" (chờ xác nhận)":""):"chưa rõ"}</div>${x.to?`<div class="s bad">Kết thúc ${fmt(x.to)}</div>`:""}`:`${x.from?fmt(x.from):"…"} đến ${x.to?fmt(x.to):"nay"}${hqPend(x)&&x.from?'<div class="s">chờ xác nhận</div>':""}`;
+    return `<tr${dead?' style="opacity:.6"':""}><td class="t"><b>${esc(x.name)}</b>${hqNote(hqStrip(x.note,keys))}</td><td>${esc(x.role)}<small class="s">${esc(x.title)}</small></td><td>${hl}${hqEnded(x,t0)?'<div class="s bad">Hết hiệu lực</div>':""}</td><td>${hqBasis(x)||esc(x.uq)}</td><td>${hqChac(x.do_chac)}</td></tr>`};
+  const blk=(rs,lab)=>{if(!rs.length)return"";const cnt={};rs.forEach(x=>{const k=hqWKey(x.note);if(k)cnt[k]=(cnt[k]||0)+1});const keys=Object.keys(cnt).filter(k=>cnt[k]>=2);
+    return `<tr><td colspan="5" style="font-weight:600;background:var(--bg2,rgba(127,127,127,.06))">${lab} (${rs.length})</td></tr>`+keys.map(k=>`<tr><td colspan="5" class="hqw">⚠ ${esc(k)} <small>(${cnt[k]} dòng cùng nhóm)</small></td></tr>`).join("")+[...rs].sort((a,b)=>(hqEnded(a,t0)-hqEnded(b,t0))||ord(a)-ord(b)||String(a.name).localeCompare(String(b.name),"vi")).map(x=>row(x,keys)).join("")};
+  let h=`<div style="overflow-x:auto"><table class="m" style="min-width:720px"><thead><tr><th>Họ và tên</th><th>Vai trò, chức danh</th><th>Nhiệm kỳ / hiệu lực</th><th>Bổ nhiệm</th><th>Độ chắc</th></tr></thead><tbody>`;
+  gs.forEach(g=>{const rs=r.filter(x=>same(x.co,g));h+=`<tr class="tot g ${cx(g)}"><td colspan="5">${chip(g)}</td></tr>`+blk(rs.filter(hqRoleH),"Hội đồng quản trị")+blk(rs.filter(hqRoleK),"Ban kiểm soát")});
+  $("plist").innerHTML=hqBar()+hqBad()+h+`</tbody></table></div><small style="display:block;margin-top:8px;color:var(--mute)">Chỉ lấy vai trò Chủ tịch HĐQT, Thành viên HĐQT, Kiểm soát viên, Trưởng Ban kiểm soát; NĐDPL xem ở mục Chức vụ. Cột Bổ nhiệm lấy từ mt_bat_dau của chức vụ; bấm vào để xem cuộc họp ở chế độ Lịch sử họp.</small>`}
+function rMtX(r,a){if(sec==="nq")hqMode="hist";if(hqMode==="now"){rHqNow();return}["padd","pimp","ptpl","pexp"].forEach(i=>$(i).hidden=false);rMt(r,a);$("plist").innerHTML=hqBar()+hqBad()+$("plist").innerHTML}
+function rNqX(r,a){hqMode="hist";["padd","pimp","ptpl","pexp"].forEach(i=>$(i).hidden=false);rNq(r,a);$("plist").innerHTML=hqBar()+hqBad()+$("plist").innerHTML}
 $("plist").addEventListener("click",e=>{
   const m=e.target.closest("[data-hqm]");if(m){e.stopPropagation();hqMode=m.dataset.hqm;if(hqMode==="now"&&sec==="nq")sec="mt";renderProf();return}
   const p=e.target.closest("[data-hqpos]");if(p){e.preventDefault();e.stopPropagation();const r=$("plist").querySelector('tr[data-hqr="'+p.dataset.hqpos+'"]');if(r)r.hidden=!r.hidden;return}
@@ -4881,6 +4900,11 @@ function rVay(r,all){
   const stT=x=>x.st==="Đang hiệu lực"?'<span style="color:var(--ok);font-weight:600">'+esc(x.st)+'</span>':x.st==="Đã tất toán"?'<span style="color:var(--mute)">'+esc(x.st)+'</span>':'<span class="dkp">'+esc(x.st||"")+'</span>';
   const rows=[...r].sort((a,b)=>(vayAct(b)-vayAct(a))||ci(a.co)-ci(b.co)||String(a.han||"9999").localeCompare(String(b.han||"9999")));
   $("plist").innerHTML=gp+`<table class="m"><thead><tr><th>Doanh nghiệp vay</th><th>Khoản vay</th><th>Số tiền, dư nợ</th><th>Đến hạn</th><th>Tài sản bảo đảm</th><th>Cam kết, điều kiện</th><th>Phê duyệt</th><th>Tình trạng</th></tr></thead><tbody>${rows.map(x=>`<tr data-id="${x.id}"${x.st==="Đã tất toán"?' style="opacity:.6"':""}><td>${chip(x.co)}${x.proj?`<small>${esc(x.proj)}</small>`:""}</td><td class="t"><b>${esc(x.bank||x.ten)}</b>${x.bank&&x.ten?`<small>${esc(x.ten)}</small>`:""}<small class="s">${[x.loai,x.so?"số "+x.so:"",x.ngay?"ký "+fmt(x.ngay):""].filter(Boolean).map(esc).join(", ")}</small>${x.md?`<small class="s clamp" title="${esc(x.md)}">${esc(x.md)}</small>`:""}</td><td class="num">${x.hm?money(x.hm):""}${x.du?`<small style="display:block">dư nợ ${money(x.du)}${x.dunt?" ("+fmt(x.dunt)+")":""}</small>`:""}${x.ls?`<small style="display:block">${esc(x.ls)}</small>`:""}</td><td>${hT(x)}</td><td><span class="clamp" title="${esc(x.tsbd||"")}">${esc(x.tsbd||"")}</span>${x.bc?`<small class="s clamp" title="${esc(x.bc)}">Bên cung cấp: ${esc(x.bc)}</small>`:""}${x.dkgd==="Chưa đăng ký"?'<small class="wn1">Chưa đăng ký giao dịch bảo đảm</small>':x.dkgd==="Đã đăng ký"?"<small>Đã đăng ký giao dịch bảo đảm</small>":""}</td><td><span class="clamp" title="${esc(x.ck||"")}">${esc(x.ck||"")}</span></td><td>${esc(x.tq||"")}${x.nq?`<small class="s">${esc(x.nq)}</small>`:""}</td><td>${stT(x)}</td></tr>`).join("")}</tbody></table>`}
+$("plist").addEventListener("click",e=>{const a=e.target.closest("[data-pjdk]");if(!a)return;e.preventDefault();e.stopPropagation();
+  const id=a.dataset.pjdk,K0=a.dataset.pjp,d=PX("dk").find(r=>String(r.id)===id);if(!d)return;
+  const G=PX("gd").filter(r=>norm(r.proj)===K0),n=dkAll(d)?null:G.map(g=>+g.gd).find(i=>dkIn(d,i));
+  pjState[K0+"|"+(n?"gd"+n:"dkc")]=true;renderProf();
+  setTimeout(()=>{const tr=document.querySelector('#plist tr[data-dkid="'+id+'"]');if(tr){tr.classList.add("flash");tr.scrollIntoView({block:"center",behavior:"smooth"});setTimeout(()=>tr.classList.remove("flash"),2600)}},60)},true);
 $("plist").addEventListener("toggle",e=>{const d=e.target;if(d&&d.dataset&&d.dataset.pk)pjState[d.dataset.pk]=d.open},true);
 const PX=k=>{const p=(CFG.prof||{})[k];return Array.isArray(p)?p:[]};
 const pjOf=(k,x)=>PX(k).filter(r=>norm(r.proj)===norm(x.name));
@@ -4899,7 +4923,7 @@ function pjDk(rows,HA){
   if(!rows.length)return '<small class="s">Chưa ghi nhận điều kiện nào.</small>';
   const hT=rows.some(r=>r.tang),hB=rows.some(r=>r.ben_giu);
   const ton=r=>(HA||[]).filter(h=>pjIds(h.dk_id).includes(String(r.id)));
-  return pjTbl(["Nhóm","Điều kiện","Số, ngày","Cơ quan"].concat(hT?["Tầng"]:[],hB?["Bên giữ"]:[],["Tình trạng","Thiếu","Vấn đề tồn","Link"]),rows,r=>{const t=ton(r);return `<tr><td>${esc(r.nhom)}</td><td>${esc(r.ten)}${r.pham_vi?`<small>${esc(r.pham_vi)}</small>`:""}</td><td>${esc(r.so)}${r.ngay?`<small>${pjD(r.ngay)}</small>`:""}</td><td>${esc(r.cq)}</td>${hT?`<td>${esc(r.tang)}</td>`:""}${hB?`<td>${esc(r.ben_giu)}</td>`:""}<td>${pjSt(r.st)}</td><td>${esc(r.thieu)}</td><td>${t.length?`<span class="wn1">${t.length} mục</span>`:""}</td><td>${lkC(r.link)}</td></tr>`})}
+  return pjTbl(["Nhóm","Điều kiện","Số, ngày","Cơ quan"].concat(hT?["Tầng"]:[],hB?["Bên giữ"]:[],["Tình trạng","Thiếu","Vấn đề tồn","Link"]),rows,r=>{const t=ton(r);return `<tr data-dkid="${esc(r.id)}"><td>${esc(r.nhom)}</td><td>${esc(r.ten)}${r.pham_vi?`<small>${esc(r.pham_vi)}</small>`:""}</td><td>${esc(r.so)}${r.ngay?`<small>${pjD(r.ngay)}</small>`:""}</td><td>${esc(r.cq)}</td>${hT?`<td>${esc(r.tang)}</td>`:""}${hB?`<td>${esc(r.ben_giu)}</td>`:""}<td>${pjSt(r.st)}</td><td>${esc(r.thieu)}</td><td>${t.length?`<span class="wn1">${t.length} mục</span>`:""}</td><td>${lkC(r.link)}</td></tr>`})}
 function pjTier(x,opG,ctG){
   const F=[["Khu / cụm","khu_cum"],["Loại khu","loai_khu"],["Chủ hạ tầng","chu_ha_tang"],["Cơ quan quản lý","cq_quan_ly"],["Ngành nghề","nganh_nghe"]].filter(a=>x[a[1]]);
   let h=F.length?`<div class="pjf">${F.map(a=>`<div><span>${a[0]}</span>${esc(x[a[1]])}</div>`).join("")}</div>`:"";
@@ -4908,12 +4932,14 @@ function pjTier(x,opG,ctG){
     const hold=plOf(x).filter(v=>v.st!=="Chưa có"&&v.st!=="Đã hết hiệu lực");
     if(hold.length)h+=`<div class="pjh">Hồ sơ đang có</div>`+pjTbl(["Hạng mục","Số, ngày","Cơ quan","Tình trạng","Link"],hold,v=>`<tr><td>${esc(v.loai||v.ten)}${v.ten&&v.loai?`<small>${esc(v.ten)}</small>`:""}</td><td>${esc(v.so)}${v.ngay?`<small>${pjD(v.ngay)}</small>`:""}</td><td>${esc(v.cq)}</td><td>${pjSt(v.st)}</td><td>${lkC(v.link)}</td></tr>`);
     return h}
-  const D=pjOf("dk",x),H=pjOf("ha",x),hc=H.filter(r=>/còn tồn/i.test(r.st||"")||String(r.van_de||"").trim()),hr=H.filter(r=>!hc.includes(r));
+  const D=pjOf("dk",x),H=pjOf("ha",x);
+  {const bad=[];H.forEach(r=>pjIds(r.dk_id).forEach(i=>{if(!PX("dk").some(d=>String(d.id)===i))bad.push(esc(r.noidung||r.loai||r.id)+": "+esc(i))}));if(bad.length)h+=`<div class="panel full warnp" style="margin:0 0 8px"><h3>⚠ ${bad.length} dk_id không có trong prof_dk</h3><small>${bad.join("<br>")}</small></div>`}
+  const hc=H.filter(r=>/còn tồn/i.test(r.st||"")||String(r.van_de||"").trim()),hr=H.filter(r=>!hc.includes(r));
   const chung=D.filter(r=>dkAll(r)||!G.some(g=>dkIn(r,+g.gd)));
   h+=pjSec(K0+"|dkc","Điều kiện chung dự án",chung.length,pjDk(chung,H),0);
   G.forEach(g=>{const n=+g.gd,L=D.filter(r=>!dkAll(r)&&dkIn(r,n));
     h+=pjSec(K0+"|gd"+n,`${esc(g.ten||"Giai đoạn "+g.gd)} ${pjSt(g.st)} <small>${esc(g.tiendo)}</small> <small>${opG(x,n)} việc, ${ctG(x,n)} hợp đồng</small> · Điều kiện`,L.length,(g.quymo?`<p class="s" style="margin:6px 0">Quy mô: ${esc(g.quymo)}</p>`:"")+(g.note?`<p class="s" style="margin:6px 0;color:var(--mute)">${esc(g.note)}</p>`:"")+pjDk(L,H),0)});
-  const hT=rows=>pjTbl(["Loại","Số, ngày","Bên","Nội dung","Vấn đề tồn đọng","Điều kiện liên quan","Tình trạng","Link"],rows,r=>{const ds=pjIds(r.dk_id).map(i=>D.find(d=>String(d.id)===i)).filter(Boolean);return `<tr><td>${esc(r.loai)}</td><td>${esc(r.so)}${r.ngay?`<small>${pjD(r.ngay)}</small>`:""}</td><td>${esc(r.ben)}</td><td>${esc(r.noidung)}</td><td>${esc(r.van_de)}</td><td>${ds.map(d=>esc(d.ten)).join("<br>")}</td><td>${pjSt(r.st)}</td><td>${lkC(r.link)}</td></tr>`});
+  const hT=rows=>pjTbl(["Loại","Số, ngày","Bên","Nội dung","Vấn đề tồn đọng","Điều kiện liên quan","Tình trạng","Link"],rows,r=>{const ds=pjIds(r.dk_id).map(i=>D.find(d=>String(d.id)===i)).filter(Boolean);return `<tr><td>${esc(r.loai)}</td><td>${esc(r.so)}${r.ngay?`<small>${pjD(r.ngay)}</small>`:""}</td><td>${esc(r.ben)}</td><td>${esc(r.noidung)}</td><td>${esc(r.van_de)}</td><td>${ds.map(d=>`<a href="#" class="pjdkc" data-pjdk="${esc(d.id)}" data-pjp="${esc(K0)}">${esc(d.ten)}</a>`).join("<br>")}</td><td>${pjSt(r.st)}</td><td>${lkC(r.link)}</td></tr>`});
   if(H.length)h+=pjSec(K0+"|ha","Quan hệ với chủ hạ tầng, còn tồn",hc.length,(hc.length?hT(hc):'<small class="s">Không có mục còn tồn.</small>')+(hr.length?`<div class="pjh">Mục đã xử lý, hợp đồng, phụ lục (${hr.length})</div>`+hT(hr):""),hc.length>0);
   const K=pjOf("kt",x);if(K.length)h+=pjSec(K0+"|kt","Khách thuê",K.length,pjTbl(["Khách","Hợp đồng","Diện tích thuê","Ngành","Ràng buộc","Tình trạng","Link"],K,r=>`<tr><td>${esc(r.khach)}</td><td>${esc(r.hd_so)}${r.ngay?`<small>${pjD(r.ngay)}</small>`:""}</td><td>${esc(r.dt_thue)}</td><td>${esc(r.nganh)}</td><td>${esc(r.rang_buoc)}</td><td>${pjSt(r.st)}</td><td>${lkC(r.link)}</td></tr>`),0);
   const N=pjOf("nv",x);if(N.length)h+=pjSec(K0+"|nv","Nhiệm vụ vận hành (nghĩa vụ, mốc)",N.length,pjTbl(["Nhóm","Nội dung","Căn cứ","Tần suất","Hạn, mốc","Tình trạng","Link"],N,r=>`<tr><td>${esc(r.nhom)}</td><td>${esc(r.noidung)}</td><td>${esc(r.can_cu)}</td><td>${esc(r.tan_suat)}</td><td>${pjD(r.han)}</td><td>${pjSt(r.st)}</td><td>${lkC(r.link)}</td></tr>`),0);
